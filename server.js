@@ -211,6 +211,155 @@ app.get("/api/production-order/:docNum", async (req, res) => {
     }
 });
 
+// Production Order Delivery endpoint
+app.post('/api/production-order/:docNum/delivery', async (req, res) => {
+  const { docNum } = req.params;
+  const { sessionId, items } = req.body;
+
+  if (!sessionId || !docNum || !items) {
+    return res.status(400).json({ error: "Missing required parameters" });
+  }
+
+  // https://10.21.22.11:50000/b1s/v1/SQLQueries('OWTR_LIST')/List?value1= 'PROD'&value2= 'DocNum'
+  
+
+  console.log("Processing delivery for docNum:", docNum);
+  console.log("Using sessionId:", sessionId);
+
+  try {
+    const deliveryData = {
+      WhsCode: items[0].WhsCode,
+      DocDate: new Date().toISOString().split("T")[0],
+      DocNum: docNum,
+      NumAtCard: items[0].NumAtCard,
+      Comments: items[0].Comments,
+      SessionID: sessionId,
+      GUID: generateGUID(),
+      LineNum: 1,
+      Items: items.map((item) => ({
+        ItemCode: item.ItemCode,
+        ItemName: item.ItemName,
+        Quantity: parseFloat(item.Quantity),
+        DeliveryQty: parseFloat(item.DeliveryQty),
+        MissingQty: parseFloat(item.MissingQty),
+        DefectiveQty: parseFloat(item.DefectiveQty),
+        Comments: item.Comments,
+        Image: item.Image,
+      })),
+    };
+
+    const response = await axiosInstance.get(
+      "https://10.21.22.11:50000/b1s/v1/SQLQueries('OWTQ_NEW')/List",
+      deliveryData,
+      {
+        headers: {
+          Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+          "Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
+        },
+      }
+    );
+
+    console.log("Delivery API Response:", response.data);
+    res.json(response.data);
+  } catch (error) {
+    console.error("Error processing delivery:", error);
+    res.status(500).json({
+      error: "Failed to process delivery",
+      details: error.message,
+    });
+  }
+});
+
+// Get delivery details
+app.get('/api/delivery/:docNum', async (req, res) => {
+    const { docNum } = req.params;
+    const { sessionId } = req.query;
+
+    if (!sessionId || !docNum) {
+        return res.status(400).json({ error: 'Missing required parameters' });
+    }
+
+    console.log("Getting delivery details for docNum:", docNum);
+    console.log("Using sessionId:", sessionId);
+
+    try {
+        const response = await axiosInstance.get(
+            `https://10.21.22.11:50000/b1s/v1/SQLQueries('OWTR_NEW')/List`,
+            {
+                params: {
+                    value1: "'PROD'",
+                    value2: docNum
+                },
+                headers: {
+                    'Cookie': `B1SESSION=${encodeURIComponent(sessionId)}`,
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+
+        console.log('Delivery API Response:', response.data);
+        res.json(response.data);
+    } catch (error) {
+        console.error('Error fetching delivery details:', error);
+        res.status(500).json({ 
+            error: 'Failed to fetch delivery details',
+            details: error.message 
+        });
+    }
+});
+
+
+// Handle delivery submissions
+app.post('/api/delivery-submit/:docNum', async (req, res) => {
+    const { docNum } = req.params;
+    const { sessionId, deliveryData } = req.body;
+
+    console.log("Processing delivery submission for docNum:", docNum);
+    console.log("Session ID:", sessionId);
+    console.log("Delivery data:", JSON.stringify(deliveryData, null, 2));
+
+    if (!sessionId || !docNum || !deliveryData) {
+        console.error('Missing parameters:', { sessionId, docNum, hasDeliveryData: !!deliveryData });
+        return res.status(400).json({ error: 'Missing required parameters' });
+    }
+
+    try {
+        console.log('Sending request to external API...');
+        const response = await axiosInstance.post(
+            'https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_OWTR',
+            deliveryData,
+            {
+                headers: {
+                    'Cookie': 'B1SESSION=' + encodeURIComponent(sessionId),
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+
+        console.log('External API Response:', response.data);
+        res.json(response.data);
+    } catch (error) {
+        console.error('Error submitting delivery. Full error:', error);
+        console.error('Error response data:', error.response?.data);
+        console.error('Error status:', error.response?.status);
+        console.error('Error headers:', error.response?.headers);
+        
+        res.status(500).json({ 
+            error: 'Delivery submission failed', 
+            details: error.message,
+            response: error.response?.data
+        });
+    }
+});
+
+function generateGUID() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        var r = Math.random() * 16 | 0,
+            v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
+
 // Handle all other routes
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'login.html'));

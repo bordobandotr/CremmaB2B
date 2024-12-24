@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CREMMA - Üretim Siparişi Teslim Al</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- DataTables CSS -->
+    <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="css/style.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
+    <style>
+        .input-group-text.required::after {
+            content: "*";
+            color: red;
+            margin-left: 4px;
+        }
+
+        .quantity-input {
+            width: 80px !important;
+        }
+
+        .input-group .form-control {
+            text-align: center;
+        }
+
+        .input-group .btn {
+            padding: 0.25rem 0.5rem;
+        }
+
+        .input-group .btn i {
+            font-size: 0.875rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="d-flex">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo-container p-4">
+                <h2 class="text-white">CREMMA</h2>
+            </div>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" href="index.html"><i class="bi bi-house"></i> Anasayfa</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="uretim-siparisleri.html"><i class="bi bi-gear"></i> Üretim
+                        Siparişleri</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#"><i class="bi bi-box"></i> Dış Tedarik</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#"><i class="bi bi-arrow-left-right"></i> Transferler</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#"><i class="bi bi-building"></i> Ana Depo</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#"><i class="bi bi-check2-square"></i> Check List</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#"><i class="bi bi-exclamation-triangle"></i> Fire ve Zayi</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#"><i class="bi bi-ticket"></i> Ticket</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#"><i class="bi bi-calculator"></i> Stok Sayımı</a>
+                </li>
+            </ul>
+            <div class="user-info position-absolute bottom-0 start-0 p-3 w-100">
+                <div class="d-flex align-items-center">
+                    <img src="img/avatar.jpg" alt="User" class="rounded-circle me-2" width="40">
+                    <div class="text-white">
+                        <small>Orkun - Caddebostan</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <header class="d-flex justify-content-between p-3 bg-white">
+                <div class="d-flex align-items-center">
+                    <button id="sidebarToggle" class="btn btn-link d-md-none">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <h5 class="mb-0">Teslim Al ve Onayla</h5>
+                </div>
+                <div class="d-flex align-items-center">
+                    <div class="me-3">
+                        <span id="userInfo" class="text-muted">
+                            <i class="bi bi-person-circle me-1"></i>
+                            Yükleniyor...
+                        </span>
+                    </div>
+                    <button class="btn btn-outline-secondary" onclick="logout()">
+                        Çıkış Yap <i class="bi bi-box-arrow-right"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Content -->
+            <div class="container-fluid p-4">
+                <div class="card">
+                    <div class="card-body">
+                        <form id="deliveryForm">
+                            <div class="row mb-3">
+                                <div class="col-md-3">
+                                    <label class="form-label">Şube Kodu (WhsCode)</label>
+                                    <input type="text" class="form-control" id="whsCode" readonly
+                                        style="background-color: #e9ecef;">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Sipariş Tarihi (DocDate)</label>
+                                    <input type="text" class="form-control" id="docDate" readonly
+                                        style="background-color: #e9ecef;">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Sipariş No (DocNum)</label>
+                                    <input type="text" class="form-control" id="docNum" readonly
+                                        style="background-color: #e9ecef;">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Teslimat Belge No</label>
+                                    <input type="text" class="form-control" id="numAtCard" required>
+                                </div>
+                            </div>
+
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="itemsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Kalem Kodu</th>
+                                            <th>Kalem Tanımı</th>
+                                            <th>Sipariş Miktarı</th>
+                                            <th>Teslimat Miktarı</th>
+                                            <th>Eksik Miktar</th>
+                                            <th>Kusurlu Miktar</th>
+                                            <th>Not</th>
+                                            <th>Görsel</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="itemsTableBody">
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="mt-4 text-end">
+                                <button type="button" class="btn btn-secondary me-2" onclick="window.history.back()">
+                                    <i class="bi bi-arrow-left"></i> Geri Dön
+                                </button>
+                                <button type="submit" class="btn btn-success">
+                                    <i class="bi bi-check-lg"></i> Teslim Al ve Onayla
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        $(document).ready(async function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            const docNum = urlParams.get('docNum');
+
+            if (!docNum) {
+                alert('Sipariş numarası bulunamadı');
+                window.history.back();
+                return;
+            }
+
+            const sessionId = localStorage.getItem('sessionId');
+            if (!sessionId) {
+                alert('Oturum bilgisi bulunamadı. Lütfen tekrar giriş yapın.');
+                window.location.href = '/login.html';
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/delivery/${docNum}?sessionId=${sessionId}`);
+                const data = await response.json();
+
+                if (!data.value || data.value.length === 0) {
+                    throw new Error('Sipariş bulunamadı');
+                }
+
+                // Fill header information
+                const firstItem = data.value[0];
+                $('#whsCode').val(firstItem.WhsCode);
+                $('#docDate').val(formatDate(firstItem.DocDate));
+                $('#docNum').val(docNum);
+                // Only set NumAtCard if it exists
+                if (firstItem.NumAtCard) {
+                    $('#numAtCard').val(firstItem.NumAtCard);
+                }
+
+                // Fill the table with order items
+                const tableBody = $('#itemsTableBody');
+                data.value.forEach(item => {
+                    tableBody.append(`
+                        <tr data-item-code="${item.ItemCode}" data-line-num="${item.LineNum}">
+                            <td>${item.ItemCode}</td>
+                            <td>${item.ItemName}</td>
+                            <td>${item.Quantity}</td>
+                            <td>
+                                <div class="input-group">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="decrementValue(this, 'delivery-qty')">
+                                        <i class="bi bi-dash"></i>
+                                    </button>
+                                    <input type="number" class="form-control form-control-sm delivery-qty" 
+                                           value="${item.Quantity}" min="0" max="${item.Quantity}" step="1">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="incrementValue(this, 'delivery-qty')">
+                                        <i class="bi bi-plus"></i>
+                                    </button>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="input-group">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="decrementValue(this, 'missing-qty')">
+                                        <i class="bi bi-dash"></i>
+                                    </button>
+                                    <input type="number" class="form-control form-control-sm missing-qty" 
+                                           value="0" min="0" step="1">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="incrementValue(this, 'missing-qty')">
+                                        <i class="bi bi-plus"></i>
+                                    </button>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="input-group">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="decrementValue(this, 'defective-qty')">
+                                        <i class="bi bi-dash"></i>
+                                    </button>
+                                    <input type="number" class="form-control form-control-sm defective-qty" 
+                                           value="0" min="0" step="1">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" onclick="incrementValue(this, 'defective-qty')">
+                                        <i class="bi bi-plus"></i>
+                                    </button>
+                                </div>
+                            </td>
+                            <td>
+                                <input type="text" class="form-control form-control-sm item-note" 
+                                       placeholder="Not...">
+                            </td>
+                            <td>
+                                <input type="file" class="form-control form-control-sm item-image" 
+                                       accept="image/*">
+                            </td>
+                            <td style="display:none;">
+                                <input type="hidden" class="uom-code" value="${item.UomCode}">
+                            </td>
+                        </tr>
+                    `);
+                });
+
+                // Add event listeners for quantity inputs
+                $('.delivery-qty, .missing-qty, .defective-qty').on('input', function () {
+                    validateQuantities($(this).closest('tr'));
+                });
+
+                // Handle form submission
+                $('#deliveryForm').on('submit', async function (e) {
+                    e.preventDefault();
+                    await submitDelivery();
+                });
+
+            } catch (error) {
+                console.error('Error loading order:', error);
+                alert('Sipariş detayları yüklenirken bir hata oluştu.');
+            }
+        });
+
+        function validateQuantities(row) {
+            const orderQty = parseInt(row.find('td:eq(2)').text());
+            const deliveryQty = parseInt(row.find('.delivery-qty').val()) || 0;
+            const missingQty = parseInt(row.find('.missing-qty').val()) || 0;
+            const defectiveQty = parseInt(row.find('.defective-qty').val()) || 0;
+
+            if (deliveryQty + missingQty + defectiveQty > orderQty) {
+                alert('Toplam miktar sipariş miktarını aşamaz!');
+                $(event.target).val(0);
+            }
+        }
+
+        async function submitDelivery() {
+            try {
+                const sessionId = localStorage.getItem('sessionId');
+                const username = localStorage.getItem('username');
+                const docNum = new URLSearchParams(window.location.search).get('docNum');
+                const guid = generateGUID(); // Generate one GUID for all items
+                const deliveryItems = [];
+
+                // Collect all items first
+                $('#itemsTableBody tr').each(function () {
+                    const row = $(this);
+                    const imageInput = row.find('.item-image')[0];
+                    
+                    deliveryItems.push({
+                        row: row,
+                        imageInput: imageInput,
+                        lineNum: row.data('line-num') // Get the stored LineNum
+                    });
+                });
+
+                // Process each item
+                for (const item of deliveryItems) {
+                    const row = item.row;
+                    const imageInput = item.imageInput;
+                    
+                    const imageBase64 = imageInput.files.length > 0 ?
+                        await convertImageToBase64(imageInput.files[0]) : '';
+
+                    const deliveryData = {
+                        U_Type: "PROD",
+                        U_WhsCode: $('#whsCode').val(),
+                        U_DocDate: new Date().toISOString().split('T')[0],
+                        U_DocNum: parseInt(docNum),
+                        U_NumAtCard: $('#numAtCard').val(),
+                        U_ItemCode: row.data('item-code'),
+                        U_ItemName: row.find('td:eq(1)').text(),
+                        U_Quantity: parseInt(row.find('td:eq(2)').text()),
+                        U_DeliveryQty: parseInt(row.find('.delivery-qty').val()) || 0,
+                        U_MissingQty: parseInt(row.find('.missing-qty').val()) || 0,
+                        U_DefectiveQty: parseInt(row.find('.defective-qty').val()) || 0,
+                        U_UomCode: row.find('.uom-code').val(),
+                        U_Comments: row.find('.item-note').val() || "",
+                        U_Image: imageBase64 || "",
+                        U_SessionID: sessionId,
+                        U_GUID: guid,
+                        U_User: username || "Orkun",
+                        U_LineNum: item.lineNum // Add the LineNum to the delivery data
+                    };
+
+                    console.log('Sending delivery data:', deliveryData);
+                    const response = await fetch(`/api/delivery-submit/${docNum}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                            sessionId: sessionId,
+                            deliveryData: deliveryData
+                        })
+                    });
+
+                    console.log('API Response status:', response.status);
+                    const responseData = await response.json();
+                    console.log('API Response data:', responseData);
+
+                    if (!response.ok) {
+                        throw new Error(`Teslimat işlemi başarısız oldu: ${responseData.details || responseData.error || 'Bilinmeyen hata'}`);
+                    }
+                }
+
+                alert('Teslimat başarıyla kaydedildi');
+                window.location.href = 'uretim-siparisleri.html';
+            } catch (error) {
+                console.error('Error submitting delivery:', error);
+                alert('Teslimat kaydedilirken bir hata oluştu');
+            }
+        }
+
+        function generateGUID() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+                var r = Math.random() * 16 | 0,
+                    v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        async function convertImageToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = error => reject(error);
+            });
+        }
+
+        function formatDate(date) {
+            if (!date) return '';
+
+            // Tarihi 'yyyyMMdd' formatından 'yyyy-MM-dd' formatına dönüştür
+            const formattedDate = date.toString().replace(/^(\d{4})(\d{2})(\d{2})$/, '$1-$2-$3');
+
+            const d = new Date(formattedDate);
+            return d.toLocaleDateString('tr-TR');
+        }
+
+        function logout() {
+            localStorage.removeItem('sessionId');
+            window.location.href = '/login.html';
+        }
+
+        function incrementValue(button, className) {
+            const input = $(button).siblings('.' + className);
+            const currentValue = parseInt(input.val()) || 0;
+            const max = parseInt(input.attr('max'));
+
+            let newValue = currentValue + 1;
+            if (max !== undefined && newValue > max) {
+                newValue = max;
+            }
+
+            input.val(newValue).trigger('input');
+        }
+
+        function decrementValue(button, className) {
+            const input = $(button).siblings('.' + className);
+            const currentValue = parseInt(input.val()) || 0;
+            const min = parseInt(input.attr('min')) || 0;
+
+            let newValue = currentValue - 1;
+            if (newValue < min) {
+                newValue = min;
+            }
+
+            input.val(newValue).trigger('input');
+        }
+    </script>
+</body>
+
+</html>

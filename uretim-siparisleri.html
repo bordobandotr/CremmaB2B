@@ -292,12 +292,12 @@
                             order.DocDueDate || '',
                             getStatusBadge(order.DocStatus) || '',
                             `<div class="btn-group">
-                                <a href="uretim-siparisi-detay.html?docNum=${order.DocNum}" type="button" class="btn btn-sm btn-primary" onclick="viewOrder(${order.DocEntry})">
+                                <a href="uretim-siparisi-detay.html?docNum=${order.DocNum}" type="button" class="btn btn-sm btn-primary">
                                     <i class="bi bi-eye"></i>
                                 </a>
-                                <button type="button" class="btn btn-sm btn-success" onclick="approveOrder(${order.DocEntry})">
+                                <a href="uretim-siparisi-teslim.html?docNum=${order.DocNum}" type="button" class="btn btn-sm btn-success">
                                     <i class="bi bi-check-lg"></i>
-                                </button>
+                                </a>
                             </div>`
                         ]);
                     });
