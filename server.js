@@ -178,6 +178,39 @@ app.post("/api/production-orders", async (req, res) => {
     }
 });
 
+// Production Orders endpoints
+app.get("/api/production-order/:docNum", async (req, res) => {
+    const sessionId = req.query.sessionId;
+    const docNum = req.params.docNum;
+
+    console.log("Getting order details for docNum:", docNum);
+    console.log("Using sessionId:", sessionId);
+
+    // https://10.21.22.11:50000/b1s/v1/SQLQueries('OWTQ_DETAIL')/List?value1= 'PROD'&value2= 'DocNum'
+
+    try {
+        const response = await axiosInstance.get(
+            "https://10.21.22.11:50000/b1s/v1/SQLQueries('OWTQ_DETAIL')/List",
+            {
+                params: {
+                    value1: "'PROD'",
+                    value2: docNum,
+                },
+                headers: {
+                    Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+                    "Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
+                },
+            }
+        );
+        console.log("Response for docNum:", docNum, response.data);
+        res.json(response.data);
+    } catch (error) {
+        console.error("Error:", error);
+        console.error("Error:", error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Handle all other routes
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'login.html'));

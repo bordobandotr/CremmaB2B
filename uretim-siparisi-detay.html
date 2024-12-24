@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CREMMA - Üretim Siparişleri</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- DataTables CSS -->
+    <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="css/style.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
+</head>
+
+<body>
+    <div class="d-flex">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo-container p-4">
+                <h2 class="text-white">CREMMA</h2>
+            </div>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" href="index.html"><i class="bi bi-house"></i> Anasayfa</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="uretim-siparisleri.html"><i class="bi bi-gear"></i> Üretim
+                        Siparişleri</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#"><i class="bi bi-box"></i> Dış Tedarik</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#"><i class="bi bi-arrow-left-right"></i> Transferler</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#"><i class="bi bi-building"></i> Ana Depo</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#"><i class="bi bi-check2-square"></i> Check List</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#"><i class="bi bi-exclamation-triangle"></i> Fire ve Zayi</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#"><i class="bi bi-ticket"></i> Ticket</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#"><i class="bi bi-calculator"></i> Stok Sayımı</a>
+                </li>
+            </ul>
+            <div class="user-info position-absolute bottom-0 start-0 p-3 w-100">
+                <div class="d-flex align-items-center">
+                    <img src="img/avatar.jpg" alt="User" class="rounded-circle me-2" width="40">
+                    <div class="text-white">
+                        <small>Orkun - Caddebostan</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <header class="d-flex justify-content-between p-3 bg-white">
+                <div class="d-flex align-items-center">
+                    <button id="sidebarToggle" class="btn btn-link d-md-none">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <h5 class="mb-0">Üretim Siparişleri</h5>
+                </div>
+                <div class="d-flex align-items-center">
+                    <div class="me-3">
+                        <span id="userInfo" class="text-muted">
+                            <i class="bi bi-person-circle me-1"></i>
+                            Yükleniyor...
+                        </span>
+                    </div>
+                    <a href="uretim-siparisi-olustur.html" class="btn btn-danger me-2">
+                        <i class="bi bi-plus"></i> Yeni Sipariş Oluştur
+                    </a>
+                    <button class="btn btn-outline-secondary" onclick="logout()">
+                        Çıkış Yap <i class="bi bi-box-arrow-right"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Content --> 
+            <div class="container-fluid py-4">
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-box-seam fs-3 me-2"></i>
+                        <h1 class="header-title mb-0">Üretim Siparişleri</h1>
+                    </div>
+                    <div>
+                        <button class="btn btn-secondary me-2" onclick="window.history.back()">
+                            <i class="bi bi-arrow-left"></i> Geri Dön
+                        </button>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="detail-label">Sipariş No:</label>
+                                    <div id="docNum"></div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="detail-label">Sipariş Tarihi:</label>
+                                    <div id="docDate"></div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="detail-label">Sipariş Özeti:</label>
+                                    <div id="orderSummary"></div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="detail-label">Şube Kodu:</label>
+                                    <div id="whsCode"></div>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="mb-3">
+                                    <label class="detail-label">Tahmini Teslimat Tarihi:</label>
+                                    <div id="docDueDate"></div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="detail-label">Sipariş Durumu:</label>
+                                    <div id="docStatus"></div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="detail-label">Teslimat Belge No:</label>
+                                    <div id="numAtCard"></div>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="detail-label">Sipariş Notu:</label>
+                                    <div id="comments"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <h5 class="mb-3">Sipariş Kalemleri</h5>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Kalem Kodu</th>
+                                        <th>Kalem Tanımı</th>
+                                        <th>Sipariş Miktarı</th>
+                                        <th>Teslimat Miktarı</th>
+                                        <th>Ölçü Birimi</th>
+                                        <th>Durum</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="itemsTableBody">
+                                    <!-- DataTables will fill this -->
+                                    <!-- <tr>
+                                        <td>STK001</td>
+                                        <td>Türk Kahvesi</td>
+                                        <td>100</td>
+                                        <td>0</td>
+                                        <td>Adet</td>
+                                        <td><span class="badge bg-warning">Onay Bekliyor</span></td>
+                                    </tr> -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div> 
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        $(document).ready(async function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const docNum = urlParams.get('docNum');
+            
+            if (!docNum) {
+                alert('Sipariş numarası bulunamadı');
+                window.history.back();
+                return;
+            }
+
+            const sessionId = localStorage.getItem('sessionId');
+            if (!sessionId) {
+                alert('Oturum bilgisi bulunamadı. Lütfen tekrar giriş yapın.');
+                window.location.href = '/login.html';
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/production-order/${docNum}?sessionId=${sessionId}`);
+
+                // if (!response.ok) {
+                //     throw new Error(`HTTP error! status: ${response.status}`);
+                // }
+
+                const data = await response.json();
+                if (!data.value || data.value.length === 0) {
+                    throw new Error('Sipariş bulunamadı');
+                }
+
+                const order = data.value[0];
+                
+                // Fill in the order details
+                $('#docNum').text(order.DocNum || '-');
+                $('#docDate').text(formatDate(order.DocDate) || '-');
+                $('#docDueDate').text(formatDate(order.DocDueDate) || '-');
+                $('#orderSummary').text(order.OrderSummary || '-');
+                $('#whsCode').text(order.WhsCode || '-');
+                $('#docStatus').html(getStatusBadge(order.DocStatus) || '-');
+                $('#numAtCard').text(order.NumAtCard || '-');
+                $('#comments').text(order.Comments || '-');
+
+                // Clear and fill the items table
+                const tableBody = $('#itemsTableBody');
+                tableBody.empty();
+                
+                data.value.forEach(item => {
+                    tableBody.append(`
+                        <tr>
+                            <td>${item.ItemCode || '-'}</td>
+                            <td>${item.ItemName || '-'}</td>
+                            <td>${item.Quantity || '0'}</td>
+                            <td>${item.DeliveryQty || '0'}</td>
+                            <td>${item.UomCode || '-'}</td>
+                            <td>${getStatusBadge(item.LineStatus)}</td>
+                        </tr>
+                    `);
+                });
+
+            } catch (error) {
+                console.error('Error fetching order details:', error);
+                alert('Sipariş detayları yüklenirken bir hata oluştu.');
+            }
+        });
+
+        // Format date for display  my api end point format 20241220 your format 2024-12-20
+        function formatDate(date) {
+        if (!date) return '';
+
+        // Tarihi 'yyyyMMdd' formatından 'yyyy-MM-dd' formatına dönüştür
+        const formattedDate = date.toString().replace(/^(\d{4})(\d{2})(\d{2})$/, '$1-$2-$3');
+
+        const d = new Date(formattedDate);
+        return d.toLocaleDateString('tr-TR');
+        }
+
+
+        // Get status badge HTML
+        function getStatusBadge(status) { 
+            const statusMap = {
+                '1': '<span class="badge bg-warning">Onay Bekliyor</span>',
+                '2': '<span class="badge" style="background-color: #fd7e14">Hazırlanıyor</span>',
+                '3': '<span class="badge" style="background-color: #0d6efd">Sevk Edildi</span>',
+                '4': '<span class="badge bg-success">Tamamlandı</span>',
+                '5': '<span class="badge bg-danger">İptal Edildi</span>'
+            };
+            return statusMap[status] || `<span class="badge bg-secondary">${status}</span>`;
+        }
+
+        // New Order button handler
+        $('#btnNewOrder').click(function() {
+            window.location.href = 'uretim-siparisi-olustur.html';
+        });
+
+        // Logout handler
+        function logout() {
+            localStorage.removeItem('sessionId');
+            window.location.href = '/login.html';
+        }
+    </script>
+</body>
+
+</html>

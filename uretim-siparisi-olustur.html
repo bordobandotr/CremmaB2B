@@ -277,7 +277,11 @@
                      $('input[type="number"]').val('0');
                      
                      // Reload the table
-                     await loadOrders();
+                    //  await loadOrders();
+                     // redirect to uretim-siparisileri.html
+                     window.location.href = 'uretim-siparisleri.html';
+                     
+                    
                  } catch (error) {
                      console.error('Error:', error);
                      alert(error.message || 'Üretim siparişi oluşturulurken bir hata oluştu.');
