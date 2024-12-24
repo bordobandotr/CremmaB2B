@@ -85,27 +85,18 @@
                             <table id="orderTable" class="table table-hover">
                                 <thead>
                                     <tr>
-                                        <th>Stok Kodu</th>
-                                        <th>Stok Adı</th>
-                                        <th>Stok Grubu</th>
-                                        <th>Depo</th>
+                            
+                                        <th>Kalem Kodu</th>
+                                        <th>Kalem Tanımı</th>
+                                        <th>Kalem Grubu</th>
+                                        <th>Stokta</th>
                                         <th>Stoktaki Miktar</th>
-                                        <th>Min. Miktar</th>
-                                        <th>Tip</th>
-                                        <th>Sipariş Adedi</th>
+                                        <th>Minimum Miktar</th>
+                                        <th>Sipariş Miktarı</th>
+                                        <th>Ölçü Birimi</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr>
-                                        <td>10022</td>
-                                        <td>KURU ÇİLEK</td>
-                                        <td>İlk Madde ve Malzeme</td>
-                                        <td>1010</td>
-                                        <td>1005</td>
-                                        <td>0</td>
-                                        <td>PROD</td>
-                                        <td><input type="number" class="form-control form-control-sm order-quantity" min="0"></td>
-                                    </tr>
                                 </tbody>
                             </table>
                         </div>
@@ -132,7 +123,7 @@
          // DataTables initialization
          $(document).ready(async function () {
              // Initialize DataTables with empty data first
-             const ordersTable = $('#ordersTable').DataTable({
+             const ordersTable = $('#orderTable').DataTable({
                  responsive: true,
                  language: {
                      "emptyTable": "Tabloda veri bulunmuyor",
@@ -205,12 +196,14 @@
                      // Add new data
                      orders.forEach(order => {
                          ordersTable.row.add([
-                             order.DocNum || '',
-                             order.DocDate || '',
-                             order.DocDueDate || '',
-                             order.DocStatus || '',
-                             order.Type || '',
-                             order.WhsCode || ''
+                             order.ItemCode,
+                             order.ItemName,
+                             order.ItemGroup,
+                             order.OnHand,
+                            order.OnHand,
+                            order.MinQty,
+                             `<input type="number" class="form-control" placeholder="Miktar" value="0">`,
+                             order.UomCode
                          ]);
                      });
 
@@ -275,14 +268,6 @@
                  $('body').toggleClass('show-sidebar');
              });
 
-             // Close sidebar when clicking outside on mobile
-             $(document).on('click', function (e) {
-                 if ($('body').hasClass('show-sidebar') &&
-                     !$(e.target).closest('.sidebar').length &&
-                     !$(e.target).closest('#sidebarToggle').length) {
-                     $('body').removeClass('show-sidebar');
-                 }
-             });
          });
 
          // Format date for display
@@ -292,70 +277,6 @@
              return d.toLocaleDateString('tr-TR');
          }
  
-         $(document).ready(function() {
-             $('#orderTable').DataTable({
-                 responsive: true,
-                 language: {
-                     "emptyTable": "Tabloda veri bulunmuyor",
-                     "info": "_TOTAL_ kayıttan _START_ - _END_ arası gösteriliyor",
-                     "infoEmpty": "Kayıt yok",
-                     "infoFiltered": "(_MAX_ kayıt içerisinden bulunan)",
-                     "lengthMenu": "Sayfada _MENU_ kayıt göster",
-                     "loadingRecords": "Yükleniyor...",
-                     "processing": "İşleniyor...",
-                     "search": "Ara:",
-                     "zeroRecords": "Eşleşen kayıt bulunamadı",
-                     "paginate": {
-                         "first": "İlk",
-                         "last": "Son",
-                         "next": "Sonraki",
-                         "previous": "Önceki"
-                     }
-                 }
-             });
-
-             $('#createOrder').click(function() {
-                 const orderData = [];
-                 $('#orderTable tbody tr').each(function() {
-                     const $row = $(this);
-                     const quantity = $row.find('.order-quantity').val();
-                     
-                     if (quantity && quantity > 0) {
-                         orderData.push({
-                             itemCode: $row.find('td:eq(0)').text(),
-                             itemName: $row.find('td:eq(1)').text(),
-                             itemGroup: $row.find('td:eq(2)').text(),
-                             whsCode: $row.find('td:eq(3)').text(),
-                             quantity: parseInt(quantity)
-                         });
-                     }
-                 });
-
-                 if (orderData.length === 0) {
-                     alert('Lütfen en az bir ürün için sipariş miktarı giriniz.');
-                     return;
-                 }
-
-                 // Send the order data to server
-                 fetch('/api/production-orders', {
-                     method: 'POST',
-                     headers: {
-                         'Content-Type': 'application/json',
-                     },
-                     body: JSON.stringify(orderData)
-                 })
-                 .then(response => response.json())
-                 .then(data => {
-                     alert('Üretim siparişi başarıyla oluşturuldu.');
-                     // Clear all inputs after successful submission
-                     $('.order-quantity').val('');
-                 })
-                 .catch(error => {
-                     console.error('Error:', error);
-                     alert('Üretim siparişi oluşturulurken bir hata oluştu.');
-                 });
-             });
-         });
      </script>
 </body>
 </html>
