@@ -16,6 +16,9 @@ const axiosInstance = axios.create({
 // Serve static files
 app.use(express.static('.'));
 
+// Parse JSON bodies
+app.use(express.json());
+
 // Proxy middleware configuration
 const proxyOptions = {
     target: 'https://10.21.22.11:50000',
@@ -113,6 +116,66 @@ app.get("/uretim-siparisleri-list", async (req, res) => {
     console.error("Error:", error.message);
     res.status(500).json({ error: error.message });
   }
+});
+
+app.post("/api/production-orders", async (req, res) => {
+    const sessionId = req.query.sessionId;
+    const orderData = req.body;
+
+    console.log("sessionId:", sessionId);
+    console.log("orderData:", orderData);
+
+    if (!Array.isArray(orderData) || orderData.length === 0) {
+        return res.status(400).json({ error: 'Invalid order data format' });
+    }
+
+    try {
+        const results = await Promise.all(orderData.map(async (order) => {
+            const data = {
+                U_Type: "PROD",
+                U_WhsCode: "1010",
+                U_ItemCode: order.itemCode,
+                U_ItemName: order.itemName,
+                U_Quantity: order.quantity,
+                U_SessionID: sessionId,
+                U_GUID: order.guid,
+                U_User: "ozan",
+                U_FromWhsCode: null,
+                U_FromWhsName: null,
+                U_Comments: "Üretim Siparişi",
+                U_UomCode: order.uomCode
+            };
+
+            console.log('Sending data:', data);
+
+            const response = await axiosInstance.post(
+                "https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_OWTQ",
+                data,
+                {
+                    headers: {
+                        'Cookie': `B1SESSION=${encodeURIComponent(sessionId)}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+
+            console.log('Response for item:', order.itemCode, response.data);
+            return response.data;
+        }));
+
+        console.log('All results:', results);
+        res.json({
+            success: true,
+            message: 'Üretim siparişleri başarıyla oluşturuldu',
+            results: results
+        });
+    } catch (error) {
+        console.error('Error creating production orders:', error);
+        res.status(500).json({ 
+            error: 'Failed to create production orders',
+            details: error.message 
+        });
+    }
 });
 
 // Handle all other routes

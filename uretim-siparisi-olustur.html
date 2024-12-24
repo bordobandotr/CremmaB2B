@@ -122,6 +122,10 @@
      <script>
          // DataTables initialization
          $(document).ready(async function () {
+             // Generate GUID for this session
+             const sessionGUID = Date.now().toString();
+             console.log('Session GUID:', sessionGUID);
+
              // Initialize DataTables with empty data first
              const ordersTable = $('#orderTable').DataTable({
                  responsive: true,
@@ -219,7 +223,66 @@
              // Initial load
              await loadOrders();
 
+             // Handle order creation
+             $('#createOrder').click(async function() {
+                 try {
+                     const orderData = [];
+                     $('#orderTable tbody tr').each(function() {
+                         const $row = $(this);
+                         const quantity = parseInt($row.find('input[type="number"]').val());
+                         
+                         if (quantity && quantity > 0) {
+                             orderData.push({
+                                 itemCode: $row.find('td:eq(0)').text().trim(),
+                                 itemName: $row.find('td:eq(1)').text().trim(),
+                                 itemGroup: $row.find('td:eq(2)').text().trim(),
+                                 quantity: quantity,
+                                 uomCode: $row.find('td:eq(7)').text().trim(), // Get UOM code from the last column
+                                 guid: sessionGUID // Add the session GUID to the order data
+                             });
+                         }
+                     });
 
+                     if (orderData.length === 0) {
+                         alert('Lütfen en az bir ürün için sipariş miktarı giriniz.');
+                         return;
+                     }
+
+                     const sessionId = localStorage.getItem('sessionId');
+                     if (!sessionId) {
+                         alert('Oturum bilgisi bulunamadı. Lütfen tekrar giriş yapın.');
+                         return;
+                     }
+
+                     const response = await fetch('/api/production-orders?sessionId=' + sessionId, {
+                         method: 'POST',
+                         headers: {
+                             'Content-Type': 'application/json',
+                             'Cookie': `B1SESSION=${sessionId}`
+                         },
+                         body: JSON.stringify(orderData)
+                     });
+
+                     console.log('Response:', response);
+
+                    //  if (!response.ok) {
+                    //      const errorData = await response.json();
+                    //      throw new Error(errorData.details || 'Sipariş oluşturulurken bir hata oluştu.');
+                    //  }
+
+                     const result = await response.json();
+                     alert('Üretim siparişleri başarıyla oluşturuldu.');
+                     
+                     // Clear all inputs
+                     $('input[type="number"]').val('0');
+                     
+                     // Reload the table
+                     await loadOrders();
+                 } catch (error) {
+                     console.error('Error:', error);
+                     alert(error.message || 'Üretim siparişi oluşturulurken bir hata oluştu.');
+                 }
+             });
 
              // Add custom filtering
              $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
