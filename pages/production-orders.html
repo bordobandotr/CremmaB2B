@@ -1,0 +1,70 @@
+<div class="container-fluid p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0">Üretim Siparişlerim</h4>
+        <button class="btn btn-danger" id="newOrderBtn">
+            <i class="fas fa-plus me-2"></i>Üretim Sipariş Oluştur
+        </button>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-hover" id="productionOrdersTable">
+                    <thead>
+                        <tr>
+                            <th>Stok Kodu</th>
+                            <th>Stok Adı</th>
+                            <th>Stokta</th>
+                            <th>Stoktaki Miktar</th>
+                            <th>Min.</th>
+                            <th>Max.</th>
+                            <th>Sipariş Adedi</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- DataTables will fill this -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    const table = $('#productionOrdersTable').DataTable({
+        language: {
+            url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/tr.json'
+        },
+        data: [
+            ['STK002', 'Zeytinyağı', 'Var', '200', '200', '1000', '99'],
+            ['STK003', 'Türk Kahvesi', 'Yok', '0', '200', '800', ''],
+            ['STK004', 'Organik Bal', 'Var', '150', '100', '500', ''],
+            ['STK005', 'Maden Suyu', 'Yok', '0', '200', '500', '45'],
+            ['STK006', 'Çay', 'Var', '500', '100', '800', '22'],
+            ['STK007', 'Makarnalar', 'Var', '600', '200', '1000', '']
+        ],
+        columns: [
+            { title: 'Stok Kodu' },
+            { title: 'Stok Adı' },
+            { title: 'Stokta' },
+            { title: 'Stoktaki Miktar' },
+            { title: 'Min.' },
+            { title: 'Max.' },
+            { 
+                title: 'Sipariş Adedi',
+                render: function(data, type, row) {
+                    if (data) {
+                        return data;
+                    }
+                    return '<input type="text" class="form-control form-control-sm" placeholder="Adet giriniz...">';
+                }
+            }
+        ]
+    });
+
+    $('#newOrderBtn').on('click', function() {
+        // Handle new order creation
+    });
+});
+</script>

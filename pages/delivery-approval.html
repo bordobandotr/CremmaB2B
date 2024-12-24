@@ -1,0 +1,80 @@
+<div class="container-fluid p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h4 class="mb-0">Teslim Al ve Onayla</h4>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table" id="deliveryTable">
+                    <thead>
+                        <tr>
+                            <th>Ürün</th>
+                            <th>Ürün Kodu</th>
+                            <th>Sipariş Adedi</th>
+                            <th>Teslimat Adeti</th>
+                            <th>Eksik Ürün Miktarı</th>
+                            <th>Kusurlu Ürün Miktarı</th>
+                            <th>Not</th>
+                            <th>Görsel</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Makarna</td>
+                            <td>97133</td>
+                            <td>357</td>
+                            <td>
+                                <div class="input-group">
+                                    <input type="text" class="form-control form-control-sm" value="12">
+                                    <button class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="input-group">
+                                    <input type="text" class="form-control form-control-sm" value="0" readonly>
+                                    <button class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="input-group">
+                                    <input type="text" class="form-control form-control-sm" value="0" readonly>
+                                    <button class="btn btn-sm btn-outline-secondary">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                            </td>
+                            <td>
+                                <button class="btn btn-sm btn-outline-secondary">
+                                    <i class="fas fa-camera"></i>
+                                </button>
+                            </td>
+                        </tr>
+                        <!-- More rows similar to above -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-end mt-4">
+        <button class="btn btn-dark">
+            <i class="fas fa-check me-2"></i>Teslim Al
+        </button>
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    // Add your delivery approval logic here
+});
+</script>

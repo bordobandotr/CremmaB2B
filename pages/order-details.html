@@ -1,0 +1,84 @@
+<div class="container-fluid p-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="d-flex align-items-center">
+            <h4 class="mb-0">Sipariş Detayları</h4>
+            <i class="fas fa-truck ms-2"></i>
+        </div>
+        <div>
+            <button class="btn btn-secondary me-2" onclick="history.back()">
+                <i class="fas fa-arrow-left me-2"></i>Geri Dön
+            </button>
+            <button class="btn btn-danger">
+                <i class="fas fa-plus me-2"></i>Yeni Sipariş
+            </button>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="mb-3">
+                <label class="text-muted">Sipariş No:</label>
+                <div>#8738573857</div>
+            </div>
+            <div class="mb-3">
+                <label class="text-muted">Sipariş Tarihi:</label>
+                <div>03.12.2024</div>
+            </div>
+            <div class="mb-3">
+                <label class="text-muted">Sipariş Özeti:</label>
+                <div>2 Ürün, Toplam 59 adet</div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="mb-3">
+                <label class="text-muted">Tahmini Teslimat Zamanı:</label>
+                <div>12.12.2024</div>
+            </div>
+            <div class="mb-3">
+                <label class="text-muted">Tedarikçi:</label>
+                <div>Biffco Enterprises Ltd.</div>
+            </div>
+            <div class="mb-3">
+                <label class="text-muted">Sipariş Durumu:</label>
+                <div><span class="badge bg-warning">Onay Bekliyor</span></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="mb-4">
+        <label class="text-muted">Sipariş Notu:</label>
+        <textarea class="form-control" rows="3" placeholder="Sipariş notunuzu yazınız."></textarea>
+    </div>
+
+    <div class="card">
+        <div class="card-body">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Ürün</th>
+                        <th>Ürün Kodu</th>
+                        <th>Sipariş Adedi</th>
+                        <th>Teslimat Adedi</th>
+                        <th>Durum</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>Siyah Çay</td>
+                        <td>42574</td>
+                        <td>34</td>
+                        <td>0</td>
+                        <td><span class="badge bg-warning">Onay Bekliyor</span></td>
+                    </tr>
+                    <tr>
+                        <td>Ihlamur</td>
+                        <td>30321</td>
+                        <td>25</td>
+                        <td>0</td>
+                        <td><span class="badge bg-warning">Onay Bekliyor</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>

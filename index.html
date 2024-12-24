@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CREMMA - Yönetim Paneli</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- DataTables CSS -->
+    <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="css/style.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
+</head>
+<body>
+    <div class="d-flex">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo-container p-4">
+                <h2 class="text-white">CREMMA</h2>
+            </div>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link active" href="#"><i class="bi bi-house"></i> Anasayfa</a>
+                </li>
+               <li class="nav-item">
+                   <a class="nav-link active" href="uretim-siparisleri.html"><i class="bi bi-gear"></i> Üretim
+                       Siparişleri</a>
+               </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#"><i class="bi bi-box"></i> Dış Tedarik</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#"><i class="bi bi-arrow-left-right"></i> Transferler</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#"><i class="bi bi-building"></i> Ana Depo</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#"><i class="bi bi-check2-square"></i> Check List</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#"><i class="bi bi-exclamation-triangle"></i> Fire ve Zayi</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#"><i class="bi bi-ticket"></i> Ticket</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#"><i class="bi bi-calculator"></i> Stok Sayımı</a>
+                </li>
+            </ul>
+            <div class="user-info position-absolute bottom-0 start-0 p-3 w-100">
+                <div class="d-flex align-items-center">
+                    <img src="img/avatar.jpg" alt="User" class="rounded-circle me-2" width="40">
+                    <div class="text-white">
+                        <small>Orkun - Caddebostan</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <header class="d-flex justify-content-between p-3 bg-white">
+                <div class="d-flex align-items-center">
+                    <button id="sidebarToggle" class="btn btn-link d-md-none">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <h5 class="mb-0">Anasayfa</h5>
+                </div>
+                <button class="btn btn-outline-secondary">
+                    Çıkış Yap <i class="bi bi-box-arrow-right"></i>
+                </button>
+            </header>
+
+            <!-- Content -->
+            <div class="container-fluid p-4">
+                <!-- Siparişler -->
+                <div class="accordion-section mb-4">
+                    <h5 class="mb-3">Sipariş ve İşlemleri</h5>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <a class="btn btn-danger w-100">
+                                <i class="bi bi-plus"></i> Hızlı Sipariş Oluştur
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a class="btn btn-outline-secondary w-100">
+                                <i class="bi bi-plus"></i> Dış Tedarik Sipariş Oluştur
+                            </a>
+                        </div>
+                        <div class="col-md-4">
+                            <a class="btn btn-outline-secondary w-100">
+                                <i class="bi bi-plus"></i> Üretim Sipariş Oluştur
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a class="btn btn-outline-secondary w-100">
+                                <i class="bi bi-clock-history"></i> Sipariş Geçmişi
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a class="btn btn-outline-secondary w-100">
+                                <i class="bi bi-list-check"></i> Aktif Siparişler
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Stok ve Envanter -->
+                <div class="accordion-section mb-4">
+                    <h5 class="mb-3">Stok ve Envanter Yönetimi</h5>
+                    <div class="row g-3">
+                        <div class="col-md-3">
+                            <div class="card">
+                                <a class="card-body d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <i class="bi bi-arrow-repeat"></i>
+                                        Stok Yenileme
+                                    </div>
+                                    <span class="badge bg-danger">14</span>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card">
+                                <a class="card-body d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <i class="bi bi-gear"></i>
+                                        Açık Üretim Siparişleri
+                                    </div>
+                                    <span class="badge bg-danger">14</span>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card">
+                                <a class="card-body d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <i class="bi bi-check2-circle"></i>
+                                        Onay Bekleyen Transfer
+                                    </div>
+                                    <span class="badge bg-danger">14</span>
+                                </a>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <a class="card">
+                                <div class="card-body d-flex justify-content-between align-items-center">
+                                    <div>
+                                        <i class="bi bi-box"></i>
+                                        Açık Dış Tedarik
+                                    </div>
+                                    <span class="badge bg-danger">14</span>
+                                </div>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Ticket İşlemleri -->
+                <div class="accordion-section mb-4">
+                    <h5 class="mb-3">Ticket İşlemleri</h5>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <a class="btn btn-outline-secondary w-100">
+                                <i class="bi bi-envelope"></i> Okunmamış Ticketlar
+                                <span class="badge bg-danger ms-2">14</span>
+                            </a>
+                        </div>
+                        <div class="col-md-6">
+                            <a class="btn btn-outline-secondary w-100">
+                                <i class="bi bi-plus"></i> Yeni Ticket Oluştur
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Grafikler -->
+                <div class="accordion-section mb-4">
+                    <h5>En Çok Satılan 10 Ürün</h5>
+                    <div class="chart-container">
+                        <canvas id="topProductsChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Stok Raporu -->
+                <div class="accordion-section mb-4">
+                    <h5>Stok Raporu</h5>
+                    <div class="table-responsive">
+                        <table id="stockTable" class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Stok Kodu</th>
+                                    <th>Stok Adı</th>
+                                    <th>Girilen Miktar</th>
+                                    <th>Giriş Tarihi</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>STK003</td>
+                                    <td>Türk Kahvesi</td>
+                                    <td>500</td>
+                                    <td>25/10/2024</td>
+                                </tr>
+                                <tr>
+                                    <td>STK004</td>
+                                    <td>Organik Bal</td>
+                                    <td>1500</td>
+                                    <td>26/10/2024</td>
+                                </tr>
+                                <!-- Diğer satırlar -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- En Çok Satış Yapan Personel -->
+                <div class="accordion-section mb-4">
+                    <h5>En Çok Satış Yapan 3 Personel</h5>
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Sıra</th>
+                                <th>Personel Adı</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td><span class="badge bg-warning">🥇</span></td>
+                                <td>Cameron Williamson</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge bg-secondary">🥈</span></td>
+                                <td>Jane Cooper</td>
+                            </tr>
+                            <tr>
+                                <td><span class="badge bg-danger">🥉</span></td>
+                                <td>Darlene Robertson</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
