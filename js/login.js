@@ -8,6 +8,8 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
     const errorMessage = document.getElementById('errorMessage');
     
     try {
+        console.log('Attempting login with:', { username, CompanyDB: "CREMMA_TEST_111224" });
+        
         const response = await axios.post(
           "/b1s/v1/Login",
           {
@@ -18,30 +20,30 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
         );
 
         console.log('Login response:', response);
-        console.log('Login response status:', response.status);
-        console.log('Login response headers:', response.headers);
-        console.log('Login response data:', response.data);
 
-        if (response.data.SessionId) {
-            // Store SessionId in localStorage
-
-            
-
+        if (response.data && response.data.SessionId) {
             localStorage.setItem('sessionId', response.data.SessionId);
             localStorage.setItem('sessionTimeout', response.data.SessionTimeout);
-            
-            // You might want to store other session info as well
             localStorage.setItem('b1Version', response.data.Version);
             
-            // Redirect to index page
             window.location.href = 'index.html';
         } else {
-            errorMessage.textContent = 'Login failed: No session ID received';
+            errorMessage.textContent = 'Geçersiz kullanıcı adı veya şifre';
             errorMessage.style.display = 'block';
         }
     } catch (error) {
-        errorMessage.style.display = 'block';
-        errorMessage.textContent = 'Giriş yapılırken bir hata oluştu. Lütfen tekrar deneyin.';
         console.error('Login error:', error);
+        
+        if (error.response) {
+            console.error('Error response:', error.response);
+            errorMessage.textContent = error.response.data.error.message.value || 'Giriş yapılırken bir hata oluştu';
+        } else if (error.request) {
+            console.error('Error request:', error.request);
+            errorMessage.textContent = 'Sunucuya bağlanılamadı';
+        } else {
+            errorMessage.textContent = 'Giriş yapılırken bir hata oluştu';
+        }
+        
+        errorMessage.style.display = 'block';
     }
 });

@@ -35,6 +35,7 @@ const proxyOptions = {
         console.log('Proxying request:', {
             method: req.method,
             path: req.path,
+            body: req.body,
             cookie: b1Session
         });
     },
@@ -43,12 +44,13 @@ const proxyOptions = {
         proxyRes.headers['Access-Control-Allow-Origin'] = '*';
         proxyRes.headers['Access-Control-Allow-Credentials'] = 'true';
         proxyRes.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, PATCH, DELETE, OPTIONS';
-        proxyRes.headers['Access-Control-Allow-Headers'] = 'Content-Type, Cookie';
+        proxyRes.headers['Access-Control-Allow-Headers'] = 'Content-Type, Cookie, Authorization';
         
         // Log the response for debugging
         console.log('Proxy response:', {
             status: proxyRes.statusCode,
-            headers: proxyRes.headers
+            headers: proxyRes.headers,
+            body: proxyRes.body
         });
     }
 };
@@ -58,7 +60,7 @@ app.options('/b1s/v1/*', (req, res) => {
     res.header('Access-Control-Allow-Origin', '*');
     res.header('Access-Control-Allow-Credentials', 'true');
     res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, PATCH, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Cookie');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Cookie, Authorization');
     res.sendStatus(200);
 });
 
@@ -514,31 +516,45 @@ app.post("/api/supply-delivery/:docNum", async (req, res) => {
     console.log("Processing delivery for docNum:", docNum);
     console.log("Delivery data:", deliveryData);
 
-try {
-  const response = await axiosInstance.post(
-    "https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_OPDN",
-    {
-      U_Type: "SUPPLY",
-      U_DocNum: docNum,
-      U_SessionID: sessionId,
-      U_GUID: generateGUID(),
-      U_User: "Orkun",
-      ...deliveryData,
-    },
-    {
-      headers: {
-        Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
-        "Content-Type": "application/json",
-      },
-    }
-  );
-  console.log("Delivery API Response:", response.data);
+    try {
+        // Her satır için ayrı bir teslimat kaydı oluştur
+        const response = await axiosInstance.post(
+            "https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_OPDN",
+            {
+                U_Type: "SUPPLY",
+                U_DocNum: docNum,
+                U_SessionID: sessionId,
+                U_GUID: generateGUID(),
+                U_User: "Orkun",
+                U_WhsCode: deliveryData.U_WhsCode,
+                U_CarName: deliveryData.U_CarName,
+                U_DocDate: deliveryData.U_DocDate,
+                U_NumAtCard: deliveryData.U_NumAtCard,
+                U_ItemCode: deliveryData.U_ItemCode,
+                U_ItemName: deliveryData.U_ItemName,
+                U_Quantity: deliveryData.U_Quantity,
+                U_DeliveryQty: deliveryData.U_DeliveryQty,
+                U_MissingQty: deliveryData.U_MissingQty,
+                U_DefectiveQty: deliveryData.U_DefectiveQty,
+                U_UomCode: deliveryData.U_UomCode,
+                U_Comments: deliveryData.U_Comments,
+                U_Image: deliveryData.U_Image || '',
+                U_LineNum: deliveryData.U_LineNum
+            },
+            {
+                headers: {
+                    Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+                    "Content-Type": "application/json",
+                },
+            }
+        );
 
-  res.json(response.data);
-} catch (error) {
-  console.error("Error:", error.message);
-  res.status(500).json({ error: error.message });
-}
+        console.log("Delivery API Response:", response.data);
+        res.json(response.data);
+    } catch (error) {
+        console.error("Error:", error.message);
+        res.status(500).json({ error: error.message });
+    }
 });
 
 // Handle all other routes
