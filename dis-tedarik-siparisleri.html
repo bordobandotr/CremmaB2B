@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CREMMA - Dış Tedarik Siparişleri</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- DataTables CSS -->
+    <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="css/style.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
+</head>
+
+<body>
+    <div class="d-flex">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo-container p-4">
+                <h2 class="text-white">CREMMA</h2>
+            </div>
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link" href="index.html"><i class="bi bi-house"></i> Anasayfa</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="uretim-siparisleri.html"><i class="bi bi-gear"></i> Üretim Siparişleri</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link active" href="dis-tedarik-siparisleri.html"><i class="bi bi-box"></i> Dış Tedarik</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#"><i class="bi bi-arrow-left-right"></i> Transferler</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#"><i class="bi bi-building"></i> Ana Depo</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#"><i class="bi bi-check2-square"></i> Check List</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#"><i class="bi bi-exclamation-triangle"></i> Fire ve Zayi</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#"><i class="bi bi-ticket"></i> Ticket</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="#"><i class="bi bi-calculator"></i> Stok Sayımı</a>
+                </li>
+            </ul>
+            <div class="user-info position-absolute bottom-0 start-0 p-3 w-100">
+                <div class="d-flex align-items-center">
+                    <img src="img/avatar.jpg" alt="User" class="rounded-circle me-2" width="40">
+                    <div class="text-white">
+                        <small>Orkun - Caddebostan</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <header class="d-flex justify-content-between p-3 bg-white">
+                <div class="d-flex align-items-center">
+                    <button id="sidebarToggle" class="btn btn-link d-md-none">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <h5 class="mb-0">Dış Tedarik Siparişleri</h5>
+                </div>
+                <div class="d-flex align-items-center">
+                    <div class="me-3">
+                        <span id="userInfo" class="text-muted">
+                            <i class="bi bi-person-circle me-1"></i>
+                            Yükleniyor...
+                        </span>
+                    </div>
+                    <a href="dis-tedarik-siparisi-olustur.html" class="btn btn-danger me-2">
+                        <i class="bi bi-plus"></i> Yeni Sipariş Oluştur
+                    </a>
+                    <button class="btn btn-outline-secondary" onclick="logout()">
+                        Çıkış Yap <i class="bi bi-box-arrow-right"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Content -->
+            <div class="container-fluid p-4">
+                <!-- Filters -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label class="form-label">Sipariş Durumu</label>
+                                <select class="form-select" id="statusFilter">
+                                    <option value="">Tümü</option>
+                                    <option value="1">Onay Bekliyor</option>
+                                    <option value="2">Hazırlanıyor</option>
+                                    <option value="3">Sevk Edildi</option>
+                                    <option value="4">Tamamlandı</option>
+                                    <option value="5">İptal Edildi</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Tedarikçi</label>
+                                <select class="form-select" id="supplierFilter">
+                                    <option value="">Tümü</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Tarih Aralığı</label>
+                                <input type="date" class="form-control" id="dateFilter">
+                            </div>
+                            <div class="col-md-3 d-flex align-items-end">
+                                <button class="btn btn-primary w-100" onclick="applyFilters()">
+                                    <i class="bi bi-search"></i> Filtrele
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Orders Table -->
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table id="ordersTable" class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Sipariş No</th>
+                                        <th>Tedarikçi</th>
+                                        <th>Sipariş Tarihi</th>
+                                        <th>Tahmini Teslimat</th>
+                                        <th>Durum</th>
+                                        <th>İşlemler</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+    <script>
+        $(document).ready(async function() {
+            // Initialize DataTables with empty data first
+            const ordersTable = $('#ordersTable').DataTable({
+                responsive: true,
+                columns: [
+                    { data: 'DocNum' },
+                    { data: 'CardName' },
+                    { 
+                        data: 'DocDate',
+                        render: function(data) {
+                            return formatDate(data);
+                        }
+                    },
+                    { 
+                        data: 'DocDueDate',
+                        render: function(data) {
+                            return formatDate(data);
+                        }
+                    },
+                    { 
+                        data: 'DocStatus',
+                        render: function(data) {
+                            return getStatusBadge(data);
+                        }
+                    },
+                    {
+                        data: null,
+                        render: function(data) {
+                            const buttons = [];
+                            
+                            // View button
+                            buttons.push(`<a href="dis-tedarik-siparisi-detay.html?docNum=${data.DocNum}" 
+                                class="btn btn-sm btn-primary me-1">
+                                <i class="bi bi-eye"></i>
+                            </a>`);
+                            
+                            // Delivery button - only show for approved orders
+                            if (data.DocStatus === '2') {
+                                buttons.push(`<a href="dis-tedarik-siparisi-teslim.html?docNum=${data.DocNum}" 
+                                    class="btn btn-sm btn-success me-1">
+                                    <i class="bi bi-box-seam"></i>
+                                </a>`);
+                            }
+                            
+                            return buttons.join('');
+                        }
+                    }
+                ],
+                order: [[0, 'desc']],
+                language: {
+                    url: 'js/datatables-tr.json'
+                }
+            });
+
+            // Load initial data
+            await loadOrders();
+
+            // Handle filter changes
+            $('#statusFilter').change(function() {
+                loadOrders();
+            });
+
+            $('#dateFilter').change(function() {
+                loadOrders();
+            });
+
+            $('#supplierFilter').change(function() {
+                loadOrders();
+            });
+
+            // Handle new order button
+            $('#btnNewOrder').click(function() {
+                window.location.href = 'dis-tedarik-siparisi-olustur.html';
+            });
+        });
+
+        // Function to load orders
+        async function loadOrders() {
+            try {
+                const status = $('#statusFilter').val();
+                const dateRange = $('#dateFilter').val();
+                const supplier = $('#supplierFilter').val();
+
+                const queryParams = new URLSearchParams({
+                    sessionId: api.getSessionId(),
+                    status: status || '',
+                    dateRange: dateRange || '',
+                    supplier: supplier || ''
+                });
+
+                const response = await fetch(`/api/supply-orders?${queryParams}`);
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+                const data = await response.json();
+                
+                $('#ordersTable').DataTable().clear().rows.add(data.value).draw();
+
+                // Update supplier filter options if empty
+                if ($('#supplierFilter option').length <= 1) {
+                    const suppliers = [...new Set(data.value.map(order => order.CardName))];
+                    suppliers.sort();
+                    
+                    suppliers.forEach(supplier => {
+                        $('#supplierFilter').append(
+                            $('<option></option>').val(supplier).text(supplier)
+                        );
+                    });
+                }
+            } catch (error) {
+                console.error('Siparişler yüklenirken hata:', error);
+                alert('Siparişler yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.');
+            }
+        }
+
+        // Format date for display
+        function formatDate(date) {
+        if (!date) return '';
+
+        // Tarihi 'yyyyMMdd' formatından 'yyyy-MM-dd' formatına dönüştür
+        const formattedDate = date.toString().replace(/^(\d{4})(\d{2})(\d{2})$/, '$1-$2-$3');
+
+        const d = new Date(formattedDate);
+        return d.toLocaleDateString('tr-TR');
+        }
+
+        // Get status badge HTML
+        function getStatusBadge(status) {
+            let badgeClass = '';
+            let statusText = '';
+            
+            switch(status) {
+                case '1':
+                    badgeClass = 'bg-warning';
+                    statusText = 'Onay Bekliyor';
+                    break;
+                case '2':
+                    badgeClass = 'bg-info';
+                    statusText = 'Hazırlanıyor';
+                    break;
+                case '3':
+                    badgeClass = 'bg-primary';
+                    statusText = 'Sevk Edildi';
+                    break;
+                case '4':
+                    badgeClass = 'bg-success';
+                    statusText = 'Tamamlandı';
+                    break;
+                case '5':
+                    badgeClass = 'bg-danger';
+                    statusText = 'İptal Edildi';
+                    break;
+                default:
+                    badgeClass = 'bg-secondary';
+                    statusText = 'Bilinmiyor';
+            }
+            
+            return `<span class="badge ${badgeClass}">${statusText}</span>`;
+        }
+    </script>
+    <script src="js/api.js"></script>
+</body>
+
+</html>

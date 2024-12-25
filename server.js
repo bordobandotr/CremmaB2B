@@ -360,6 +360,187 @@ function generateGUID() {
     });
 }
 
+// External Supply Order endpoints
+app.get("/api/supply-orders", async (req, res) => {
+    const sessionId = req.query.sessionId;
+    const whsCode = '1010';
+
+    console.log("sessionId:", sessionId);
+    console.log("whsCode:", whsCode);
+ 
+    
+    try {
+        const response = await axiosInstance.get(
+            "https://10.21.22.11:50000/b1s/v1/SQLQueries('OPOR_LIST')/List",
+            {
+                params: {
+                    value1: "'SUPPLY'",
+                    value2: `'${whsCode}'`,
+                },
+                headers: {
+                    Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+                    "Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
+                },
+            }
+        );
+        res.json(response.data);
+    } catch (error) {
+        console.error("Error:", error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get("/api/supply-order/:docNum", async (req, res) => {
+    const sessionId = req.query.sessionId;
+    const docNum = req.params.docNum;
+
+    console.log("sessionId:", sessionId);
+    console.log("docNum:", docNum);
+ 
+
+try {
+  const response = await axiosInstance.get(
+    "https://10.21.22.11:50000/b1s/v1/SQLQueries('OPOR_DETAIL')/List",
+    {
+      params: {
+        value1: "'SUPPLY'",
+        value2: `'${docNum}'`,
+      },
+      headers: {
+        Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+        "Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
+      },
+    }
+  );
+
+  console.log("Response for docNum:", docNum, response.data);
+
+  res.json(response.data);
+} catch (error) {
+  console.error("Error:", error.message);
+  res.status(500).json({ error: error.message });
+}
+});
+
+app.get("/api/supply-items", async (req, res) => {
+    const sessionId = req.query.sessionId;
+    const whsCode = req.query.whsCode;
+    
+    try {
+        const response = await axiosInstance.get(
+            "https://10.21.22.11:50000/b1s/v1/SQLQueries('OPOR_NEW')/List",
+            {
+                params: {
+                    value1: "'SUPPLY'",
+                    value2: `'${whsCode}'`,
+                },
+                headers: {
+                    Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+                    "Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
+                },
+            }
+        );
+        res.json(response.data);
+    } catch (error) {
+        console.error("Error:", error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post("/api/supply-order", async (req, res) => {
+    const { sessionId, orderData } = req.body;
+
+    console.log("Processing order for WhsCode:", orderData.WhsCode);
+    console.log("Order data:", orderData);
+ 
+
+    try {
+        const response = await axiosInstance.post(
+          "https://10.21.22.11:50000/b1s/v1/SQLQueries('OPOR_NEW')/List",
+          orderData,
+          {
+            params: {
+              value1: "'SUPPLY'",
+              value2: `'${orderData.WhsCode}'`,
+            },
+            headers: {
+              Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        res.json(response.data);
+    } catch (error) {
+        console.error("Error:", error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get("/api/supply-delivery/:docNum", async (req, res) => {
+    const sessionId = req.query.sessionId;
+    const docNum = req.params.docNum;
+
+    console.log("sessionId:", sessionId);
+    console.log("docNum:", docNum);
+
+    return
+
+    try {
+        const response = await axiosInstance.get(
+          "https://10.21.22.11:50000/b1s/v1/SQLQueries('ASUDO_B2B_OPDN')",
+          {
+            params: {
+              value1: "'SUPPLY'",
+              value2: `'${docNum}'`,
+            },
+            headers: {
+              Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+              "Content-Type":
+                "application/x-www-form-urlencoded; charset=utf-8",
+            },
+          }
+        );
+        res.json(response.data);
+    } catch (error) {
+        console.error("Error:", error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.post("/api/supply-delivery/:docNum", async (req, res) => {
+    const { docNum } = req.params;
+    const { sessionId, deliveryData } = req.body;
+
+    console.log("Processing delivery for docNum:", docNum);
+    console.log("Delivery data:", deliveryData);
+
+try {
+  const response = await axiosInstance.post(
+    "https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_OPDN",
+    {
+      U_Type: "SUPPLY",
+      U_DocNum: docNum,
+      U_SessionID: sessionId,
+      U_GUID: generateGUID(),
+      U_User: "Orkun",
+      ...deliveryData,
+    },
+    {
+      headers: {
+        Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+        "Content-Type": "application/json",
+      },
+    }
+  );
+  console.log("Delivery API Response:", response.data);
+
+  res.json(response.data);
+} catch (error) {
+  console.error("Error:", error.message);
+  res.status(500).json({ error: error.message });
+}
+});
+
 // Handle all other routes
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'login.html'));
