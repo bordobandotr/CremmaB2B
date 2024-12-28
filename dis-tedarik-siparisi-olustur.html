@@ -13,6 +13,50 @@
     <link href="css/style.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
+    <style>
+        #orderSummaryModal .quantity-value {
+            font-weight: 500;
+            min-width: 30px;
+            text-align: center;
+        }
+
+        #orderSummaryModal .item-row {
+            padding: 12px 0;
+            border-bottom: 1px solid #eee;
+        }
+
+        #orderSummaryModal .item-row:last-child {
+            border-bottom: none;
+        }
+
+        #orderSummaryModal .quantity-badge {
+            display: flex;
+            align-items: center;
+            background: #f8f9fa;
+            padding: 4px 12px;
+            border-radius: 20px;
+        }
+
+        #orderSummaryModal .quantity-controls {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        #orderSummaryModal .quantity-controls button {
+            border: none;
+            background: none;
+            padding: 0 4px;
+            font-size: 18px;
+            line-height: 1;
+            color: #6c757d;
+            cursor: pointer;
+        }
+
+        #orderSummaryModal .quantity-controls button:hover {
+            color: #000;
+        }
+    </style>
 </head>
 <body>
     <div class="d-flex">
@@ -111,7 +155,31 @@
                         <button type="button" class="btn btn-primary" id="submitOrder" disabled>
                             <i class="bi bi-check-lg"></i> Siparişi Oluştur
                         </button>
+                        <button type="button" class="btn btn-primary" id="createOrderBtn">
+                            <i class="bi bi-check-lg"></i> Sipariş Özeti
+                        </button>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sipariş Özeti Modal -->
+    <div class="modal fade" id="orderSummaryModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold">Sipariş Özeti</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body pt-2">
+                    <div id="orderSummaryList" class="mb-3">
+                        <!-- Sipariş özetleri buraya eklenecek -->
+                    </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-outline-dark px-4 rounded-pill" data-bs-dismiss="modal">Değiştir</button>
+                    <button type="button" class="btn btn-dark px-4 rounded-pill" id="confirmOrderBtn">Onayla</button>
                 </div>
             </div>
         </div>
@@ -120,7 +188,6 @@
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="js/nav-menu.js"></script>
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
     <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
@@ -155,8 +222,16 @@
                     { 
                         data: null,
                         render: function(data) {
-                            return `<input type="number" class="form-control order-qty" 
-                                    min="0" step="0.01" value="0">`;
+                            return `<div class="input-group">
+                                <button class="btn btn-sm btn-secondary decrease-qty" type="button">
+                                    <i class="bi bi-dash"></i>
+                                </button>
+                                <input type="number" class="form-control order-qty" 
+                                    min="0" step="0.01" value="0" data-min="${data.MinQty}" data-item-code="${data.ItemCode}">
+                                <button class="btn btn-sm btn-secondary increase-qty" type="button">
+                                    <i class="bi bi-plus"></i>
+                                </button>
+                            </div>`;
                         }
                     },
                     { data: 'UomCode' },
@@ -185,6 +260,47 @@
                 const data = await response.json();
                 orderItemsTable.clear().rows.add(data.value).draw();
 
+                // Miktar kontrolü için ortak fonksiyon
+                function handleQuantityChange(currentValue, minQty, isIncrease) {
+                    if (isIncrease) {
+                        // Artırma (+) durumu
+                        if (currentValue === 0 && minQty > 0) {
+                            // 0'dan direkt minimum miktara çık
+                            return minQty;
+                        } else {
+                            // Normal artış
+                            return currentValue + 1;
+                        }
+                    } else {
+                        // Azaltma (-) durumu
+                        if (currentValue <= minQty) {
+                            // Minimum miktardaysa direkt 0'a in
+                            return 0;
+                        } else {
+                            // Normal azalış
+                            return currentValue - 1;
+                        }
+                    }
+                }
+
+                // Handle quantity buttons in the table
+                $('#orderItems').on('click', '.increase-qty, .decrease-qty', function() {
+                    const input = $(this).closest('.input-group').find('.order-qty');
+                    const currentValue = parseFloat(input.val()) || 0;
+                    const minQty = parseFloat(input.data('min')) || 0;
+                    const itemCode = input.data('item-code');
+                    const isIncrease = $(this).hasClass('increase-qty');
+
+                    const newValue = handleQuantityChange(currentValue, minQty, isIncrease);
+                    
+                    if (currentValue === 0 && newValue > 0) {
+                        const rowData = orderItemsTable.row($(this).closest('tr')).data();
+                        // alert(`${rowData[1]} için minimum sipariş miktarı ${minQty}'dir.`);
+                    }
+                    
+                    input.val(newValue);
+                });
+
                 // Handle quantity input changes
                 $('#orderItems').on('input', '.order-qty', function() {
                     validateOrder();
@@ -193,6 +309,164 @@
                 console.error('Veriler yüklenirken hata:', error);
                 alert('Veriler yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.');
             }
+
+            // Function to show order summary modal
+            function showOrderSummaryModal() {
+                const orderData = [];
+                
+                // Get all rows with quantities
+                orderItemsTable.rows().every(function() {
+                    const rowData = this.data();
+                    const $row = $(this.node());
+                    const quantity = parseFloat($row.find('.order-qty').val()) || 0;
+                    
+                    if (quantity > 0) {
+                        orderData.push({
+                            itemCode: rowData.ItemCode,
+                            itemName: rowData.ItemName,
+                            quantity: quantity,
+                            uomCode: rowData.UomCode,
+                            minQty: parseFloat(rowData.MinQty) || 0,
+                            cardCode: rowData.CardCode,
+                            cardName: rowData.CardName,
+                            whsCode: '1010'
+                        });
+                    }
+                });
+
+                if (orderData.length === 0) {
+                    alert('Lütfen en az bir ürün için miktar giriniz.');
+                    return;
+                }
+
+                // Populate order summary modal
+                const summaryHtml = orderData.map(item => `
+                    <div class="item-row">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <div class="fw-bold item-name">${item.itemName}</div>
+                                <div class="text-muted small item-code">${item.itemCode}</div>
+                                <div class="d-none card-code">${item.cardCode || 'TDK1'}</div>
+                                <div class="d-none card-name">${item.cardName || 'Tedarikci'}</div>
+                                <div class="d-none whs-code">${item.whsCode || '1010'}</div>
+                            </div>
+                            <div class="quantity-badge">
+                                <div class="quantity-controls">
+                                    <button type="button" class="decrease-modal-qty" data-item-code="${item.itemCode}" data-min="${item.minQty}">−</button>
+                                    <span class="quantity-value">${item.quantity}</span>
+                                    <button type="button" class="increase-modal-qty" data-item-code="${item.itemCode}" data-min="${item.minQty}">+</button>
+                                </div>
+                                <span class="ms-2 uom-code">${item.uomCode}</span>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+
+                $('#orderSummaryList').html(summaryHtml);
+                
+                const modal = new bootstrap.Modal(document.getElementById('orderSummaryModal'));
+                modal.show();
+            }
+
+            // Show summary when clicking create order button
+            $('#createOrderBtn').click(function() {
+                showOrderSummaryModal();
+            });
+
+            // Handle quantity changes in modal
+            $(document).on('click', '.decrease-modal-qty, .increase-modal-qty', function() {
+                const $button = $(this);
+                const itemCode = $button.data('item-code');
+                const minQty = parseFloat($button.data('min')) || 0;
+                const isIncrease = $button.hasClass('increase-modal-qty');
+                
+                const $qtySpan = $button.siblings('.quantity-value');
+                const currentValue = parseFloat($qtySpan.text()) || 0;
+                
+                let newValue;
+                if (isIncrease) {
+                    if (currentValue === 0) {
+                        newValue = minQty; // 0'dan direkt minimum miktara
+                    } else {
+                        newValue = currentValue + 1;
+                    }
+                } else {
+                    if (currentValue <= minQty) {
+                        newValue = 0; // Minimum miktardaysa direkt 0'a
+                    } else {
+                        newValue = currentValue - 1;
+                    }
+                }
+                
+                $qtySpan.text(newValue);
+                
+                // Update the main table quantity
+                const $tableInput = $(`.order-qty[data-item-code="${itemCode}"]`);
+                $tableInput.val(newValue);
+
+                // If quantity becomes 0, remove the row
+                if (newValue === 0) {
+                    $button.closest('.item-row').remove();
+                    
+                    // If no items left, close modal
+                    if ($('#orderSummaryList .item-row').length === 0) {
+                        $('#orderSummaryModal').modal('hide');
+                    }
+                }
+            });
+
+            // Handle order confirmation
+            $('#confirmOrderBtn').click(async function() {
+                try {
+                    const sessionId = localStorage.getItem('sessionId');
+                    
+                    const orderItems = [];
+                    $('#orderSummaryList .item-row').each(function() {
+                        const $row = $(this);
+                        
+                        orderItems.push({
+                            U_Type: "SUPPLY",
+                            U_WhsCode: $row.find('.whs-code').text(),
+                            U_ItemCode: $row.find('.item-code').text(),
+                            U_ItemName: $row.find('.item-name').text(),
+                            U_Quantity: parseFloat($row.find('.quantity-value').text()),
+                            U_UomCode: $row.find('.uom-code').text(),
+                            U_CardCode: $row.find('.card-code').text(),
+                            U_CardName: $row.find('.card-name').text(),
+                            U_SessionID: sessionId,
+                            U_User: "MANAGER"
+                        });
+                    });
+
+                    console.log('Sipariş oluşturuluyor...', orderItems);
+
+                    const response = await fetch('/api/supply-order?sessionId=' + sessionId, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ items: orderItems })
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || 'Sipariş oluşturulurken bir hata oluştu');
+                    }
+
+                    const result = await response.json();
+                    console.log('Sipariş sonucu:', result);
+                    
+                    // Close modal and reset form
+                    $('#orderSummaryModal').modal('hide');
+                    orderItemsTable.clear().draw();
+                    await loadItems();
+                    
+                    alert('Sipariş başarıyla oluşturuldu!');
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert(error.message);
+                }
+            });
 
             // Handle submit button click
             $('#submitOrder').click(async function() {
