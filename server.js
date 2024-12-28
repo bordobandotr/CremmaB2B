@@ -68,30 +68,86 @@ app.options('/b1s/v1/*', (req, res) => {
 // Create the proxy middleware
 app.use('/b1s/v1/*', createProxyMiddleware(proxyOptions));
 
-// Test route using axiosInstance
+// Test route using axiosInstance with pagination
 app.get('/test', async (req, res) => {
     const sessionId = req.query.sessionId;
     console.log("test", sessionId);
     try {
-        const response = await axiosInstance.get(
-          "https://10.21.22.11:50000/b1s/v1/SQLQueries('OWTQ_LIST')/List",
-          {
-            params: {
-              value1: "'PROD'",
-              value2: "'1010'",
-            },
-            headers: {
-              Cookie:
-                "B1SESSION=" + encodeURIComponent(sessionId),
-              "Content-Type":
-                "application/x-www-form-urlencoded; charset=utf-8",
-            },
-          }
+        let allData = [];
+        let nextLink = null;
+        
+        // Initial request
+        const initialResponse = await axiosInstance.get(
+            "https://10.21.22.11:50000/b1s/v1/SQLQueries('OWTQ_LIST')/List",
+            {
+                params: {
+                    value1: "'PROD'",
+                    value2: "'1010'",
+                },
+                headers: {
+                    Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+                    "Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
+                },
+            }
         );
-        res.json(response.data);
+
+        // Add initial data
+        allData = [...initialResponse.data.value];
+        nextLink = initialResponse.data["odata.nextLink"];
+
+        // Continue fetching if there's more data
+        while (nextLink) {
+            console.log("Fetching next batch of data...");
+            const nextResponse = await axiosInstance.get(
+                `https://10.21.22.11:50000/b1s/v1/${nextLink}`,
+                {
+                    headers: {
+                        Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+                        "Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
+                    },
+                }
+            );
+            
+            // Add next batch of data
+            allData = [...allData, ...nextResponse.data.value];
+            nextLink = nextResponse.data["odata.nextLink"];
+        }
+
+        res.json({
+            value: allData,
+            totalCount: allData.length
+        });
     } catch (error) {
         console.error('Error:', error);
         console.error("Error:", error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Paginated OWTQ_LIST endpoint with skip parameter
+app.get('/api/owtq-list', async (req, res) => {
+    const sessionId = req.query.sessionId;
+    const skip = parseInt(req.query.skip) || 0;
+    
+    try {
+        const response = await axiosInstance.get(
+            "https://10.21.22.11:50000/b1s/v1/SQLQueries('OWTQ_LIST')/List",
+            {
+                params: {
+                    value1: "'PROD'",
+                    value2: "'1010'",
+                    $skip: skip
+                },
+                headers: {
+                    Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+                    "Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
+                },
+            }
+        );
+        
+        res.json(response.data);
+    } catch (error) {
+        console.error('Error:', error);
         res.status(500).json({ error: error.message });
     }
 });

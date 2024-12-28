@@ -14,9 +14,60 @@
     <link href="css/style.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
+    <style>
+        /* Loading Screen Styles */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .loading-content {
+            text-align: center;
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .loading-spinner {
+            width: 4rem;
+            height: 4rem;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #dc3545;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: #333;
+            font-size: 1.1rem;
+            margin-top: 1rem;
+        }
+    </style>
 </head>
 
 <body>
+    <!-- Loading Screen -->
+    <div class="loading-screen">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Yükleniyor...</div>
+        </div>
+    </div>
     <div class="d-flex">
         <!-- Sidebar -->
         <div class="sidebar">
@@ -97,20 +148,17 @@
                         <div class="row g-3">
                             <div class="col-md-3">
                                 <label class="form-label">Sipariş Durumu</label>
-                                <select class="form-select">
+                                <select id="statusFilter" class="form-select">
                                     <option value="">Tümü</option>
-                                    <option value="hazırlaniyor">Hazırlanıyor</option>
-                                    <option value="tamamlandi">Tamamlandı</option>
-                                    <option value="iptal">İptal Edildi</option>
                                 </select>
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label">Başlangıç Tarihi</label>
-                                <input type="date" class="form-control">
+                                <input id="startDate" type="date" class="form-control">
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label">Bitiş Tarihi</label>
-                                <input type="date" class="form-control">
+                                <input id="endDate" type="date" class="form-control">
                             </div>
                         </div>
                     </div>
@@ -140,68 +188,6 @@
             </div>
         </div>
     </div>
- 
-    <!-- <div class="modal fade" id="newOrderModal" tabindex="-1">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title">Yeni Üretim Siparişi Oluştur</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="newOrderForm">
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <label class="form-label">Tahmini Teslimat Tarihi</label>
-                                <input type="date" class="form-control" required>
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label">Sipariş Notu</label>
-                                <textarea class="form-control" rows="3"></textarea>
-                            </div>
-                            <div class="col-12">
-                                <h6 class="mb-3">Ürünler</h6>
-                                <div class="table-responsive">
-                                    <table class="table table-sm">
-                                        <thead>
-                                            <tr>
-                                                <th>Ürün Kodu</th>
-                                                <th>Ürün Adı</th>
-                                                <th>Miktar</th>
-                                                <th></th>
-                                            </tr>
-                                        </thead>
-                                        <tbody id="productList">
-                                            <tr>
-                                                <td><input type="text" class="form-control form-control-sm" required>
-                                                </td>
-                                                <td><input type="text" class="form-control form-control-sm" required>
-                                                </td>
-                                                <td><input type="number" class="form-control form-control-sm" required>
-                                                </td>
-                                                <td>
-                                                    <button type="button" class="btn btn-sm btn-outline-danger">
-                                                        <i class="bi bi-trash"></i>
-                                                    </button>
-                                                </td>
-                                            </tr>
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <button type="button" class="btn btn-sm btn-outline-primary" id="addProductRow">
-                                    <i class="bi bi-plus"></i> Ürün Ekle
-                                </button>
-                            </div>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
-                    <button type="submit" form="newOrderForm" class="btn btn-danger">Sipariş Oluştur</button>
-                </div>
-            </div>
-        </div>
-    </div> -->
 
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
@@ -211,10 +197,77 @@
     <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        let ordersTable;
+
+        // Loading Screen Functions
+        function showLoading(message = 'Yükleniyor...') {
+            const loadingScreen = document.querySelector('.loading-screen');
+            const loadingText = loadingScreen.querySelector('.loading-text');
+            loadingText.textContent = message;
+            loadingScreen.style.display = 'flex';
+        }
+
+        function hideLoading() {
+            const loadingScreen = document.querySelector('.loading-screen');
+            loadingScreen.style.display = 'none';
+        }
+
         // DataTables initialization
         $(document).ready(async function () {
-            // Initialize DataTables with empty data first
-            const ordersTable = $('#ordersTable').DataTable({
+            // Initialize DataTables
+            initializeDataTable([]);
+            
+            // Initial load
+            await loadOrders();
+
+            // Add event listeners for filters
+            $('#statusFilter').on('change', function() {
+                showLoading('Filtreleniyor...');
+                setTimeout(() => {
+                    ordersTable.column(3).search(this.value).draw();
+                    hideLoading();
+                }, 100);
+            });
+
+            $('#startDate, #endDate').on('change', function() {
+                showLoading('Filtreleniyor...');
+                setTimeout(() => {
+                    ordersTable.draw();
+                    hideLoading();
+                }, 100);
+            });
+
+            // Custom date range filter
+            $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+                const startDate = $('#startDate').val();
+                const endDate = $('#endDate').val();
+                const orderDate = data[1]; // Index of the date column
+
+                if (!startDate && !endDate) return true;
+                
+                const orderDateObj = new Date(orderDate.split('.').reverse().join('-'));
+                const startDateObj = startDate ? new Date(startDate) : null;
+                const endDateObj = endDate ? new Date(endDate) : null;
+
+                if (startDate && !endDate) {
+                    return orderDateObj >= startDateObj;
+                }
+                if (!startDate && endDate) {
+                    return orderDateObj <= endDateObj;
+                }
+                return orderDateObj >= startDateObj && orderDateObj <= endDateObj;
+            });
+        });
+
+        function initializeDataTable(data) {
+            showLoading('Tablo Yükleniyor...');
+            
+            if ($.fn.DataTable.isDataTable('#ordersTable')) {
+                ordersTable.destroy();
+            }
+
+            ordersTable = $('#ordersTable').DataTable({
+                data: data,
                 responsive: true,
                 language: {
                     "emptyTable": "Tabloda veri bulunmuyor",
@@ -233,205 +286,139 @@
                         "previous": "Önceki"
                     }
                 },
-                order: [
-                    [2, 'desc']
-                ], // Sort by order date descending
-                columnDefs: [{
-                    targets: -1, // Last column (Actions)
-                    orderable: false
-                }],
-                processing: true
-            });
-
-            // Function to load orders
-            async function loadOrders() {
-                try {
-                    const sessionId = localStorage.getItem('sessionId');
-                    if (!sessionId) {
-                        alert('Oturum bilgisi bulunamadı. Lütfen tekrar giriş yapın.');
-                        return;
+                order: [[1, 'desc']], // Sort by order date descending
+                columnDefs: [
+                    {
+                        targets: -1,
+                        orderable: false,
+                        searchable: false
+                    },
+                    {
+                        targets: [1, 2],
+                        type: 'date'
                     }
-
-                    console.log('Session ID:', sessionId);
-
-                    const response = await fetch('/test?sessionId=' + sessionId, {
-                        method: 'GET',
-                        credentials: 'include',
-                        headers: {
-                            'Accept': '*/*',
-                            'Content-Type': 'application/json',
-                            'Cookie': `B1SESSION=${sessionId}`
-                        }
-                    });
-
-                    if (!response.ok) {
-                        throw new Error(`HTTP error! status: ${response.status}`);
-                    }
-
-                    const data = await response.json();
-                    console.log('Response:', data);
-
-                    if (!data || !data.value) {
-                        console.error('Invalid response format:', data);
-                        alert('Veri formatı geçersiz');
-                        return;
-                    }
-
-                    const orders = data.value;
-                    console.log('Fetched orders:', orders);
-
-                    // Clear existing data
-                    ordersTable.clear();
-
-                    // "DocDate":"20241213","DocDueDate":"20241213","DocNum":4,"DocStatus":"1","Type":"PROD","WhsCode":"1010"
-                    // Add new data
-                    orders.forEach(order => {
-                        ordersTable.row.add([
-                            order.DocNum || '',
-                            order.DocDate || '',
-                            order.DocDueDate || '',
-                            getStatusBadge(order.DocStatus) || '',
-                            `<div class="btn-group">
-                                <a href="uretim-siparisi-detay.html?docNum=${order.DocNum}" type="button" class="btn btn-sm btn-primary">
-                                    <i class="bi bi-eye"></i>
-                                </a>
-                                <a href="uretim-siparisi-teslim.html?docNum=${order.DocNum}" type="button" class="btn btn-sm btn-success">
-                                    <i class="bi bi-check-lg"></i>
-                                </a>
-                            </div>`
-                        ]);
-                    });
-
-                    // Redraw the table
-                    ordersTable.draw();
-
-                } catch (error) {
-                    console.error('Error fetching orders:', error);
-                    alert('Üretim siparişleri yüklenirken bir hata oluştu.');
-                }
-            }
-
-            // Initial load
-            await loadOrders();
-
-            // Refresh button handler
-            $('#refreshButton').on('click', loadOrders);
-
-            // Filter handling
-            $('.form-select, .form-control').on('change', function () {
-                ordersTable.draw();
-            });
-
-            // Add custom filtering
-            $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
-                const supplier = $('select:eq(0)').val();
-                const status = $('select:eq(1)').val();
-                const startDate = $('input[type="date"]:eq(0)').val();
-                const endDate = $('input[type="date"]:eq(1)').val();
-
-                // If no filters are set, show all rows
-                if (!supplier && !status && !startDate && !endDate) {
-                    return true;
-                }
-
-                let pass = true;
-
-                // Supplier filter
-                if (supplier && data[0].indexOf(supplier) === -1) {
-                    pass = false;
-                }
-
-                // Status filter
-                if (status) {
-                    const rowStatus = data[3].toLowerCase();
-                    if (rowStatus.indexOf(status.toLowerCase()) === -1) {
-                        pass = false;
-                    }
-                }
-
-                // Date range filter
-                if (startDate || endDate) {
-                    const rowDate = new Date(data[2]);
-                    if (startDate && new Date(startDate) > rowDate) {
-                        pass = false;
-                    }
-                    if (endDate && new Date(endDate) < rowDate) {
-                        pass = false;
-                    }
-                }
-                return pass;
-            }); // New Order Form handling
-            $('#addProductRow').click(function () {
-                const newRow = ` <tr>
-            <td><input type="text" class="form-control form-control-sm" required></td>
-            <td><input type="text" class="form-control form-control-sm" required></td>
-            <td><input type="number" class="form-control form-control-sm" required></td>
-            <td>
-                <button type="button" class="btn btn-sm btn-outline-danger">
-                    <i class="bi bi-trash"></i>
-                </button>
-            </td>
-            </tr>
-            `;
-                $('#productList').append(newRow);
-            });
-
-            // Remove product row
-            $('#productList').on('click', '.btn-outline-danger', function () {
-                $(this).closest('tr').remove();
-            });
-
-            // Form submission
-            $('#newOrderForm').on('submit', function (e) {
-                e.preventDefault();
-
-                // Here you would typically send the form data to your backend
-                // For now, we'll just show a success message and close the modal
-
-                const modal = bootstrap.Modal.getInstance(document.getElementById('newOrderModal'));
-                modal.hide();
-
-                // You can show a success message here
-                // For example, using a toast notification
-            });
-
-            // Sidebar toggle for mobile
-            $('#sidebarToggle').click(function () {
-                $('body').toggleClass('show-sidebar');
-            });
-
-            // Close sidebar when clicking outside on mobile
-            $(document).on('click', function (e) {
-                if ($('body').hasClass('show-sidebar') &&
-                    !$(e.target).closest('.sidebar').length &&
-                    !$(e.target).closest('#sidebarToggle').length) {
-                    $('body').removeClass('show-sidebar');
+                ],
+                processing: true,
+                deferRender: true,
+                searching: true,
+                drawCallback: function() {
+                    hideLoading();
                 }
             });
-        });
-
-        // Format date for display
-        function formatDate(date) {
-            if (!date) return '';
-            const d = new Date(date);
-            return d.toLocaleDateString('tr-TR');
         }
 
-        // Koşul: (1:Onay Bekliyor (Sarı), 2:Hazırlanıyor (Turuncu) , 3:Sevk Edildi (Mavi) , 4:Tamamlandı (Yeşil), 5:İptal Edildi (Kırmızı) )
+        // Function to load orders
+        async function loadOrders() {
+            showLoading('Siparişler Yükleniyor...');
+            try {
+                const sessionId = localStorage.getItem('sessionId');
+                if (!sessionId) {
+                    hideLoading();
+                    alert('Oturum bilgisi bulunamadı. Lütfen tekrar giriş yapın.');
+                    return;
+                }
 
-        // Status badge helper
+                const response = await fetch('/test?sessionId=' + sessionId, {
+                    method: 'GET',
+                    credentials: 'include',
+                    headers: {
+                        'Accept': '*/*',
+                        'Content-Type': 'application/json',
+                        'Cookie': `B1SESSION=${sessionId}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                
+                if (!data || !data.value) {
+                    throw new Error('Invalid response format');
+                }
+
+                const tableData = data.value.map(order => [
+                    order.DocNum || '',
+                    formatDate(order.DocDate) || '',
+                    formatDate(order.DocDueDate) || '',
+                    `<span style="display: none;">${order.DocStatus}</span>` + getStatusBadge(order.DocStatus) || '',
+                    `<div class="btn-group">
+                        <a href="uretim-siparisi-detay.html?docNum=${order.DocNum}" type="button" class="btn btn-sm btn-primary">
+                            <i class="bi bi-eye"></i> Detay
+                        </a>
+                        ${order.DocStatus === '3' ? 
+                            `<a href="uretim-siparisi-teslim.html?docNum=${order.DocNum}" type="button" class="btn btn-sm btn-success">
+                                <i class="bi bi-check-lg"></i> Teslim Al
+                            </a>` 
+                            : ''
+                        }
+                    </div>`
+                ]);
+
+                initializeDataTable(tableData);
+                updateStatusFilterOptions(data.value);
+            } catch (error) {
+                console.error('Error fetching orders:', error);
+                alert('Üretim siparişleri yüklenirken bir hata oluştu.');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Helper function to get status badge
         function getStatusBadge(status) {
             const statusMap = {
                 '1': '<span class="badge bg-warning">Onay Bekliyor</span>',
                 '2': '<span class="badge bg-info">Hazırlanıyor</span>',
                 '3': '<span class="badge bg-primary">Sevk Edildi</span>',
                 '4': '<span class="badge bg-success">Tamamlandı</span>',
-                '5': '<span class="badge bg-danger">İptal Edildi</span>',
+                '5': '<span class="badge bg-danger">İptal Edildi</span>'
             };
             return statusMap[status] || `<span class="badge bg-info">${status}</span>`;
         }
 
-      
+        // Update status filter options
+        function updateStatusFilterOptions(orders) {
+            const statusFilter = $('#statusFilter');
+            const statusMap = {
+                '1': 'Onay Bekliyor',
+                '2': 'Hazırlanıyor',
+                '3': 'Sevk Edildi',
+                '4': 'Tamamlandı',
+                '5': 'İptal Edildi'
+            };
+            
+            statusFilter.empty();
+            statusFilter.append('<option value="">Tümü</option>');
+            
+            const uniqueStatuses = [...new Set(orders.map(order => order.DocStatus))];
+            uniqueStatuses.forEach(status => {
+                const statusText = statusMap[status] || status;
+                statusFilter.append(`<option value="${status}">${statusText}</option>`);
+            });
+        }
+
+        // Format date for display
+        function formatDate(date) {
+            if (!date) return '';
+            const d = new Date(date.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3'));
+            return d.toLocaleDateString('tr-TR');
+        }
+
+        // Sidebar toggle for mobile
+        $('#sidebarToggle').click(function () {
+            $('body').toggleClass('show-sidebar');
+        });
+
+        // Close sidebar when clicking outside on mobile
+        $(document).on('click', function (e) {
+            if ($('body').hasClass('show-sidebar') &&
+                !$(e.target).closest('.sidebar').length &&
+                !$(e.target).closest('#sidebarToggle').length) {
+                $('body').removeClass('show-sidebar');
+            }
+        });
     </script>
 </body>
 
