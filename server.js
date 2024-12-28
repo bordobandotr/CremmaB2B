@@ -178,11 +178,10 @@ app.get("/uretim-siparisleri-list", async (req, res) => {
 });
 
 app.post("/api/production-orders", async (req, res) => {
-    const sessionId = req.query.sessionId;
     const orderData = req.body;
+    const sessionId = req.query.sessionId;
 
-    console.log("sessionId:", sessionId);
-    console.log("orderData:", orderData);
+    console.log("Received order data:", orderData);
 
     if (!Array.isArray(orderData) || orderData.length === 0) {
         return res.status(400).json({ error: 'Invalid order data format' });
@@ -191,49 +190,42 @@ app.post("/api/production-orders", async (req, res) => {
     try {
         const results = await Promise.all(orderData.map(async (order) => {
             const data = {
-                U_Type: "PROD",
-                U_WhsCode: "1010",
-                U_ItemCode: order.itemCode,
-                U_ItemName: order.itemName,
-                U_Quantity: order.quantity,
-                U_SessionID: sessionId,
-                U_GUID: order.guid,
-                U_User: "ozan",
+                U_Type: order.U_Type,
+                U_WhsCode: order.U_WhsCode,
+                U_ItemCode: order.U_ItemCode,
+                U_ItemName: order.U_ItemName,
+                U_Quantity: order.U_Quantity,
+                U_UomCode: order.U_UomCode,
+                U_SessionID: sessionId || order.U_SessionID,
+                U_GUID: order.U_GUID,
+                U_User: order.U_User,
                 U_FromWhsCode: null,
                 U_FromWhsName: null,
-                U_Comments: "Üretim Siparişi",
-                U_UomCode: order.uomCode
+                U_Comments: "Üretim Siparişi"
             };
 
-            console.log('Sending data:', data);
+            console.log("Sending data:", data);
 
             const response = await axiosInstance.post(
                 "https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_OWTQ",
                 data,
                 {
                     headers: {
-                        'Cookie': `B1SESSION=${encodeURIComponent(sessionId)}`,
+                        'Cookie': `B1SESSION=${sessionId}`,
                         'Content-Type': 'application/json'
                     }
                 }
             );
 
-            console.log('Response for item:', order.itemCode, response.data);
+            console.log('Response for item:', order.U_ItemCode, response.data);
             return response.data;
         }));
 
         console.log('All results:', results);
-        res.json({
-            success: true,
-            message: 'Üretim siparişleri başarıyla oluşturuldu',
-            results: results
-        });
+        res.json(results);
     } catch (error) {
-        console.error('Error creating production orders:', error);
-        res.status(500).json({ 
-            error: 'Failed to create production orders',
-            details: error.message 
-        });
+        console.error('Error creating orders:', error);
+        res.status(500).json({ error: error.message });
     }
 });
 
