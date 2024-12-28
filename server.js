@@ -224,7 +224,7 @@ app.post("/api/production-orders", async (req, res) => {
                     }
                 }
             );
-
+            
             console.log('Response for item:', order.U_ItemCode, response.data);
             return response.data;
         }));
@@ -764,7 +764,7 @@ app.post("/api/supply-order", async (req, res) => {
         });
     }
 });
-
+ 
 // Transfer listesini getir
 app.get("/api/transfer-list/:whsCode", async (req, res) => {
     const { whsCode } = req.params;
@@ -801,6 +801,254 @@ app.get("/api/transfer-list/:whsCode", async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+// Transfer İşlemleri için Endpoints
+
+// Transfer için ürün listesini getir
+app.get('/api/transfer/items', async (req, res) => {
+    const sessionId = req.query.sessionId;
+    
+    console.log('Using sessionId:', sessionId);
+
+  
+    try {
+      const response = await axiosInstance.get(
+        "https://10.21.22.11:50000/b1s/v1/SQLQueries('OWTQ_T_NEW')/List",
+        {
+          params: {
+            value1: "'TRANSFER'",
+            value2: "'1010'",
+          },
+          headers: {
+            Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+            "Content-Type": "application/json",
+          },
+        }
+      );
+
+      console.log("Response for transfer items:", response);
+      res.json(response.data);
+    } catch (error) {
+      console.error(
+        "Error fetching transfer items:",
+        error.response?.data || error.message
+      );
+      res.status(500).json({
+        status: "error",
+        message: "Ürün listesi alınırken bir hata oluştu",
+        error: error.response?.data || error.message,
+      });
+    }
+});
+
+// Yeni transfer oluştur
+app.post("/api/transfer/create", async (req, res) => {
+  const sessionId = req.query.sessionId;
+  const transferItems = req.body;
+
+  console.log("Using sessionId:", sessionId);
+  console.log("Transfer items:", transferItems);
+
+  if (!Array.isArray(transferItems) || transferItems.length === 0) {
+    return res.status(400).json({ error: "Invalid transfer data format" });
+  }
+
+  const generateGUID = () => {
+    return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+      var r = (Math.random() * 16) | 0,
+        v = c == "x" ? r : (r & 0x3) | 0x8;
+      return v.toString(16);
+    });
+  };   
+   
+
+  try {
+    const results = await Promise.all(
+      transferItems.map(async (item) => {
+        const data = {
+          U_Type: item.U_Type,
+          U_WhsCode: item.U_WhsCode,
+          U_ItemCode: item.U_ItemCode,
+          U_ItemName: item.U_ItemName,
+          U_FromWhsCode: item.U_FromWhsCode,
+          U_FromWhsName: item.U_FromWhsName,
+          U_Quantity: item.U_Quantity,
+          U_UomCode: item.U_UomCode,
+          U_Comments: item.U_Comments || "",
+          U_SessionID: sessionId || item.U_SessionID,
+          U_GUID: generateGUID() + "_" + item.U_FromWhsCode,
+          U_User: item.U_User,
+        };
+
+        console.log("Sending data:", data);
+
+        const response = await axiosInstance.post(
+          "https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_OWTQ",
+          data,
+          {
+            headers: {
+              Cookie: `B1SESSION=${sessionId}`,
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        console.log("Response for item:", response.data);
+        console.log("Response for item:", item.U_ItemCode, response.data);
+        return response.data;
+      })
+    );
+
+    console.log("All results:", results);
+    res.json(results);
+  } catch (error) {
+    console.error("Error creating transfers:", error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Transfer onaylama/reddetme
+app.post('/api/transfer/approve/:docNum', async (req, res) => {
+    const { docNum } = req.params;
+    const { sessionId, note, transferData } = req.body;
+
+    console.log('Approving/rejecting transfer for docNum:', docNum);
+    console.log('Using sessionId:', sessionId);
+    console.log('Transfer data:', transferData);
+
+    try {
+        const response = await axiosInstance.post(
+            "https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_OWTR",
+            {
+                U_Type: "TRANSFER",
+                U_DocNum: parseInt(docNum),
+                U_WhsCode: '1010',
+                U_ItemCode: transferData.ItemCode,
+                U_ItemName: transferData.ItemName,
+                U_DocDate: transferData.DocDate,
+                U_Quantity: parseFloat(transferData.Quantity),
+                U_UomCode: transferData.UomCode,
+                U_FromWhsCode: transferData.FromWhsCode,
+                U_FromWhsName: transferData.FromWhsName,
+                U_DocStatus: transferData.approved ? "4" : "5",
+                U_Comments: note || "",
+                U_SessionID: sessionId,
+                U_GUID: generateGUID(),
+                U_User: "Orkun"
+            },
+            {
+                headers: {
+                    Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+                    "Content-Type": "application/json"
+                }
+            }
+        );
+
+        console.log('Transfer approved/rejected:', response.data);
+        res.json(response.data);
+    } catch (error) {
+        console.error('Error approving/rejecting transfer:', error.response?.data || error.message);
+        res.status(500).json({
+            status: 'error',
+            message: 'Transfer onaylama/reddetme işlemi başarısız oldu',
+            error: error.response?.data || error.message
+        });
+    }
+});
+
+// Transfer teslim alma
+app.post('/api/transfer/deliver/:docNum', async (req, res) => {
+    const { docNum } = req.params;
+    const sessionId = req.query.sessionId;
+    const { note } = req.body;
+
+    if (!sessionId || !docNum) {
+        return res.status(400).json({
+            status: 'error',
+            message: 'SessionId ve DocNum zorunludur'
+        });
+    }
+
+    try {
+        const response = await axiosInstance.post(
+            "https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_OWTR",
+            {
+                U_Type: "TRANSFER",
+                U_DocNum: parseInt(docNum),
+                U_DocStatus: "C", // C: Completed/Teslim Alındı
+                U_Comments: note || "",
+                U_SessionID: sessionId,
+                U_GUID: generateGUID(),
+                U_User: req.body.username || ""
+            },
+            {
+                headers: {
+                    Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+                    "Content-Type": "application/json"
+                }
+            }
+        );
+
+        res.json({
+            status: 'success',
+            message: 'Transfer teslim alındı'
+        });
+    } catch (error) {
+        console.error('Error delivering transfer:', error.response?.data || error.message);
+        res.status(500).json({
+            status: 'error',
+            message: 'Transfer teslim alınırken bir hata oluştu',
+            error: error.response?.data || error.message
+        });
+    }
+});
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 // Handle all other routes
 app.get('*', (req, res) => {

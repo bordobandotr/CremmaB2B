@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="tr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -14,6 +15,7 @@
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
 </head>
+
 <body>
     <div class="d-flex">
         <!-- Sidebar -->
@@ -45,6 +47,11 @@
                     <h5 class="mb-0">Transferler</h5>
                 </div>
                 <div class="d-flex align-items-center">
+                    <div class="btn-group me-2">
+                        <a href="transfer-olustur.html" class="btn btn-primary">
+                            <i class="bi bi-plus-lg me-1"></i>Yeni Transfer
+                        </a>
+                    </div>
                     <button class="btn btn-outline-secondary" onclick="logout()">
                         Çıkış Yap <i class="bi bi-box-arrow-right"></i>
                     </button>
@@ -70,10 +77,118 @@
                                     <th>Gönderen Şube</th>
                                     <th>Alıcı Şube</th>
                                     <th>Durum</th>
+                                    <th>İşlemler</th>
                                 </tr>
                             </thead>
                         </table>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transfer Onay Modal -->
+    <div class="modal fade" id="transferOnayModal" tabindex="-1" aria-labelledby="transferOnayModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="transferOnayModalLabel">Transfer Onay</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <p><strong>Transfer No:</strong> <span id="modalTransferNo"></span></p>
+                            <p><strong>Stok Kodu:</strong> <span id="modalStokKodu"></span></p>
+                            <p><strong>Stok Adı:</strong> <span id="modalStokAdi"></span></p>
+                            <p><strong>Transfer Tarihi:</strong> <span id="modalTransferTarihi"></span></p>
+                            <input type="hidden" id="modalFromWhsCode">
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="modalMiktar" class="form-label"><strong>Transfer Miktarı:</strong></label>
+                                <div class="input-group">
+                                    <button class="btn btn-outline-secondary" type="button" id="decreaseQty">
+                                        <i class="bi bi-dash"></i>
+                                    </button>
+                                    <input type="number" class="form-control text-center" id="modalMiktar" min="1"
+                                        step="1" onkeydown="return event.keyCode !== 190 && event.keyCode !== 188">
+                                    <button class="btn btn-outline-secondary" type="button" id="increaseQty">
+                                        <i class="bi bi-plus"></i>
+                                    </button>
+                                    <span class="input-group-text" id="modalUomCode"></span>
+                                </div>
+                                <small class="text-muted">Talep Edilen: <span id="modalRequestedQty"></span></small>
+                            </div>
+                            <p><strong>Gönderen Depo:</strong> <span id="modalGonderenDepo"></span></p>
+                            <p><strong>Alıcı Depo:</strong> <span id="modalAliciDepo"></span></p>
+                            <p><strong>Durum:</strong> <span id="modalDurum" class="badge"></span></p>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="modalAciklama" class="form-label"><strong>Açıklama:</strong></label>
+                        <textarea class="form-control" id="modalAciklama" rows="2"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="button" class="btn btn-primary" id="onaylaBtn">
+                        <span class="spinner-border spinner-border-sm d-none me-2" role="status"
+                            aria-hidden="true"></span>
+                        Onayla
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- Transfer Red Modal -->
+    <div class="modal fade" id="transferRedModal" tabindex="-1" aria-labelledby="transferRedModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="transferRedModalLabel">Transfer Reddetme</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <p><strong>Transfer No:</strong> <span id="modalRedTransferNo"></span></p>
+                            <p><strong>Stok Kodu:</strong> <span id="modalRedStokKodu"></span></p>
+                            <p><strong>Stok Adı:</strong> <span id="modalRedStokAdi"></span></p>
+                            <p><strong>Transfer Tarihi:</strong> <span id="modalRedTransferTarihi"></span></p>
+                            <input type="hidden" id="modalRedFromWhsCode">
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="modalRedMiktar" class="form-label"><strong>Transfer
+                                        Miktarı:</strong></label>
+                                <div class="input-group">
+                                    <input type="number" class="form-control text-center" id="modalRedMiktar" readonly>
+                                    <span class="input-group-text" id="modalRedUomCode"></span>
+                                </div>
+                            </div>
+                            <p><strong>Gönderen Depo:</strong> <span id="modalRedGonderenDepo"></span></p>
+                            <p><strong>Alıcı Depo:</strong> <span id="modalRedAliciDepo"></span></p>
+                            <p><strong>Durum:</strong> <span id="modalRedDurum" class="badge"></span></p>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="modalRedAciklama" class="form-label"><strong>Red Nedeni:</strong></label>
+                        <textarea class="form-control" id="modalRedAciklama" rows="2"
+                            placeholder="Red nedenini giriniz..."></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="button" class="btn btn-danger" id="reddetBtn">
+                        <span class="spinner-border spinner-border-sm d-none me-2" role="status"
+                            aria-hidden="true"></span>
+                        Reddet
+                    </button>
                 </div>
             </div>
         </div>
@@ -87,44 +202,290 @@
     <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
     <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
     <script>
-        $(document).ready(async function() {
+        // Tarih formatlama fonksiyonu
+        function formatDate(date) {
+            if (!date) return '';
+            const d = new Date(date.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3'));
+            return d.toLocaleDateString('tr-TR');
+        }
+
+        // Transfer onaylama modalını göster
+        function showTransferModal(docNum) {
+            // Get transfer details from the DataTable
+            const table = $('#transferTable').DataTable();
+            const row = table.rows().data().filter(item => item.DocNum === docNum)[0];
+
+            if (row) {
+                // Populate modal fields
+                $('#modalTransferNo').text(row.DocNum);
+                $('#modalStokKodu').text(row.ItemCode);
+                $('#modalStokAdi').text(row.ItemName);
+                $('#modalTransferTarihi').text(formatDate(row.DocDate));
+
+                // Set up quantity input
+                const qtyInput = $('#modalMiktar');
+                qtyInput.val(Math.floor(row.Quantity)); // Ensure integer value
+                $('#modalRequestedQty').text(Math.floor(row.Quantity) + ' ' + row.UomCode);
+                $('#modalUomCode').text(row.UomCode);
+                $('#modalFromWhsCode').val(row.FromWhsCode);
+
+                // Set up quantity increment/decrement buttons
+                $('#decreaseQty').off('click').on('click', function () {
+                    const currentVal = parseInt(qtyInput.val()) || 0;
+                    if (currentVal > 1) {
+                        qtyInput.val(currentVal - 1);
+                    }
+                });
+
+                $('#increaseQty').off('click').on('click', function () {
+                    const currentVal = parseInt(qtyInput.val()) || 0;
+                    qtyInput.val(currentVal + 1);
+                });
+
+                // Ensure integer values on input
+                qtyInput.on('input', function () {
+                    let value = this.value.replace(/[^\d]/g, ''); // Remove non-digits
+                    if (value === '') value = '1';
+                    this.value = parseInt(value);
+                });
+
+                $('#modalGonderenDepo').text(row.FromWhsName);
+                $('#modalAliciDepo').text(row.WhsName);
+
+                // Set status with appropriate color
+                const statusBadge = $('#modalDurum');
+                statusBadge.text('Onay Bekliyor');
+                statusBadge.removeClass().addClass('badge bg-warning');
+
+                // Clear and set up description field
+                $('#modalAciklama').val('');
+
+                // Reset and set up onay button click handler
+                const onaylaBtn = $('#onaylaBtn');
+                const spinner = onaylaBtn.find('.spinner-border');
+
+                onaylaBtn.prop('disabled', false);
+                spinner.addClass('d-none');
+
+                onaylaBtn.off('click').on('click', async function () {
+                    try {
+                        // Validate quantity
+                        const transferQty = parseInt($('#modalMiktar').val());
+                        const requestedQty = Math.floor(row.Quantity);
+
+                        if (isNaN(transferQty) || transferQty <= 0) {
+                            alert('Lütfen geçerli bir miktar giriniz');
+                            return;
+                        }
+
+                        if (transferQty > requestedQty) {
+                            if (!confirm(
+                                    'Transfer miktarı talep edilen miktardan fazla. Devam etmek istiyor musunuz?'
+                                    )) {
+                                return;
+                            }
+                        }
+
+                        // Disable button and show spinner
+                        onaylaBtn.prop('disabled', true);
+                        spinner.removeClass('d-none');
+
+                        const result = await approveTransfer(docNum, {
+                            ...row,
+                            Quantity: transferQty,
+                            Comments: $('#modalAciklama').val(),
+                            approved: true
+                        });
+
+                        // Close modal
+                        $('#transferOnayModal').modal('hide');
+
+                        // // Refresh the table with a slight delay
+                        // setTimeout(() => {
+                        //     table.ajax.reload(null, false);
+                        // }, 500);
+
+                    } catch (error) {
+                        console.error('Transfer onaylama hatası:', error);
+                        //alert('Transfer onaylanırken bir hata oluştu: ' + (error.message || 'Bilinmeyen bir hata'));
+                    } finally {
+                        // Re-enable button and hide spinner
+                        onaylaBtn.prop('disabled', false);
+                        spinner.addClass('d-none');
+                    }
+                });
+
+                // Show modal
+                const modal = new bootstrap.Modal(document.getElementById('transferOnayModal'));
+                modal.show();
+            }
+        }
+
+
+        function showTransferRedModal(docNum) {
+            // Get transfer details from the DataTable
+            const table = $('#transferTable').DataTable();
+            const row = table.rows().data().filter(item => item.DocNum === docNum)[0];
+
+            if (row) {
+                // Populate modal fields
+                $('#modalRedTransferNo').text(row.DocNum);
+                $('#modalRedStokKodu').text(row.ItemCode);
+                $('#modalRedStokAdi').text(row.ItemName);
+                $('#modalRedTransferTarihi').text(formatDate(row.DocDate));
+
+                // Set up quantity input
+                $('#modalRedMiktar').val(Math.floor(row.Quantity));
+                $('#modalRedUomCode').text(row.UomCode);
+                $('#modalRedFromWhsCode').val(row.FromWhsCode);
+
+                $('#modalRedGonderenDepo').text(row.FromWhsName);
+                $('#modalRedAliciDepo').text(row.WhsName);
+
+                // Set status with appropriate color
+                const statusBadge = $('#modalRedDurum');
+                statusBadge.text('Red Bekliyor');
+                statusBadge.removeClass().addClass('badge bg-danger');
+
+                // Clear and set up description field
+                $('#modalRedAciklama').val('');
+
+                // Reset and set up reddet button click handler
+                const reddetBtn = $('#reddetBtn');
+                const spinner = reddetBtn.find('.spinner-border');
+
+                reddetBtn.prop('disabled', false);
+                spinner.addClass('d-none');
+
+                reddetBtn.off('click').on('click', async function () {
+                    try {
+                        const note = $('#modalRedAciklama').val();
+
+                        if (!note.trim()) {
+                            alert('Lütfen red nedenini giriniz');
+                            return;
+                        }
+
+                        // Disable button and show spinner
+                        reddetBtn.prop('disabled', true);
+                        spinner.removeClass('d-none');
+
+                        // Call reject function
+                        await approveTransfer(docNum, {
+                            ...row,
+                            Quantity: parseInt($('#modalRedMiktar').val()),
+                            Comments: note,
+                            approved: false
+                        });
+
+                        // Close modal
+                        $('#transferRedModal').modal('hide');
+
+                        // Refresh the table with a slight delay
+                        // setTimeout(() => {
+                        //     table.ajax.reload(null, false);
+                        // }, 500);
+                        
+                    } catch (error) {
+                        console.error('Transfer reddetme hatası:', error);
+                    } finally {
+                        // Re-enable button and hide spinner
+                        reddetBtn.prop('disabled', false);
+                        spinner.addClass('d-none');
+                    }
+                });
+
+                // Show modal
+                const modal = new bootstrap.Modal(document.getElementById('transferRedModal'));
+                modal.show();
+            }
+        }
+
+        async function approveTransfer(docNum, transferData) {
+            try {
+                const sessionId = api.getSessionId();
+
+                const response = await fetch(`/api/transfer/approve/${docNum}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        sessionId: sessionId,
+                        note: transferData.Comments,
+                        transferData: {
+                            ItemCode: transferData.ItemCode,
+                            ItemName: transferData.ItemName,
+                            DocDate: transferData.DocDate,
+                            Quantity: transferData.Quantity,
+                            UomCode: transferData.UomCode,
+                            FromWhsCode: transferData.FromWhsCode,
+                            FromWhsName: transferData.FromWhsName,
+                            approved: transferData.approved
+                        }
+                    })
+                });
+
+                console.log('Onay response:', response);
+                const data = await response.json();
+                console.log('Onay data:', data);
+
+                return data;
+            } catch (error) {
+                console.error('Transfer onaylama hatası:', error);
+                throw error;
+            }
+        }
+
+        $(document).ready(async function () {
             // Initialize DataTable
             const transferTable = $('#transferTable').DataTable({
                 responsive: true,
-                columns: [
-                    { data: 'DocNum' },
-                    { data: 'ItemCode' },
-                    { data: 'ItemName' },
-                    { 
+                columns: [{
+                        data: 'DocNum'
+                    },
+                    {
+                        data: 'ItemCode'
+                    },
+                    {
+                        data: 'ItemName'
+                    },
+                    {
                         data: 'DocDate',
-                        render: function(data) {
-                            return new Date(data).toLocaleDateString('tr-TR');
+                        render: function (data) {
+                            return formatDate(data);
                         }
                     },
-                    { 
+                    {
                         data: 'DeliveryDate',
-                        render: function(data) {
-                            return data ? new Date(data).toLocaleDateString('tr-TR') : '-';
+                        render: function (data) {
+                            return formatDate(data);
                         }
                     },
-                    { 
+                    {
                         data: 'Quantity',
-                        render: function(data) {
+                        render: function (data) {
                             return parseFloat(data).toFixed(2);
                         }
                     },
-                    { 
+                    {
                         data: 'DeliveryQty',
-                        render: function(data) {
+                        render: function (data) {
                             return parseFloat(data).toFixed(2);
                         }
                     },
-                    { data: 'UomCode' },
-                    { data: 'FromWhsName' },
-                    { data: 'WhsName' },
-                    { 
+                    {
+                        data: 'UomCode'
+                    },
+                    {
+                        data: 'FromWhsName'
+                    },
+                    {
+                        data: 'WhsName'
+                    },
+                    {
                         data: 'DocStatus',
-                        render: function(data) {
+                        render: function (data) {
                             const statusMap = {
                                 '1': '<span class="badge bg-warning">Onay Bekliyor</span>',
                                 '2': '<span class="badge" style="background-color: #fd7e14;">Hazırlanıyor</span>',
@@ -134,22 +495,67 @@
                             };
                             return statusMap[data] || data;
                         }
+                    },
+                    {
+                        data: null,
+                        render: function (data, type, row) {
+                            const buttons = [];
+
+                            // Teslimat butonu - sadece sevk edilmiş durumda göster
+                            if (row.DocStatus === '3') {
+                                buttons.push(`
+                                    <button class="btn btn-success btn-sm me-1 deliver-btn" data-doc-num="${row.DocNum}">
+                                        <i class="bi bi-box-seam"></i> Teslim Al
+                                    </button>
+                                `);
+                            }
+
+                            // Onay butonu - sadece onay bekleyen durumda göster
+                            if (row.DocStatus === '1') {
+                                buttons.push(`
+                                    <div class="btn-group btn-group-sm">
+                                        <button class="btn btn-sm btn-success approve-btn" data-doc-num="${row.DocNum}">
+                                            <i class="bi bi-check-lg"></i> Onayla
+                                        </button>
+                                        <button class="btn btn-sm btn-danger"
+                                            onclick="showTransferRedModal(${row.DocNum})">
+                                            <i class="bi bi-x-circle"></i> Reddet
+                                        </button>
+                                    </div>
+                                `);
+                            }
+
+                            return buttons.join('');
+                        }
                     }
                 ],
-                order: [[0, 'desc']],
+                order: [
+                    [0, 'desc']
+                ],
                 language: {
                     url: 'js/datatables-tr.json'
                 }
             });
 
-            // Load transfers
+            // Event handlers for dynamic buttons
+            $('#transferTable').on('click', '.deliver-btn', function () {
+                const docNum = $(this).data('doc-num');
+                window.location.href = `transfer-teslim.html?docNum=${docNum}`;
+            });
+
+            $('#transferTable').on('click', '.approve-btn', function () {
+                const docNum = $(this).data('doc-num');
+                showTransferModal(docNum);
+            });
+
+            // Fetch and populate transfer data
             try {
                 const whsCode = '1010';
                 const sessionId = api.getSessionId();
 
                 console.log('whsCode:', whsCode);
                 console.log('sessionId:', sessionId);
-                
+
                 const response = await fetch(`/api/transfer-list/${whsCode}?sessionId=${sessionId}`);
 
                 if (!response.ok) {
@@ -164,8 +570,84 @@
                 alert('Veriler yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.');
             }
         });
+
+        async function deliverTransfer(docNum) {
+            try {
+                const sessionId = api.getSessionId();
+                const note = prompt('Teslimat notu eklemek ister misiniz?', '');
+
+                const response = await fetch(`/api/transfer/deliver/${docNum}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        sessionId: sessionId,
+                        note: note
+                    })
+                });
+
+                console.log('Teslimat response:', response);
+
+                // if (!response.ok) {
+                //     throw new Error('Teslimat işlemi başarısız oldu');
+                // }
+
+                window.location.href = `transfer-teslim.html?docNum=${docNum}`;
+            } catch (error) {
+                console.error('Teslimat hatası:', error);
+                // alert('Teslimat işlemi sırasında bir hata oluştu: ' + error.message);
+            }
+        }
+
+        async function rejectTransfer(docNum) {
+            try {
+                const table = $('#transferTable').DataTable();
+                const row = table.rows().data().filter(item => item.DocNum === docNum)[0];
+
+                if (!row) {
+                    throw new Error('Transfer bulunamadı');
+                }
+
+                const sessionId = api.getSessionId();
+                const note = ''; // You can add a note field if needed
+
+                const result = await fetch(`/api/transfer/approve/${docNum}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        sessionId: sessionId,
+                        note: note,
+                        transferData: {
+                            ItemCode: row.ItemCode,
+                            ItemName: row.ItemName,
+                            DocDate: row.DocDate,
+                            Quantity: row.Quantity,
+                            UomCode: row.UomCode,
+                            FromWhsCode: row.FromWhsCode,
+                            FromWhsName: row.FromWhsName,
+                            approved: false
+                        }
+                    })
+                });
+
+                console.log('Red response:', result);
+
+                // Refresh the table with a slight delay
+                setTimeout(() => {
+                    table.ajax.reload(null, false);
+                }, 500);
+
+            } catch (error) {
+                console.error('Transfer reddetme hatası:', error);
+                //alert('Transfer reddedilirken bir hata oluştu: ' + (error.message || 'Bilinmeyen bir hata'));
+            }
+        }
     </script>
     <script src="js/api.js"></script>
     <script src="js/nav-menu.js"></script>
 </body>
+
 </html>

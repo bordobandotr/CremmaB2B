@@ -9,6 +9,16 @@ const api = {
         return !!sessionId;
     },
 
+    // Format date to TR locale
+    formatDate: (date) => {
+        if (!date) return '-';
+        return new Date(date).toLocaleDateString('tr-TR', {
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit'
+        });
+    },
+
     // Create axios instance with session header
     createAuthenticatedRequest: () => {
         const sessionId = localStorage.getItem('sessionId');

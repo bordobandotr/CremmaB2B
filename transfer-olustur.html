@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CREMMA - Transfer Oluştur</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- DataTables CSS -->
+    <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="css/style.css" rel="stylesheet">
+    <link href="css/loading.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    <style>
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            flex-direction: column;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        .loading-text {
+            font-size: 1.2em;
+            color: #333;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .select2-container {
+            width: 100% !important;
+        }
+
+        #transferTable .quantity-control {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        #transferTable .quantity-value {
+            font-weight: 500;
+            min-width: 30px;
+            text-align: center;
+        }
+
+        /* Modal Styles */
+        .modal-backdrop.show {
+            opacity: 0.7;
+        }
+        
+        #transferSummaryModal .modal-content {
+            border-radius: 15px;
+            border: none;
+            box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+        }
+
+        #transferSummaryModal .quantity-badge {
+            background: #f8f9fa;
+            border-radius: 20px;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            color: #212529;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #transferSummaryModal .quantity-badge .quantity-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        #transferSummaryModal .quantity-badge button {
+            width: 24px;
+            height: 24px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            border: none;
+            background: #212529;
+            color: #fff;
+            font-size: 1.2rem;
+            line-height: 1;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        #transferSummaryModal .quantity-badge button:hover {
+            background: #000;
+            transform: scale(1.1);
+        }
+
+        #transferSummaryModal .quantity-value {
+            font-weight: 500;
+            min-width: 30px;
+            text-align: center;
+        }
+
+        #transferSummaryModal .item-row {
+            padding: 12px;
+            margin-bottom: 8px;
+            background: #fff;
+            border-radius: 10px;
+            transition: all 0.2s;
+            border: 1px solid #dee2e6;
+        }
+
+        #transferSummaryModal .item-row:hover {
+            background: #f8f9fa;
+        }
+
+        #transferSummaryModal .item-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        #transferSummaryModal .item-code {
+            color: #6c757d;
+            font-size: 0.875rem;
+        }
+
+        #transferSummaryModal .item-name {
+            font-weight: 600;
+            color: #212529;
+        }
+
+        #transferSummaryModal .item-quantity {
+            color: #0d6efd;
+            font-weight: 500;
+        }
+
+        #transferSummaryModal .modal-footer {
+            border-top: none;
+            padding: 1rem;
+        }
+
+        #transferSummaryModal .btn-primary {
+            padding: 0.5rem 1.5rem;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div class="loading-screen">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Yükleniyor...</div>
+    </div>
+
+    <div class="d-flex">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="logo-container p-4">
+                <h2 class="text-white">CREMMA</h2>
+            </div>
+            <!-- Sidebar menu items will be included here -->
+
+            <div id="sidebar-nav">
+                <!-- Navigation menu will be loaded here -->
+            </div>
+
+            <div class="user-info position-absolute bottom-0 start-0 p-3 w-100">
+                <div class="d-flex align-items-center">
+                    <img src="img/avatar.jpg" alt="User" class="rounded-circle me-2" width="40">
+                    <div class="text-white">
+                        <small>Orkun - Caddebostan</small>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <header class="d-flex justify-content-between p-3 bg-white">
+                <div class="d-flex align-items-center">
+                    <button id="sidebarToggle" class="btn btn-link d-md-none">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <h4 class="mb-0">Transfer Oluştur</h4>
+                </div>
+                <div class="d-flex gap-2">
+                    <button id="showTransferSummary" class="btn btn-outline-primary">
+                        <i class="bi bi-eye me-2"></i>Transfer Özeti
+                    </button>
+                    <button id="createTransferBtn" class="btn btn-primary">
+                        <i class="bi bi-plus-lg me-2"></i>Transfer Oluştur
+                    </button>
+                </div>
+            </header>
+
+            <!-- Main Content Area -->
+            <div class="container-fluid py-4">
+                <!-- Filters -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-3">
+                                <label class="form-label">Kalem Grubu</label>
+                                <select id="kalemGrubuFilter" class="form-select" multiple>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Kalem Tanımı</label>
+                                <select id="kalemTanimiFilter" class="form-select" multiple>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="form-label">Stokta</label>
+                                <select id="stoktaFilter" class="form-select">
+                                    <option value="">Tümü</option>
+                                    <option value="var">Var</option>
+                                    <option value="yok">Yok</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3 d-flex align-items-end">
+                                <button id="resetFilters" class="btn btn-secondary w-100">Filtreleri Sıfırla</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Table -->
+                <div class="card">
+                    <div class="card-body">
+                        <table id="transferTable" class="table table-striped w-100">
+                            <thead>
+                                <tr>
+                                    <th>Kalem Kodu</th>
+                                    <th>Kalem Tanımı</th>
+                                    <th>Kalem Grubu</th>
+                                    <th>Şube Kodu</th>
+                                    <th>Şube Adı</th>
+                                    <th>Stokta</th>
+                                    <th>Stoktaki Miktar</th>
+                                    <th>Gerekli Miktar</th>
+                                    <th>Sipariş Miktarı</th>
+                                    <th>Ölçü Birimi</th>
+                                    <th>Not</th>
+                                </tr>
+                            </thead>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Transfer Özeti Modal -->
+    <div class="modal fade" id="transferSummaryModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold">Transfer Özeti</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body pt-3">
+                    <div id="transferSummaryBody"></div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="button" class="btn btn-primary" id="confirmTransferBtn">Transfer Oluştur</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Required JS -->
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="js/nav-menu.js"></script>
+
+    <script>
+        function showLoading(message = 'Yükleniyor...') {
+            $('.loading-screen .loading-text').text(message);
+            $('.loading-screen').css('display', 'flex');
+        }
+
+        function hideLoading() {
+            $('.loading-screen').hide();
+        }
+
+        $(document).ready(async function () {
+            try {
+                showLoading('Veriler Yükleniyor...');
+                const sessionId = localStorage.getItem('sessionId');
+                // if (!sessionId) {
+                //     window.location.href = '/login.html';
+                //     return;
+                // }
+
+                // Initialize Select2
+                $('#kalemGrubuFilter, #kalemTanimiFilter').select2({
+                    theme: 'bootstrap-5',
+                    placeholder: 'Seçiniz',
+                    allowClear: true
+                });
+
+                // Initialize DataTable
+                const table = $('#transferTable').DataTable({
+                    responsive: true,
+                    language: {
+                        url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/tr.json',
+                    },
+                    columns: [
+                        { data: 'ItemCode' },
+                        { data: 'ItemName' },
+                        { data: 'ItemGroup' },
+                        { data: 'FromWhsCode' },
+                        { data: 'FromWhsName' },
+                        { 
+                            data: 'OnHand',
+                            render: function(data) {
+                                return parseFloat(data) > 0 ? 'Var' : 'Yok';
+                            }
+                        },
+                        { 
+                            data: 'OnHand',
+                            render: function(data) {
+                                return parseFloat(data).toFixed(2);
+                            }
+                        },
+                        { 
+                            data: 'MinQty',
+                            render: function(data) {
+                                return parseFloat(data).toFixed(2);
+                            }
+                        },
+                        {
+                            data: null,
+                            render: function(data, type, row) {
+                                if (type === 'display') {
+                                    return `
+                                        <div class="quantity-control">
+                                            <button class="btn btn-sm btn-outline-secondary decrease-qty" 
+                                                    data-item-code="${row.ItemCode}" 
+                                                    data-min="${row.MinQty}">
+                                                <i class="bi bi-dash"></i>
+                                            </button>
+                                            <input type="number" class="form-control form-control-sm transfer-qty" 
+                                                   style="width: 80px" 
+                                                   value="0" 
+                                                   min="0"
+                                                   max="${row.OnHand}"
+                                                   data-item-code="${row.ItemCode}"
+                                                   data-min="${row.MinQty}">
+                                            <button class="btn btn-sm btn-outline-secondary increase-qty" 
+                                                    data-item-code="${row.ItemCode}" 
+                                                    data-min="${row.MinQty}">
+                                                <i class="bi bi-plus"></i>
+                                            </button>
+                                        </div>`;
+                                }
+                                return data;
+                            }
+                        },
+                        { data: 'UomCode' },
+                        {
+                            data: null,
+                            render: function(data, type, row) {
+                                return `<input type="text" class="form-control form-control-sm transfer-note" 
+                                              data-item-code="${row.ItemCode}">`;
+                            }
+                        }
+                    ]
+                });
+
+                // Custom filtering function
+                $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+                    const kalemGrubuValues = $('#kalemGrubuFilter').val() || [];
+                    const kalemTanimiValues = $('#kalemTanimiFilter').val() || [];
+                    const stokta = $('#stoktaFilter').val();
+
+                    // Kalem Grubu filter
+                    if (kalemGrubuValues.length && !kalemGrubuValues.includes(data[2])) {
+                        return false;
+                    }
+
+                    // Kalem Tanımı filter
+                    if (kalemTanimiValues.length && !kalemTanimiValues.includes(data[1])) {
+                        return false;
+                    }
+
+                    // Stokta filter
+                    if (stokta) {
+                        const stokDurumu = parseFloat(data[6]) > 0 ? 'var' : 'yok';
+                        if (stokta !== stokDurumu) {
+                            return false;
+                        }
+                    }
+
+                    return true;
+                });
+
+                // Filter change handlers
+                $('#kalemGrubuFilter, #kalemTanimiFilter, #stoktaFilter').change(function() {
+                    table.draw();
+                });
+
+                // Reset filters
+                $('#resetFilters').click(function() {
+                    $('#kalemGrubuFilter, #kalemTanimiFilter').val(null).trigger('change');
+                    $('#stoktaFilter').val('').trigger('change');
+                    table.draw();
+                });
+
+                async function loadTransfers() {
+                    try {
+                        showLoading('Veriler Yükleniyor...');
+                        const sessionId = localStorage.getItem('sessionId');
+                        
+                        const response = await fetch(`/api/transfer/items?sessionId=${encodeURIComponent(sessionId)}`, {
+                            method: 'GET',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            }
+                        });
+
+                        console.log('Response:', response);
+
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+
+                        const data = await response.json();
+                        console.log('Data:', data);
+                        
+                        // Verileri tabloya ekle
+                        table.clear().rows.add(data.value).draw();
+
+                        // Filtreleri güncelle
+                        const kalemGrubu = [...new Set(data.value.map(item => item.ItemGroup))];
+                        const kalemTanimi = [...new Set(data.value.map(item => item.ItemName))];
+
+                        $('#kalemGrubuFilter').empty().append(
+                            kalemGrubu.map(group => `<option value="${group}">${group}</option>`)
+                        );
+
+                        $('#kalemTanimiFilter').empty().append(
+                            kalemTanimi.map(name => `<option value="${name}">${name}</option>`)
+                        );
+
+                    } catch (error) {
+                        console.error('Error loading transfers:', error);
+                        alert('Veriler yüklenirken bir hata oluştu.');
+                    } finally {
+                        hideLoading();
+                    }
+                }
+
+                // Shared function for quantity control logic
+                function handleQuantityChange(currentValue, minQty, maxQty, isIncrease) {
+                    currentValue = parseFloat(currentValue) || 0;
+                    minQty = parseFloat(minQty) || 0;
+                    maxQty = parseFloat(maxQty) || 0;
+                    
+                    if (isIncrease) {
+                        // Artırma (+) durumu
+                        if (currentValue === 0 && minQty > 0) {
+                            // 0'dan direkt minimum miktara çık
+                            return Math.min(minQty, maxQty);
+                        } else {
+                            // Normal artış, maksimum stok kontrolü ile
+                            return Math.min(currentValue + 1, maxQty);
+                        }
+                    } else {
+                        // Azaltma (-) durumu
+                        if (currentValue <= minQty) {
+                            // Minimum miktardaysa direkt 0'a in
+                            return 0;
+                        } else {
+                            // Normal azalış
+                            return currentValue - 1;
+                        }
+                    }
+                }
+
+                // Quantity change handlers
+                $('#transferTable').on('click', '.decrease-qty, .increase-qty', function() {
+                    const $button = $(this);
+                    const $input = $button.siblings('.transfer-qty');
+                    const currentValue = parseFloat($input.val()) || 0;
+                    const maxValue = parseFloat($input.attr('max')) || 0;
+                    const minQty = parseFloat($input.data('min')) || 0;
+                    const isIncrease = $button.hasClass('increase-qty');
+                    
+                    const newValue = handleQuantityChange(currentValue, minQty, maxValue, isIncrease);
+                    $input.val(newValue);
+                });
+
+                // Input validation for quantity
+                $('#transferTable').on('change', '.transfer-qty', function() {
+                    const $input = $(this);
+                    const maxValue = parseFloat($input.attr('max')) || 0;
+                    const minQty = parseFloat($input.data('min')) || 0;
+                    const value = parseFloat($input.val()) || 0;
+                    
+                    if (value < 0) {
+                        $input.val(0);
+                    } else if (value > maxValue) {
+                        $input.val(maxValue);
+                        alert('Stok miktarından fazla sipariş verilemez.');
+                    } else if (value > 0 && value < minQty) {
+                        $input.val(minQty);
+                        alert(`Minimum sipariş miktarı ${minQty} olmalıdır.`);
+                    }
+                });
+
+                function generateUUID() {
+                    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                        var r = Math.random() * 16 | 0,
+                            v = c == 'x' ? r : (r & 0x3 | 0x8);
+                        return v.toString(16);
+                    });
+                }
+
+                function showTransferSummaryModal() {
+                    const transferData = [];
+                    
+                    // Get all rows with quantities
+                    table.rows().every(function() {
+                        const rowData = this.data();
+                        const $row = $(this.node());
+                        const quantity = parseFloat($row.find('.transfer-qty').val()) || 0;
+                        
+                        if (quantity > 0) {
+                            transferData.push({
+                                itemCode: rowData.ItemCode,
+                                itemName: rowData.ItemName,
+                                quantity: quantity,
+                                uomCode: rowData.UomCode,
+                                minQty: parseFloat(rowData.MinQty) || 0,
+                                maxQty: parseFloat(rowData.OnHand) || 0,
+                                note: $row.find('.transfer-note').val() || ''
+                            });
+                        }
+                    });
+
+                    if (transferData.length === 0) {
+                        alert('Lütfen en az bir ürün için miktar giriniz.');
+                        return;
+                    }
+
+                    // Populate transfer summary modal
+                    const summaryHtml = transferData.map(item => `
+                        <div class="item-row">
+                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                <div class="item-info">
+                                    <div class="item-name">${item.itemName}</div>
+                                    <div class="item-code">${item.itemCode}</div>
+                                </div>
+                                <div class="quantity-badge">
+                                    <div class="quantity-controls">
+                                        <button type="button" class="decrease-modal-qty" 
+                                                data-item-code="${item.itemCode}" 
+                                                data-min="${item.minQty}"
+                                                data-max="${item.maxQty}">−</button>
+                                        <span class="quantity-value item-quantity">${item.quantity}</span>
+                                        <button type="button" class="increase-modal-qty" 
+                                                data-item-code="${item.itemCode}" 
+                                                data-min="${item.minQty}"
+                                                data-max="${item.maxQty}">+</button>
+                                    </div>
+                                    <span class="ms-2">${item.uomCode}</span>
+                                </div>
+                            </div>
+                            ${item.note ? `<div class="text-muted small">Not: ${item.note}</div>` : ''}
+                        </div>
+                    `).join('');
+
+                    $('#transferSummaryBody').html(summaryHtml);
+                    const modal = new bootstrap.Modal('#transferSummaryModal');
+                    modal.show();
+                }
+
+                $(document).on('click', '.decrease-modal-qty, .increase-modal-qty', function() {
+                    const $button = $(this);
+                    const $quantitySpan = $button.closest('.quantity-controls').find('.quantity-value');
+                    const currentValue = parseFloat($quantitySpan.text()) || 0;
+                    const maxValue = parseFloat($button.data('max')) || 0;
+                    const minQty = parseFloat($button.data('min')) || 0;
+                    const isIncrease = $button.hasClass('increase-modal-qty');
+                    
+                    const newValue = handleQuantityChange(currentValue, minQty, maxValue, isIncrease);
+                    $quantitySpan.text(newValue);
+                    
+                    // Update the original table input
+                    const itemCode = $button.data('item-code');
+                    $(`#transferTable .transfer-qty[data-item-code="${itemCode}"]`).val(newValue);
+                });
+
+                $('#showTransferSummary, #createTransferBtn').click(function() {
+                    showTransferSummaryModal();
+                });
+
+                $('#confirmTransferBtn').click(async function() {
+                    try {
+                        showLoading('Transfer Oluşturuluyor...');
+                        const sessionId = localStorage.getItem('sessionId');
+                        const whsCode = '1010';
+                        const username = 'Orkun';
+                        
+                        const transferItems = [];
+                        
+                        // Collect all items with quantities
+                        table.rows().every(function() {
+                            const rowData = this.data();
+                            const $row = $(this.node());
+                            const quantity = parseFloat($row.find('.transfer-qty').val()) || 0;
+                            const note = $row.find('.transfer-note').val() || '';
+                            
+                            if (quantity > 0) {
+                                transferItems.push({
+                                    U_Type: "TRANSFER",
+                                    U_WhsCode: whsCode,
+                                    U_ItemCode: rowData.ItemCode,
+                                    U_ItemName: rowData.ItemName,
+                                    U_FromWhsCode: rowData.FromWhsCode,
+                                    U_FromWhsName: rowData.FromWhsName,
+                                    U_Quantity: quantity,
+                                    U_UomCode: rowData.UomCode,
+                                    U_Comments: note,
+                                    U_SessionID: sessionId,
+                                    U_GUID: generateUUID(),
+                                    U_User: username
+                                });
+                            }
+                        });
+
+                        if (transferItems.length === 0) {
+                            alert('Lütfen en az bir ürün için miktar giriniz.');
+                            return;
+                        }
+
+                        // Send all transfer items in a single request
+                        console.log('Sending transfer items:', transferItems);
+                        const response = await fetch(`/api/transfer/create?sessionId=${encodeURIComponent(sessionId)}`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify(transferItems)
+                        });
+
+                        if (!response.ok) {
+                            const errorData = await response.json();
+                            throw new Error(errorData.message || 'Transfer oluşturulurken bir hata oluştu');
+                        }
+
+                        const result = await response.json();
+                        console.log('Transfers created:', result);
+
+                        alert('Transfer başarıyla oluşturuldu!');
+                        bootstrap.Modal.getInstance('#transferSummaryModal').hide();
+                        
+                        // Reset quantities and reload table
+                        $('.transfer-qty').val(0);
+                        $('.transfer-note').val('');
+                        await loadTransfers();
+
+                    } catch (error) {
+                        console.error('Error creating transfer:', error);
+                        alert('Transfer oluşturulurken bir hata oluştu: ' + error.message);
+                    } finally {
+                        hideLoading();
+                    }
+                });
+
+                // Initial load
+                await loadTransfers();
+
+            } catch (error) {
+                console.error('Initialization error:', error);
+                alert('Sayfa yüklenirken bir hata oluştu.');
+                hideLoading();
+            }
+        });
+    </script>
+</body>
+</html>
