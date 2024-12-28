@@ -11,10 +11,51 @@
     <link href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css" rel="stylesheet">
     <!-- Custom CSS -->
     <link href="css/style.css" rel="stylesheet">
+    <link href="css/loading.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
+    <style>
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            flex-direction: column;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        .loading-text {
+            font-size: 1.2em;
+            color: #333;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
 </head>
 <body>
+    <!-- Loading Screen -->
+    <div class="loading-screen">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Yükleniyor...</div>
+    </div>
     <div class="d-flex">
         <!-- Sidebar -->
         <div class="sidebar">
@@ -120,222 +161,247 @@
     <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
     <!-- <script src="js/uretim-siparisi-olustur.js"></script> -->
      <script>
+         // Loading Screen Functions
+        function showLoading(message = 'Yükleniyor...') {
+            const loadingScreen = document.querySelector('.loading-screen');
+            const loadingText = loadingScreen.querySelector('.loading-text');
+            loadingText.textContent = message;
+            loadingScreen.classList.remove('d-none');
+            loadingScreen.style.display = 'flex';
+        }
+
+        function hideLoading() {
+            const loadingScreen = document.querySelector('.loading-screen');
+            loadingScreen.style.display = 'none';
+        }
+
          // DataTables initialization
          $(document).ready(async function () {
-             // Generate GUID for this session
-             const sessionGUID = Date.now().toString();
-             console.log('Session GUID:', sessionGUID);
+             try {
+                showLoading('Veriler Yükleniyor...');
+                const sessionId = localStorage.getItem('sessionId');
+                if (!sessionId) {
+                    window.location.href = '/login.html';
+                    return;
+                }
 
-             // Initialize DataTables with empty data first
-             const ordersTable = $('#orderTable').DataTable({
-                 responsive: true,
-                 language: {
-                     "emptyTable": "Tabloda veri bulunmuyor",
-                     "info": "_TOTAL_ kayıttan _START_ - _END_ arası gösteriliyor",
-                     "infoEmpty": "Kayıt yok",
-                     "infoFiltered": "(_MAX_ kayıt içerisinden bulunan)",
-                     "lengthMenu": "Sayfada _MENU_ kayıt göster",
-                     "loadingRecords": "Yükleniyor...",
-                     "processing": "İşleniyor...",
-                     "search": "Ara:",
-                     "zeroRecords": "Eşleşen kayıt bulunamadı",
-                     "paginate": {
-                         "first": "İlk",
-                         "last": "Son",
-                         "next": "Sonraki",
-                         "previous": "Önceki"
-                     }
-                 },
-                 order: [
-                     [2, 'desc']
-                 ], // Sort by order date descending
-                 columnDefs: [{
-                     targets: -1, // Last column (Actions)
-                     orderable: false
-                 }],
-                 processing: true
-             });
+                console.log('Session ID:', sessionId);
 
-             // Function to load orders
-             async function loadOrders() {
-                 try {
-                     const sessionId = localStorage.getItem('sessionId');
-                     if (!sessionId) {
-                         alert('Oturum bilgisi bulunamadı. Lütfen tekrar giriş yapın.');
-                         return;
-                     }
+                // Generate GUID for this session
+                const sessionGUID = Date.now().toString();
+                console.log('Session GUID:', sessionGUID);
 
-                     console.log('Session ID:', sessionId);
+                // Initialize DataTables with empty data first
+                const ordersTable = $('#orderTable').DataTable({
+                    responsive: true,
+                    language: {
+                        "emptyTable": "Tabloda veri bulunmuyor",
+                        "info": "_TOTAL_ kayıttan _START_ - _END_ arası gösteriliyor",
+                        "infoEmpty": "Kayıt yok",
+                        "infoFiltered": "(_MAX_ kayıt içerisinden bulunan)",
+                        "lengthMenu": "Sayfada _MENU_ kayıt göster",
+                        "loadingRecords": "Yükleniyor...",
+                        "processing": "İşleniyor...",
+                        "search": "Ara:",
+                        "zeroRecords": "Eşleşen kayıt bulunamadı",
+                        "paginate": {
+                            "first": "İlk",
+                            "last": "Son",
+                            "next": "Sonraki",
+                            "previous": "Önceki"
+                        }
+                    },
+                    order: [
+                        [2, 'desc']
+                    ], // Sort by order date descending
+                    columnDefs: [{
+                        targets: -1, // Last column (Actions)
+                        orderable: false
+                    }],
+                    processing: true
+                });
 
-                     const response = await fetch('/uretim-siparisleri-list?sessionId=' + sessionId, {
-                         method: 'GET',
-                         credentials: 'include',
-                         headers: {
-                             'Accept': '*/*',
-                             'Content-Type': 'application/json',
-                             'Cookie': `B1SESSION=${sessionId}`
-                         }
-                     });
+                // Function to load orders
+                async function loadOrders() {
+                    try {
+                        const response = await fetch('/uretim-siparisleri-list?sessionId=' + sessionId, {
+                            method: 'GET',
+                            credentials: 'include',
+                            headers: {
+                                'Accept': '*/*',
+                                'Content-Type': 'application/json',
+                                'Cookie': `B1SESSION=${sessionId}`
+                            }
+                        });
 
-                     if (!response.ok) {
-                         throw new Error(`HTTP error! status: ${response.status}`);
-                     }
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
 
-                     const data = await response.json();
-                     console.log('Response:', data);
+                        const data = await response.json();
+                        console.log('Response:', data);
 
-                     if (!data || !data.value) {
-                         console.error('Invalid response format:', data);
-                         alert('Veri formatı geçersiz');
-                         return;
-                     }
+                        if (!data || !data.value) {
+                            console.error('Invalid response format:', data);
+                            alert('Veri formatı geçersiz');
+                            return;
+                        }
 
-                     const orders = data.value;
-                     console.log('Fetched orders:', orders);
+                        const orders = data.value;
+                        console.log('Fetched orders:', orders);
 
-                     // Clear existing data
-                     ordersTable.clear();
+                        // Clear existing data
+                        ordersTable.clear();
 
-                     // "DocDate":"20241213","DocDueDate":"20241213","DocNum":4,"DocStatus":"1","Type":"PROD","WhsCode":"1010"
-                     // Add new data
-                     orders.forEach(order => {
-                         ordersTable.row.add([
-                             order.ItemCode,
-                             order.ItemName,
-                             order.ItemGroup,
-                             order.OnHand,
-                            order.OnHand,
-                            order.MinQty,
-                             `<input type="number" class="form-control" placeholder="Miktar" value="0">`,
-                             order.UomCode
-                         ]);
-                     });
+                        // "DocDate":"20241213","DocDueDate":"20241213","DocNum":4,"DocStatus":"1","Type":"PROD","WhsCode":"1010"
+                        // Add new data
+                        orders.forEach(order => {
+                            ordersTable.row.add([
+                                order.ItemCode,
+                                order.ItemName,
+                                order.ItemGroup,
+                                order.OnHand,
+                                order.OnHand,
+                                order.MinQty,
+                                `<input type="number" class="form-control" placeholder="Miktar" value="0">`,
+                                order.UomCode
+                            ]);
+                        });
 
-                     // Redraw the table
-                     ordersTable.draw();
+                        // Redraw the table
+                        ordersTable.draw();
 
-                 } catch (error) {
-                     console.error('Error fetching orders:', error);
-                     alert('Üretim siparişleri yüklenirken bir hata oluştu.');
-                 }
-             }
+                    } catch (error) {
+                        console.error('Error fetching orders:', error);
+                        alert('Üretim siparişleri yüklenirken bir hata oluştu.');
+                    }
+                }
 
-             // Initial load
-             await loadOrders();
+                // Initial load
+                await loadOrders();
 
-             // Handle order creation
-             $('#createOrder').click(async function() {
-                 try {
-                     const orderData = [];
-                     $('#orderTable tbody tr').each(function() {
-                         const $row = $(this);
-                         const quantity = parseInt($row.find('input[type="number"]').val());
-                         
-                         if (quantity && quantity > 0) {
-                             orderData.push({
-                                 itemCode: $row.find('td:eq(0)').text().trim(),
-                                 itemName: $row.find('td:eq(1)').text().trim(),
-                                 itemGroup: $row.find('td:eq(2)').text().trim(),
-                                 quantity: quantity,
-                                 uomCode: $row.find('td:eq(7)').text().trim(), // Get UOM code from the last column
-                                 guid: sessionGUID // Add the session GUID to the order data
-                             });
-                         }
-                     });
+                // Handle order creation
+                $('#createOrder').click(async function() {
+                    try {
+                        showLoading('Üretim Siparişi Oluşturuluyor...');
+                        const orderData = [];
+                        $('#orderTable tbody tr').each(function() {
+                            const $row = $(this);
+                            const quantity = parseInt($row.find('input[type="number"]').val());
+                            
+                            if (quantity && quantity > 0) {
+                                orderData.push({
+                                    itemCode: $row.find('td:eq(0)').text().trim(),
+                                    itemName: $row.find('td:eq(1)').text().trim(),
+                                    itemGroup: $row.find('td:eq(2)').text().trim(),
+                                    quantity: quantity,
+                                    uomCode: $row.find('td:eq(7)').text().trim(), // Get UOM code from the last column
+                                    guid: sessionGUID // Add the session GUID to the order data
+                                });
+                            }
+                        });
 
-                     if (orderData.length === 0) {
-                         alert('Lütfen en az bir ürün için sipariş miktarı giriniz.');
-                         return;
-                     }
+                        if (orderData.length === 0) {
+                            alert('Lütfen en az bir ürün için sipariş miktarı giriniz.');
+                            return;
+                        }
 
-                     const sessionId = localStorage.getItem('sessionId');
-                     if (!sessionId) {
-                         alert('Oturum bilgisi bulunamadı. Lütfen tekrar giriş yapın.');
-                         return;
-                     }
+                        const sessionId = localStorage.getItem('sessionId');
+                        if (!sessionId) {
+                            alert('Oturum bilgisi bulunamadı. Lütfen tekrar giriş yapın.');
+                            return;
+                        }
 
-                     const response = await fetch('/api/production-orders?sessionId=' + sessionId, {
-                         method: 'POST',
-                         headers: {
-                             'Content-Type': 'application/json',
-                             'Cookie': `B1SESSION=${sessionId}`
-                         },
-                         body: JSON.stringify(orderData)
-                     });
+                        const response = await fetch('/api/production-orders?sessionId=' + sessionId, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Cookie': `B1SESSION=${sessionId}`
+                            },
+                            body: JSON.stringify(orderData)
+                        });
 
-                     console.log('Response:', response);
+                        console.log('Response:', response);
 
-                    //  if (!response.ok) {
-                    //      const errorData = await response.json();
-                    //      throw new Error(errorData.details || 'Sipariş oluşturulurken bir hata oluştu.');
-                    //  }
+                        // if (!response.ok) {
+                        //     const errorData = await response.json();
+                        //     throw new Error(errorData.details || 'Sipariş oluşturulurken bir hata oluştu.');
+                        // }
 
-                     const result = await response.json();
-                     alert('Üretim siparişleri başarıyla oluşturuldu.');
-                     
-                     // Clear all inputs
-                     $('input[type="number"]').val('0');
-                     
-                     // Reload the table
-                    //  await loadOrders();
-                     // redirect to uretim-siparisileri.html
-                     window.location.href = 'uretim-siparisleri.html';
-                     
+                        const result = await response.json();
+                        alert('Üretim siparişleri başarıyla oluşturuldu.');
+                        
+                        // Clear all inputs
+                        $('input[type="number"]').val('0');
+                        
+                        // Reload the table
+                        // await loadOrders();
+                        // redirect to uretim-siparisileri.html
+                        window.location.href = 'uretim-siparisleri.html';
+                        
                     
-                 } catch (error) {
-                     console.error('Error:', error);
-                     alert(error.message || 'Üretim siparişi oluşturulurken bir hata oluştu.');
-                 }
-             });
+                    } catch (error) {
+                        console.error('Error:', error);
+                        alert(error.message || 'Üretim siparişi oluşturulurken bir hata oluştu.');
+                    } finally {
+                        hideLoading();
+                    }
+                });
 
-             // Add custom filtering
-             $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
-                 const supplier = $('select:eq(0)').val();
-                 const status = $('select:eq(1)').val();
-                 const startDate = $('input[type="date"]:eq(0)').val();
-                 const endDate = $('input[type="date"]:eq(1)').val();
+                // Add custom filtering
+                $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+                    const supplier = $('select:eq(0)').val();
+                    const status = $('select:eq(1)').val();
+                    const startDate = $('input[type="date"]:eq(0)').val();
+                    const endDate = $('input[type="date"]:eq(1)').val();
 
-                 // If no filters are set, show all rows
-                 if (!supplier && !status && !startDate && !endDate) {
-                     return true;
-                 }
+                    // If no filters are set, show all rows
+                    if (!supplier && !status && !startDate && !endDate) {
+                        return true;
+                    }
 
-                 let pass = true;
+                    let pass = true;
 
-                 // Supplier filter
-                 if (supplier && data[0].indexOf(supplier) === -1) {
-                     pass = false;
-                 }
+                    // Supplier filter
+                    if (supplier && data[0].indexOf(supplier) === -1) {
+                        pass = false;
+                    }
 
-                 // Status filter
-                 if (status) {
-                     const rowStatus = data[3].toLowerCase();
-                     if (rowStatus.indexOf(status.toLowerCase()) === -1) {
-                         pass = false;
-                     }
-                 }
+                    // Status filter
+                    if (status) {
+                        const rowStatus = data[3].toLowerCase();
+                        if (rowStatus.indexOf(status.toLowerCase()) === -1) {
+                            pass = false;
+                        }
+                    }
 
-                 // Date range filter
-                 if (startDate || endDate) {
-                     const rowDate = new Date(data[2]);
-                     if (startDate && new Date(startDate) > rowDate) {
-                         pass = false;
-                     }
-                     if (endDate && new Date(endDate) < rowDate) {
-                         pass = false;
-                     }
-                 }
-                 return pass;
-             }); // New Order Form handling
+                    // Date range filter
+                    if (startDate || endDate) {
+                        const rowDate = new Date(data[2]);
+                        if (startDate && new Date(startDate) > rowDate) {
+                            pass = false;
+                        }
+                        if (endDate && new Date(endDate) < rowDate) {
+                            pass = false;
+                        }
+                    }
+                    return pass;
+                }); // New Order Form handling
              
   
 
-             // Sidebar toggle for mobile
-             $('#sidebarToggle').click(function () {
-                 $('body').toggleClass('show-sidebar');
-             });
+                // Sidebar toggle for mobile
+                $('#sidebarToggle').click(function () {
+                    $('body').toggleClass('show-sidebar');
+                });
 
-         });
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Veriler yüklenirken bir hata oluştu.');
+            } finally {
+                hideLoading();
+            }
+        });
 
          // Format date for display
          function formatDate(date) {
