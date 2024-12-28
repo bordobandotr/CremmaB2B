@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="tr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -13,6 +14,10 @@
     <link href="css/style.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css"
+        rel="stylesheet" />
     <style>
         #orderSummaryModal .quantity-value {
             font-weight: 500;
@@ -56,8 +61,56 @@
         #orderSummaryModal .quantity-controls button:hover {
             color: #000;
         }
+
+        /* Select2 Custom Styles */
+        .select2-container {
+            width: 100% !important;
+        }
+
+        .select2-container .select2-selection--multiple {
+            min-height: 38px !important;
+            border: 1px solid #ced4da !important;
+            border-radius: 0.375rem !important;
+        }
+
+        .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice {
+            background-color: #e9ecef !important;
+            border: 1px solid #dee2e6 !important;
+            border-radius: 0.25rem !important;
+            padding: 2px 8px !important;
+            margin: 2px !important;
+            font-size: 0.875rem !important;
+        }
+
+        .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice__remove {
+            border: none !important;
+            background: none !important;
+            padding: 0 4px !important;
+            float: right !important;
+            margin-left: 5px !important;
+        }
+
+        .select2-container--bootstrap-5 .select2-dropdown {
+            border-color: #ced4da !important;
+        }
+
+        .select2-container--bootstrap-5 .select2-search__field {
+            border-radius: 0.25rem !important;
+            padding: 4px 8px !important;
+        }
+
+        .select2-container--bootstrap-5 .select2-results__option--highlighted[aria-selected] {
+            background-color: #f8f9fa !important;
+            color: #212529 !important;
+        }
+
+        .select2-container--bootstrap-5 .select2-results__option[aria-selected=true] {
+            background-color: #e9ecef !important;
+            color: #212529 !important;
+        }
     </style>
 </head>
+
 <body>
     <div class="d-flex">
         <!-- Sidebar -->
@@ -66,36 +119,7 @@
                 <h2 class="text-white">CREMMA</h2>
             </div>
             <div id="sidebar-nav">
-                <!-- Navigation menu will be loaded here -->
-                <ul class="nav flex-column">
-                    <li class="nav-item">
-                        <a class="nav-link" href="index.html"><i class="bi bi-house"></i> Anasayfa</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="uretim-siparisleri.html"><i class="bi bi-gear"></i> Üretim Siparişleri</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="dis-tedarik-siparisleri.html"><i class="bi bi-box"></i> Dış Tedarik</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="bi bi-arrow-left-right"></i> Transferler</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="bi bi-building"></i> Ana Depo</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="bi bi-check2-square"></i> Check List</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="bi bi-exclamation-triangle"></i> Fire ve Zayi</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="bi bi-ticket"></i> Ticket</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="#"><i class="bi bi-calculator"></i> Stok Sayımı</a>
-                    </li>
-                </ul>
+                
             </div>
             <div class="user-info position-absolute bottom-0 start-0 p-3 w-100">
                 <div class="d-flex align-items-center">
@@ -132,6 +156,34 @@
                 <div class="card">
                     <div class="card-body">
                         <div class="table-responsive">
+                            <div class="row mb-3">
+                                <div class="col-md-3">
+                                    <label for="itemGroupFilter" class="form-label">Kalem Grubu</label>
+                                    <select id="itemGroupFilter" class="form-select">
+                                        <option value="">Tümü</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="itemNameFilter" class="form-label">Kalem Tanımı</label>
+                                    <select id="itemNameFilter" class="form-select">
+                                        <option value="">Tümü</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="tedarikciFilter" class="form-label">Tedarikçi</label>
+                                    <select id="tedarikciFilter" class="form-select">
+                                        <option value="">Tümü</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-3">
+                                    <label for="stoktaFilter" class="form-label">Stok Durumu</label>
+                                    <select id="stoktaFilter" class="form-select">
+                                        <option value="">Tümü</option>
+                                        <option value="Var">Stokta Var</option>
+                                        <option value="Yok">Stokta Yok</option>
+                                    </select>
+                                </div>
+                            </div>
                             <table id="orderItems" class="table table-hover">
                                 <thead>
                                     <tr>
@@ -144,7 +196,6 @@
                                         <th>Sipariş Miktarı</th>
                                         <th>Ölçü Birimi</th>
                                         <th>Tedarikçi</th>
-                                        <th>Tedarikçi Kodu</th>
                                     </tr>
                                 </thead>
                                 <tbody></tbody>
@@ -173,12 +224,13 @@
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
                 <div class="modal-body pt-2">
-                    <div id="orderSummaryList" class="mb-3">
+                    <div id="orderSummaryItems" class="mb-3">
                         <!-- Sipariş özetleri buraya eklenecek -->
                     </div>
                 </div>
                 <div class="modal-footer border-0 pt-0">
-                    <button type="button" class="btn btn-outline-dark px-4 rounded-pill" data-bs-dismiss="modal">Değiştir</button>
+                    <button type="button" class="btn btn-outline-dark px-4 rounded-pill"
+                        data-bs-dismiss="modal">Değiştir</button>
                     <button type="button" class="btn btn-dark px-4 rounded-pill" id="confirmOrderBtn">Onayla</button>
                 </div>
             </div>
@@ -192,8 +244,10 @@
     <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
     <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
     <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="js/nav-menu.js"></script>
     <script>
-        $(document).ready(async function() {
+        $(document).ready(async function () {
             // Initialize DataTable
             const orderItemsTable = $('#orderItems').DataTable({
                 responsive: true,
@@ -201,47 +255,131 @@
                     { data: 'ItemCode' },
                     { data: 'ItemName' },
                     { data: 'ItemGroup' },
-                    { 
+                    {
                         data: 'OnHand',
-                        render: function(data) {
+                        render: function (data) {
                             return parseFloat(data) > 0 ? 'Var' : 'Yok';
                         }
                     },
-                    { 
+                    {
                         data: 'OnHand',
-                        render: function(data) {
+                        render: function (data) {
                             return parseFloat(data).toFixed(2);
                         }
                     },
-                    { 
+                    {
                         data: 'MinQty',
-                        render: function(data) {
+                        render: function (data) {
                             return parseFloat(data).toFixed(2);
                         }
                     },
-                    { 
+                    {
                         data: null,
-                        render: function(data) {
-                            return `<div class="input-group">
-                                <button class="btn btn-sm btn-secondary decrease-qty" type="button">
-                                    <i class="bi bi-dash"></i>
-                                </button>
-                                <input type="number" class="form-control order-qty" 
-                                    min="0" step="0.01" value="0" data-min="${data.MinQty}" data-item-code="${data.ItemCode}">
-                                <button class="btn btn-sm btn-secondary increase-qty" type="button">
-                                    <i class="bi bi-plus"></i>
-                                </button>
-                            </div>`;
+                        render: function (data) {
+                            return `
+                                <div class="input-group quantity-control">
+                                    <button type="button" class="btn btn-outline-secondary decrease-qty">
+                                        <i class="bi bi-dash"></i>
+                                    </button>
+                                    <input type="number" class="form-control text-center order-qty" 
+                                        value="0" min="0" step="1">
+                                    <button type="button" class="btn btn-outline-secondary increase-qty">
+                                        <i class="bi bi-plus"></i>
+                                    </button>
+                                </div>`;
                         }
                     },
                     { data: 'UomCode' },
-                    { data: 'CardName' },
-                    { data: 'CardCode' }
+                    { data: 'CardName' }
                 ],
                 order: [[0, 'asc']],
                 language: {
                     url: 'js/datatables-tr.json'
                 }
+            });
+
+            // Function to populate filters
+            async function populateFilters(selectedGroup = '') {
+                const items = orderItemsTable.data().toArray();
+                
+                // Filter items based on selected group
+                const filteredItems = selectedGroup 
+                    ? items.filter(item => item.ItemGroup === selectedGroup)
+                    : items;
+                
+                // Get unique values for each filter
+                const itemGroups = [...new Set(items.map(item => item.ItemGroup))];
+                const itemNames = [...new Set(filteredItems.map(item => item.ItemName))];
+                const suppliers = [...new Set(filteredItems.map(item => item.CardName))];
+                
+                // Populate item group filter
+                const itemGroupFilter = $('#itemGroupFilter');
+                if (!selectedGroup) {
+                    itemGroupFilter.empty().append('<option value="">Tümü</option>');
+                    itemGroups.forEach(group => {
+                        if (group) {
+                            itemGroupFilter.append(`<option value="${group}">${group}</option>`);
+                        }
+                    });
+                }
+
+                // Populate item name filter
+                const itemNameFilter = $('#itemNameFilter');
+                itemNameFilter.empty().append('<option value="">Tümü</option>');
+                itemNames.forEach(name => {
+                    if (name) {
+                        itemNameFilter.append(`<option value="${name}">${name}</option>`);
+                    }
+                });
+
+                // Populate supplier filter
+                const supplierFilter = $('#tedarikciFilter');
+                supplierFilter.empty().append('<option value="">Tümü</option>');
+                suppliers.forEach(supplier => {
+                    if (supplier) {
+                        supplierFilter.append(`<option value="${supplier}">${supplier}</option>`);
+                    }
+                });
+            }
+
+            // Add filter change event listeners
+            $('#itemGroupFilter').on('change', function() {
+                const itemGroupVal = $(this).val();
+                
+                // Reset other filters
+                $('#itemNameFilter, #tedarikciFilter').val('').trigger('change');
+                
+                // Repopulate filters based on selected group
+                populateFilters(itemGroupVal);
+                
+                // Apply group filter to table
+                orderItemsTable.column(2).search(itemGroupVal).draw();
+            });
+
+            $('#itemNameFilter, #tedarikciFilter, #stoktaFilter').on('change', function() {
+                const itemGroupVal = $('#itemGroupFilter').val();
+                const itemNameVal = $('#itemNameFilter').val();
+                const tedarikciVal = $('#tedarikciFilter').val();
+                const stoktaVal = $('#stoktaFilter').val();
+                
+                // Reset all searches except item group
+                orderItemsTable.columns().search('');
+                
+                // Apply filters
+                if (itemGroupVal) {
+                    orderItemsTable.column(2).search(itemGroupVal);
+                }
+                if (itemNameVal) {
+                    orderItemsTable.column(1).search(itemNameVal);
+                }
+                if (tedarikciVal) {
+                    orderItemsTable.column(8).search(tedarikciVal);
+                }
+                if (stoktaVal) {
+                    orderItemsTable.column(3).search(stoktaVal);
+                }
+                
+                orderItemsTable.draw();
             });
 
             // Load items
@@ -251,14 +389,16 @@
 
                 console.log('whsCode:', whsCode);
                 console.log('sessionId:', sessionId);
-                
+
                 const response = await fetch(`/api/supply-items-list/${whsCode}?sessionId=${sessionId}`);
 
-                console.log('Veriler yükleniyor...',response);
-
+                console.log('Veriler yükleniyor...', response);
 
                 const data = await response.json();
                 orderItemsTable.clear().rows.add(data.value).draw();
+
+                // Call populateFilters after data load
+                populateFilters();
 
                 // Miktar kontrolü için ortak fonksiyon
                 function handleQuantityChange(currentValue, minQty, isIncrease) {
@@ -284,7 +424,7 @@
                 }
 
                 // Handle quantity buttons in the table
-                $('#orderItems').on('click', '.increase-qty, .decrease-qty', function() {
+                $('#orderItems').on('click', '.increase-qty, .decrease-qty', function () {
                     const input = $(this).closest('.input-group').find('.order-qty');
                     const currentValue = parseFloat(input.val()) || 0;
                     const minQty = parseFloat(input.data('min')) || 0;
@@ -292,17 +432,17 @@
                     const isIncrease = $(this).hasClass('increase-qty');
 
                     const newValue = handleQuantityChange(currentValue, minQty, isIncrease);
-                    
+
                     if (currentValue === 0 && newValue > 0) {
                         const rowData = orderItemsTable.row($(this).closest('tr')).data();
                         // alert(`${rowData[1]} için minimum sipariş miktarı ${minQty}'dir.`);
                     }
-                    
+
                     input.val(newValue);
                 });
 
                 // Handle quantity input changes
-                $('#orderItems').on('input', '.order-qty', function() {
+                $('#orderItems').on('input', '.order-qty', function () {
                     validateOrder();
                 });
             } catch (error) {
@@ -313,22 +453,22 @@
             // Function to show order summary modal
             function showOrderSummaryModal() {
                 const orderData = [];
-                
+
                 // Get all rows with quantities
-                orderItemsTable.rows().every(function() {
-                    const rowData = this.data();
-                    const $row = $(this.node());
-                    const quantity = parseFloat($row.find('.order-qty').val()) || 0;
-                    
+                $('#orderItems .order-qty').each(function () {
+                    const quantity = parseFloat($(this).val()) || 0;
                     if (quantity > 0) {
+                        const $row = $(this).closest('tr');
+                        const rowData = orderItemsTable.row($row).data();
+
                         orderData.push({
                             itemCode: rowData.ItemCode,
                             itemName: rowData.ItemName,
                             quantity: quantity,
                             uomCode: rowData.UomCode,
                             minQty: parseFloat(rowData.MinQty) || 0,
-                            cardCode: rowData.CardCode,
-                            cardName: rowData.CardName,
+                            cardCode: rowData.CardCode || 'TDK1',
+                            cardName: rowData.CardName || 'Tedarikci',
                             whsCode: '1010'
                         });
                     }
@@ -346,43 +486,41 @@
                             <div>
                                 <div class="fw-bold item-name">${item.itemName}</div>
                                 <div class="text-muted small item-code">${item.itemCode}</div>
-                                <div class="d-none card-code">${item.cardCode || 'TDK1'}</div>
-                                <div class="d-none card-name">${item.cardName || 'Tedarikci'}</div>
-                                <div class="d-none whs-code">${item.whsCode || '1010'}</div>
+                                <div class="d-none card-code">${item.cardCode}</div>
+                                <div class="d-none card-name">${item.cardName}</div>
+                                <div class="d-none whs-code">${item.whsCode}</div>
                             </div>
-                            <div class="quantity-badge">
-                                <div class="quantity-controls">
-                                    <button type="button" class="decrease-modal-qty" data-item-code="${item.itemCode}" data-min="${item.minQty}">−</button>
-                                    <span class="quantity-value">${item.quantity}</span>
-                                    <button type="button" class="increase-modal-qty" data-item-code="${item.itemCode}" data-min="${item.minQty}">+</button>
+                            <div class="d-flex align-items-center">
+                                <div class="input-group input-group-sm quantity-control" style="width: 120px;">
+                                    <button type="button" class="btn btn-outline-secondary decrease-modal-qty" data-item-code="${item.itemCode}" data-min="${item.minQty}">-</button>
+                                    <input type="number" class="form-control text-center modal-qty" value="${item.quantity}" min="0" data-item-code="${item.itemCode}" data-min="${item.minQty}">
+                                    <button type="button" class="btn btn-outline-secondary increase-modal-qty" data-item-code="${item.itemCode}" data-min="${item.minQty}">+</button>
                                 </div>
-                                <span class="ms-2 uom-code">${item.uomCode}</span>
+                                <span class="ms-2">${item.uomCode}</span>
                             </div>
                         </div>
                     </div>
                 `).join('');
 
-                $('#orderSummaryList').html(summaryHtml);
-                
-                const modal = new bootstrap.Modal(document.getElementById('orderSummaryModal'));
-                modal.show();
+                $('#orderSummaryItems').html(summaryHtml);
+                $('#orderSummaryModal').modal('show');
             }
 
             // Show summary when clicking create order button
-            $('#createOrderBtn').click(function() {
+            $('#createOrderBtn').click(function () {
                 showOrderSummaryModal();
             });
 
             // Handle quantity changes in modal
-            $(document).on('click', '.decrease-modal-qty, .increase-modal-qty', function() {
+            $(document).on('click', '.decrease-modal-qty, .increase-modal-qty', function () {
                 const $button = $(this);
                 const itemCode = $button.data('item-code');
                 const minQty = parseFloat($button.data('min')) || 0;
                 const isIncrease = $button.hasClass('increase-modal-qty');
-                
-                const $qtySpan = $button.siblings('.quantity-value');
-                const currentValue = parseFloat($qtySpan.text()) || 0;
-                
+
+                const $qtyInput = $button.siblings('.modal-qty');
+                const currentValue = parseFloat($qtyInput.val()) || 0;
+
                 let newValue;
                 if (isIncrease) {
                     if (currentValue === 0) {
@@ -397,9 +535,9 @@
                         newValue = currentValue - 1;
                     }
                 }
-                
-                $qtySpan.text(newValue);
-                
+
+                $qtyInput.val(newValue);
+
                 // Update the main table quantity
                 const $tableInput = $(`.order-qty[data-item-code="${itemCode}"]`);
                 $tableInput.val(newValue);
@@ -407,38 +545,67 @@
                 // If quantity becomes 0, remove the row
                 if (newValue === 0) {
                     $button.closest('.item-row').remove();
-                    
+
                     // If no items left, close modal
-                    if ($('#orderSummaryList .item-row').length === 0) {
+                    if ($('#orderSummaryItems .item-row').length === 0) {
                         $('#orderSummaryModal').modal('hide');
                     }
                 }
             });
 
+            // Generate UUID function
+            function generateUUID() {
+                return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                    var r = Math.random() * 16 | 0,
+                        v = c == 'x' ? r : (r & 0x3 | 0x8);
+                    return v.toString(16);
+                });
+            }
+
             // Handle order confirmation
             $('#confirmOrderBtn').click(async function() {
                 try {
                     const sessionId = localStorage.getItem('sessionId');
-                    
+                    const orderGuid = generateUUID(); // Generate a single GUID for all items
+
                     const orderItems = [];
-                    $('#orderSummaryList .item-row').each(function() {
+                    $('#orderSummaryItems .item-row').each(function() {
                         const $row = $(this);
                         
+                        // Get all required values and trim them
+                        const whsCode = $row.find('.whs-code').text().trim();
+                        const itemCode = $row.find('.item-code').text().trim();
+                        const itemName = $row.find('.item-name').text().trim();
+                        const cardCode = $row.find('.card-code').text().trim();
+                        const cardName = $row.find('.card-name').text().trim();
+                        const uomCode = $row.find('.ms-2').text().trim();
+                        const quantity = parseFloat($row.find('.modal-qty').val()) || 0;
+
+                        // Validate that all required fields have values
+                        if (!whsCode || !itemCode || !itemName || !cardCode || !cardName || !uomCode || !quantity) {
+                            throw new Error('Eksik bilgi var. Lütfen tüm alanların dolu olduğundan emin olun.');
+                        }
+
                         orderItems.push({
                             U_Type: "SUPPLY",
-                            U_WhsCode: $row.find('.whs-code').text(),
-                            U_ItemCode: $row.find('.item-code').text(),
-                            U_ItemName: $row.find('.item-name').text(),
-                            U_Quantity: parseFloat($row.find('.quantity-value').text()),
-                            U_UomCode: $row.find('.uom-code').text(),
-                            U_CardCode: $row.find('.card-code').text(),
-                            U_CardName: $row.find('.card-name').text(),
-                            U_SessionID: sessionId,
-                            U_User: "MANAGER"
+                            U_WhsCode: whsCode,
+                            U_ItemCode: itemCode,
+                            U_ItemName: itemName,
+                            U_Quantity: quantity,
+                            U_UomCode: uomCode,
+                            U_CardCode: cardCode,
+                            U_CardName: cardName,
+                            U_GUID: orderGuid,
+                            U_User: localStorage.getItem('username') || 'Orkun'
                         });
                     });
 
-                    console.log('Sipariş oluşturuluyor...', orderItems);
+                    if (orderItems.length === 0) {
+                        alert('Lütfen en az bir ürün için miktar giriniz.');
+                        return;
+                    }
+
+                    console.log('Sending order items:', orderItems); // Debug log
 
                     const response = await fetch('/api/supply-order?sessionId=' + sessionId, {
                         method: 'POST',
@@ -454,98 +621,22 @@
                     }
 
                     const result = await response.json();
-                    console.log('Sipariş sonucu:', result);
                     
                     // Close modal and reset form
                     $('#orderSummaryModal').modal('hide');
                     orderItemsTable.clear().draw();
-                    await loadItems();
                     
                     alert('Sipariş başarıyla oluşturuldu!');
+
+                    // Clear quantities and reload orders
+                    // redirect to uretim-siparisi-olustur.html
+                    window.location.href = 'dis-tedarik-siparisleri.html';
                 } catch (error) {
                     console.error('Error:', error);
-                    alert(error.message);
-                }
-            });
-
-            // Handle submit button click
-            $('#submitOrder').click(async function() {
-                if (!confirm('Siparişi oluşturmak istediğinize emin misiniz?')) {
-                    return;
-                }
-
-                try {
-                    // Get all rows from the table
-                    const orderItems = [];
-                    const table = $('#orderItems').DataTable();
-                    
-                    table.rows().every(function() {
-                        const data = this.data();
-                        const row = $(this.node());
-                        
-                        // Get input values for this row
-                        const quantity = parseFloat(row.find('.order-qty').val() || 0);
-                        
-                        if (quantity > 0) {
-                            orderItems.push({
-                                WhsCode: api.getWhsCode(),
-                                ItemCode: data.ItemCode,
-                                ItemName: data.ItemName,
-                                Quantity: quantity,
-                                UomCode: data.UomCode,
-                                CardCode: data.CardCode,
-                                CardName: data.CardName
-                            });
-                        }
-                    });
-
-                    if (orderItems.length === 0) {
-                        throw new Error('Lütfen en az bir kalem için sipariş miktarı girin');
-                    }
-
-                    // Disable submit button
-                    $('#submitOrder').prop('disabled', true);
-
-                    // Send all items in a single request
-                    const response = await fetch('/api/supply-order', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            sessionId: api.getSessionId(),
-                            items: orderItems
-                        })
-                    });
-
-                    if (!response.ok) {
-                        throw new Error('Sipariş oluşturulurken bir hata oluştu');
-                    }
-
-                    const result = await response.json();
-                    
-                    if (result.success) {
-                        alert('Sipariş başarıyla oluşturuldu');
-                        window.location.href = 'dis-tedarik-siparisleri.html';
-                    } else {
-                        throw new Error(result.error || 'Sipariş oluşturulurken bir hata oluştu');
-                    }
-
-                } catch (error) {
-                    console.error('Sipariş oluşturulurken hata:', error);
-                    alert('Sipariş oluşturulurken bir hata oluştu. Lütfen daha sonra tekrar deneyin.');
-                    $('#submitOrder').prop('disabled', false);
+                    alert('Sipariş oluşturulurken bir hata oluştu: ' + error.message);
                 }
             });
         });
-
-        // Function to validate order
-        function validateOrder() {
-            const hasQuantity = [...document.querySelectorAll('.order-qty')]
-                .some(input => parseFloat(input.value || 0) > 0);
-            
-            $('#submitOrder').prop('disabled', !hasQuantity);
-        }
     </script>
     <script src="js/api.js"></script>
 </body>

@@ -68,6 +68,14 @@ app.options('/b1s/v1/*', (req, res) => {
 // Create the proxy middleware
 app.use('/b1s/v1/*', createProxyMiddleware(proxyOptions));
 
+function generateGUID() {
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
+    var r = (Math.random() * 16) | 0,
+      v = c == "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+}
+
 // Test route using axiosInstance with pagination
 app.get('/test', async (req, res) => {
     const sessionId = req.query.sessionId;
@@ -403,45 +411,75 @@ app.post('/api/delivery-submit/:docNum', async (req, res) => {
     }
 });
 
-function generateGUID() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-        var r = Math.random() * 16 | 0,
-            v = c == 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-    });
-}
 
-// // External Supply Order endpoints
-// app.get("/api/supply-orders", async (req, res) => {
-//     const sessionId = req.query.sessionId;
-//     const whsCode = '1010';
 
-//     console.log("sessionId:", sessionId);
-//     console.log("whsCode:", whsCode);
+// External Supply Order endpoints
+app.get("/api/supply-orders", async (req, res) => {
+    const sessionId = req.query.sessionId;
+    const whsCode = '1010';
+
+    console.log("sessionId:", sessionId);
+    console.log("whsCode:", whsCode);
  
     
-//     try {
-//         const response = await axiosInstance.get(
-//             "https://10.21.22.11:50000/b1s/v1/SQLQueries('OPOR_LIST')/List",
-//             {
-//                 params: {
-//                     value1: "'SUPPLY'",
-//                     value2: `'${whsCode}'`,
-//                 },
-//                 headers: {
-//                     Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
-//                     "Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
-//                 },
-//             }
-//         );
-//         res.json(response.data);
-//     } catch (error) {
-//         console.error("Error:", error.message);
-//         res.status(500).json({ error: error.message });
-//     }
-// });
+    try {
+        const response = await axiosInstance.get(
+            "https://10.21.22.11:50000/b1s/v1/SQLQueries('OPOR_LIST')/List",
+            {
+                params: {
+                    value1: "'SUPPLY'",
+                    value2: `'${whsCode}'`,
+                },
+                headers: {
+                    Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+                    "Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
+                },
+            }
+        );
+        console.log("Response for whsCode:", whsCode, response.data);
+        res.json(response.data);
+    } catch (error) {
+        console.error("Error:", error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+
+app.get("/api/supply-detail-order/:docNum", async (req, res) => {
+  console.log("ewqeqweqw");
+  const sessionId = req.query.sessionId;
+  const docNum = req.params.docNum;
+
+  console.log("sessionId:", sessionId);
+  console.log("docNum:", docNum);
+
+  try {
+    const response = await axiosInstance.get(
+      "https://10.21.22.11:50000/b1s/v1/SQLQueries('OPDN_NEW')/List",
+      {
+        params: {
+          value1: "'SUPPLY'",
+          value2: `'${docNum}'`,
+        },
+        headers: {
+          Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+          "Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
+        },
+      }
+    );
+
+    console.log("Response for docNum:", docNum, response.data);
+
+    res.json(response.data);
+  } catch (error) {
+    console.error("Error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
 
 app.get("/api/supply-order/:docNum", async (req, res) => {
+    console.log("ewqeqweqw");
     const sessionId = req.query.sessionId;
     const docNum = req.params.docNum;
 
@@ -535,7 +573,7 @@ app.get("/api/supply-delivery/:docNum", async (req, res) => {
     console.log("sessionId:", sessionId);
     console.log("docNum:", docNum);
 
-    return
+    
 
     try {
         const response = await axiosInstance.get(
@@ -561,35 +599,37 @@ app.get("/api/supply-delivery/:docNum", async (req, res) => {
 
 app.post("/api/supply-delivery/:docNum", async (req, res) => {
     const { docNum } = req.params;
-    const { sessionId, commonData, items } = req.body;
+    const { sessionId, items } = req.body;
 
     console.log("Processing delivery for docNum:", docNum);
-    console.log("Common data:", commonData);
-    console.log("Items:", items);
+    console.log("Using sessionId:", sessionId);
+    console.log("Items:", items); 
+ 
 
     try {
         const guid = generateGUID(); // Tek bir GUID oluştur
-        const deliveryRequests = items.map(item => ({
-            U_Type: "SUPPLY",
-            U_DocNum: docNum,
-            U_SessionID: sessionId,
-            U_GUID: guid, // Aynı GUID'i kullan
-            U_User: "Orkun",
-            U_WhsCode: item.WhsCode,
-            U_CarName: item.CardName,
-            U_DocDate: commonData.DocDate,
-            U_NumAtCard: commonData.NumAtCard,
-            U_ItemCode: item.ItemCode,
-            U_ItemName: item.ItemName,
-            U_Quantity: item.Quantity,
-            U_DeliveryQty: item.DeliveryQty,
-            U_MissingQty: item.MissingQty,
-            U_DefectiveQty: item.DefectiveQty,
-            U_UomCode: item.UomCode,
-            U_Comments: commonData.Comments || '',
-            U_Image: '',
-            U_LineNum: item.LineNum
+        const deliveryRequests = items.map((item) => ({
+          U_Type: "SUPPLY",
+          U_WhsCode: item.U_WhsCode,
+          U_CardName: item.U_CarName,
+          U_DocDate: item.U_DocDate,
+          U_DocNum: docNum,
+          U_NumAtCard: item.U_NumAtCard,
+          U_ItemCode: item.U_ItemCode,
+          U_ItemName: item.U_ItemName,
+          U_Quantity: item.U_Quantity,
+          U_DeliveryQty: item.U_DeliveryQty,
+          U_MissingQty: item.U_MissingQty,
+          U_DefectiveQty: item.U_DefectiveQty,
+          U_UomCode: item.U_UomCode,
+          U_Comments: item.U_Comments,
+          U_Image: "",
+          U_SessionID: sessionId,
+          U_GUID: guid, // Aynı GUID'i kullan
+          U_User: "Orkun",
+          U_LineNum: item.U_LineNum,
         }));
+ 
 
         console.log("Sending delivery requests with GUID:", guid);
 
@@ -670,38 +710,57 @@ app.post("/api/supply-order", async (req, res) => {
     console.log("supply-order Processing supply order for items:", items);
     console.log("supply-order Using sessionId:", sessionId);
 
+    
     try {
+        const guid = generateGUID(); // Tek bir GUID oluştur
         const responses = [];
 
+
+       
+        // Her ürün için sipariş oluştur
         for (const item of items) {
-            console.log("Creating order with data:", item);
-
             const response = await axiosInstance.post(
-                "https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_OPOR",
-                item,
-                {
-                    headers: {
-                        Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
-                        "Content-Type": "application/json"
-                    }
-                }
+              "https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_OPOR",
+              {
+                U_Type: "SUPPLY",
+                U_WhsCode: item.U_WhsCode,
+                U_ItemCode: item.U_ItemCode,
+                U_ItemName: item.U_ItemName,
+                U_Quantity: item.U_Quantity,
+                U_UomCode: item.U_UomCode,
+                U_CardCode: item.U_CardCode,
+                U_CardName: item.U_CardName,
+                U_SessionID: sessionId,
+                U_GUID: guid + "_" + item.U_CardCode, // Aynı GUID'i kullan
+                U_User: "Orkun",
+              },
+              {
+                headers: {
+                  Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+                  "Content-Type": "application/json",
+                },
+              }
             );
-
+            
+            console.log(`Response for item request:`, response.data);
             responses.push(response.data);
-            console.log(`Supply order created for item ${item.U_ItemCode}`);
+            // console.log(`Supply order created for item ${item.ItemCode} with GUID: ${guid}`);
         }
 
-        console.log("Successfully created orders:", responses);
+        console.log(`Successfully created orders for ${responses}`);
 
         res.json({
             success: true,
             message: `Successfully created orders for ${responses.length} items`,
-            data: responses
+            guid: guid,
+            results: responses
         });
     } catch (error) {
-        console.error("Error creating supply order:", error.response?.data || error.message);
+        console.error("Error creating supply order:", error);
         res.status(500).json({ 
-            error: error.response?.data?.error?.message || error.message 
+            success: false,
+            error: error.message,
+            details: error.response?.data || 'Unknown error occurred'
         });
     }
 });
