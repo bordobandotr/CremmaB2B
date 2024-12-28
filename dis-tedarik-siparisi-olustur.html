@@ -159,19 +159,19 @@
                             <div class="row mb-3">
                                 <div class="col-md-3">
                                     <label for="itemGroupFilter" class="form-label">Kalem Grubu</label>
-                                    <select id="itemGroupFilter" class="form-select">
+                                    <select id="itemGroupFilter" class="form-select" multiple>
                                         <option value="">Tümü</option>
                                     </select>
                                 </div>
                                 <div class="col-md-3">
                                     <label for="itemNameFilter" class="form-label">Kalem Tanımı</label>
-                                    <select id="itemNameFilter" class="form-select">
+                                    <select id="itemNameFilter" class="form-select" multiple>
                                         <option value="">Tümü</option>
                                     </select>
                                 </div>
                                 <div class="col-md-3">
                                     <label for="tedarikciFilter" class="form-label">Tedarikçi</label>
-                                    <select id="tedarikciFilter" class="form-select">
+                                    <select id="tedarikciFilter" class="form-select" multiple>
                                         <option value="">Tümü</option>
                                     </select>
                                 </div>
@@ -299,12 +299,12 @@
             });
 
             // Function to populate filters
-            async function populateFilters(selectedGroup = '') {
+            async function populateFilters(selectedGroups = []) {
                 const items = orderItemsTable.data().toArray();
                 
-                // Filter items based on selected group
-                const filteredItems = selectedGroup 
-                    ? items.filter(item => item.ItemGroup === selectedGroup)
+                // Filter items based on selected groups
+                const filteredItems = selectedGroups.length > 0
+                    ? items.filter(item => selectedGroups.includes(item.ItemGroup))
                     : items;
                 
                 // Get unique values for each filter
@@ -312,68 +312,87 @@
                 const itemNames = [...new Set(filteredItems.map(item => item.ItemName))];
                 const suppliers = [...new Set(filteredItems.map(item => item.CardName))];
                 
-                // Populate item group filter
-                const itemGroupFilter = $('#itemGroupFilter');
-                if (!selectedGroup) {
-                    itemGroupFilter.empty().append('<option value="">Tümü</option>');
+                // Initialize Select2 for multiple select filters
+                $('#itemGroupFilter, #itemNameFilter, #tedarikciFilter').select2({
+                    theme: 'bootstrap-5',
+                    width: '100%',
+                    placeholder: 'Seçiniz...',
+                    allowClear: true,
+                    language: {
+                        noResults: function() {
+                            return 'Sonuç bulunamadı';
+                        }
+                    }
+                });
+                
+                // Populate item group filter if not already populated
+                if (!selectedGroups.length) {
+                    const itemGroupFilter = $('#itemGroupFilter');
+                    itemGroupFilter.empty();
                     itemGroups.forEach(group => {
                         if (group) {
-                            itemGroupFilter.append(`<option value="${group}">${group}</option>`);
+                            itemGroupFilter.append(new Option(group, group, false, false));
                         }
                     });
                 }
 
                 // Populate item name filter
                 const itemNameFilter = $('#itemNameFilter');
-                itemNameFilter.empty().append('<option value="">Tümü</option>');
+                itemNameFilter.empty();
                 itemNames.forEach(name => {
                     if (name) {
-                        itemNameFilter.append(`<option value="${name}">${name}</option>`);
+                        itemNameFilter.append(new Option(name, name, false, false));
                     }
                 });
 
                 // Populate supplier filter
                 const supplierFilter = $('#tedarikciFilter');
-                supplierFilter.empty().append('<option value="">Tümü</option>');
+                supplierFilter.empty();
                 suppliers.forEach(supplier => {
                     if (supplier) {
-                        supplierFilter.append(`<option value="${supplier}">${supplier}</option>`);
+                        supplierFilter.append(new Option(supplier, supplier, false, false));
                     }
                 });
             }
 
             // Add filter change event listeners
             $('#itemGroupFilter').on('change', function() {
-                const itemGroupVal = $(this).val();
+                const selectedGroups = $(this).val() || [];
                 
                 // Reset other filters
-                $('#itemNameFilter, #tedarikciFilter').val('').trigger('change');
+                $('#itemNameFilter, #tedarikciFilter').val(null).trigger('change');
                 
-                // Repopulate filters based on selected group
-                populateFilters(itemGroupVal);
+                // Repopulate filters based on selected groups
+                populateFilters(selectedGroups);
                 
                 // Apply group filter to table
-                orderItemsTable.column(2).search(itemGroupVal).draw();
+                const groupFilter = selectedGroups.length > 0 
+                    ? selectedGroups.map(group => `^${group}$`).join('|')
+                    : '';
+                orderItemsTable.column(2).search(groupFilter, true, false).draw();
             });
 
             $('#itemNameFilter, #tedarikciFilter, #stoktaFilter').on('change', function() {
-                const itemGroupVal = $('#itemGroupFilter').val();
-                const itemNameVal = $('#itemNameFilter').val();
-                const tedarikciVal = $('#tedarikciFilter').val();
+                const selectedGroups = $('#itemGroupFilter').val() || [];
+                const selectedNames = $('#itemNameFilter').val() || [];
+                const selectedSuppliers = $('#tedarikciFilter').val() || [];
                 const stoktaVal = $('#stoktaFilter').val();
                 
-                // Reset all searches except item group
+                // Reset all searches
                 orderItemsTable.columns().search('');
                 
-                // Apply filters
-                if (itemGroupVal) {
-                    orderItemsTable.column(2).search(itemGroupVal);
+                // Apply filters using regex for multiple selections
+                if (selectedGroups.length > 0) {
+                    const groupFilter = selectedGroups.map(group => `^${group}$`).join('|');
+                    orderItemsTable.column(2).search(groupFilter, true, false);
                 }
-                if (itemNameVal) {
-                    orderItemsTable.column(1).search(itemNameVal);
+                if (selectedNames.length > 0) {
+                    const nameFilter = selectedNames.map(name => `^${name}$`).join('|');
+                    orderItemsTable.column(1).search(nameFilter, true, false);
                 }
-                if (tedarikciVal) {
-                    orderItemsTable.column(8).search(tedarikciVal);
+                if (selectedSuppliers.length > 0) {
+                    const supplierFilter = selectedSuppliers.map(supplier => `^${supplier}$`).join('|');
+                    orderItemsTable.column(8).search(supplierFilter, true, false);
                 }
                 if (stoktaVal) {
                     orderItemsTable.column(3).search(stoktaVal);
