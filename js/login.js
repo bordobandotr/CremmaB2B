@@ -1,23 +1,22 @@
 document.getElementById('loginForm').addEventListener('submit', async function(e) {
     e.preventDefault();
     
-// window.location.href = "index.html";
-
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
     const errorMessage = document.getElementById('errorMessage');
+
+    console.log('Login attempt for username:', username);
     
     try {
-        console.log('Attempting login with:', { username, CompanyDB: "CREMMA_TEST_111224" });
-        
-        const response = await axios.post(
-          "/b1s/v1/Login",
-          {
+        const response = await axios.post('/b1s/v1/Login', {
             UserName: username,
             Password: password,
-            CompanyDB: "CREMMA_TEST_111224",
-          }
-        );
+            CompanyDB: "CREMMA_TEST_111224"
+        }, {
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
 
         console.log('Login response:', response);
 

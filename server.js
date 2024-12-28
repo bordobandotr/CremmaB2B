@@ -25,10 +25,11 @@ const proxyOptions = {
     changeOrigin: true,
     secure: false, // SSL sertifikası doğrulamasını devre dışı bırak
     onProxyReq: (proxyReq, req, res) => {
-        // Get the session cookie from the original request
-        const b1Session = req.headers.cookie;
-        if (b1Session) {
-            proxyReq.setHeader('Cookie', b1Session);
+        if (req.body) {
+            const bodyData = JSON.stringify(req.body);
+            proxyReq.setHeader('Content-Type', 'application/json');
+            proxyReq.setHeader('Content-Length', Buffer.byteLength(bodyData));
+            proxyReq.write(bodyData);
         }
         
         // Log the request for debugging
@@ -36,7 +37,7 @@ const proxyOptions = {
             method: req.method,
             path: req.path,
             body: req.body,
-            cookie: b1Session
+            headers: proxyReq.getHeaders()
         });
     },
     onProxyRes: (proxyRes, req, res) => {
@@ -65,7 +66,7 @@ app.options('/b1s/v1/*', (req, res) => {
 });
 
 // Create the proxy middleware
-app.use('/b1s/v1', createProxyMiddleware(proxyOptions));
+app.use('/b1s/v1/*', createProxyMiddleware(proxyOptions));
 
 // Test route using axiosInstance
 app.get('/test', async (req, res) => {
@@ -449,39 +450,40 @@ app.get("/api/supply-items", async (req, res) => {
     }
 });
 
-app.post("/api/supply-order", async (req, res) => {
-    const { sessionId, orderData } = req.body;
+// app.post("/api/supply-order", async (req, res) => {
+//     const { sessionId, orderData } = req.body;
 
-    console.log("Processing order for WhsCode:", orderData.WhsCode);
-    console.log("Order data:", orderData);
+//     console.log("Processing order for WhsCode:", orderData.WhsCode);
+//     console.log("Order data:", orderData);
  
 
-    try {
-        const response = await axiosInstance.post(
-          "https://10.21.22.11:50000/b1s/v1/SQLQueries('OPOR_NEW')/List",
-          orderData,
-          {
-            params: {
-              value1: "'SUPPLY'",
-              value2: `'${orderData.WhsCode}'`,
-            },
-            headers: {
-              Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
-              "Content-Type": "application/json",
-            },
-          }
-        );
-        res.json(response.data);
-    } catch (error) {
-        console.error("Error:", error.message);
-        res.status(500).json({ error: error.message });
-    }
-});
+//     try {
+//         const response = await axiosInstance.post(
+//           "https://10.21.22.11:50000/b1s/v1/SQLQueries('OPOR_NEW')/List",
+//           orderData,
+//           {
+//             params: {
+//               value1: "'SUPPLY'",
+//               value2: `'${orderData.WhsCode}'`,
+//             },
+//             headers: {
+//               Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+//               "Content-Type": "application/json",
+//             },
+//           }
+//         );
+//         res.json(response.data);
+//     } catch (error) {
+//         console.error("Error:", error.message);
+//         res.status(500).json({ error: error.message });
+//     }
+// });
 
 app.get("/api/supply-delivery/:docNum", async (req, res) => {
     const sessionId = req.query.sessionId;
     const docNum = req.params.docNum;
 
+    console.log("Getting delivery details for docNum:", docNum);
     console.log("sessionId:", sessionId);
     console.log("docNum:", docNum);
 
@@ -511,48 +513,197 @@ app.get("/api/supply-delivery/:docNum", async (req, res) => {
 
 app.post("/api/supply-delivery/:docNum", async (req, res) => {
     const { docNum } = req.params;
-    const { sessionId, deliveryData } = req.body;
+    const { sessionId, commonData, items } = req.body;
 
     console.log("Processing delivery for docNum:", docNum);
-    console.log("Delivery data:", deliveryData);
+    console.log("Common data:", commonData);
+    console.log("Items:", items);
 
     try {
-        // Her satır için ayrı bir teslimat kaydı oluştur
-        const response = await axiosInstance.post(
-            "https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_OPDN",
+        const guid = generateGUID(); // Tek bir GUID oluştur
+        const deliveryRequests = items.map(item => ({
+            U_Type: "SUPPLY",
+            U_DocNum: docNum,
+            U_SessionID: sessionId,
+            U_GUID: guid, // Aynı GUID'i kullan
+            U_User: "Orkun",
+            U_WhsCode: item.WhsCode,
+            U_CarName: item.CardName,
+            U_DocDate: commonData.DocDate,
+            U_NumAtCard: commonData.NumAtCard,
+            U_ItemCode: item.ItemCode,
+            U_ItemName: item.ItemName,
+            U_Quantity: item.Quantity,
+            U_DeliveryQty: item.DeliveryQty,
+            U_MissingQty: item.MissingQty,
+            U_DefectiveQty: item.DefectiveQty,
+            U_UomCode: item.UomCode,
+            U_Comments: commonData.Comments || '',
+            U_Image: '',
+            U_LineNum: item.LineNum
+        }));
+
+        console.log("Sending delivery requests with GUID:", guid);
+
+        // Tüm istekleri paralel olarak gönder
+        const responses = await Promise.all(
+            deliveryRequests.map(data => 
+                axiosInstance.post(
+                    "https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_OPDN",
+                    data,
+                    {
+                        headers: {
+                            Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+                            "Content-Type": "application/json",
+                        },
+                    }
+                )
+            )
+        );
+
+        console.log(`Successfully processed ${responses.length} items with GUID: ${guid}`);
+
+        res.json({
+            success: true,
+            message: `Successfully processed ${responses.length} items`,
+            guid: guid,
+            results: responses.map(r => r.data)
+        });
+    } catch (error) {
+        console.error("Error processing delivery:", error);
+        res.status(500).json({ 
+            success: false,
+            error: error.message,
+            details: error.response?.data || 'Unknown error occurred'
+        });
+    }
+});
+
+// Dış tedarik ürünlerini getir
+app.get("/api/supply-items-list/:whsCode", async (req, res) => {
+    const { whsCode } = req.params;
+    const sessionId = req.query.sessionId;
+
+    console.log("whsCode:", whsCode);
+    console.log("sessionId:", sessionId);
+
+    if (!sessionId) {
+        return res.status(401).json({ error: 'Oturum bulunamadı' });
+    }
+
+    try {
+        const response = await axiosInstance.get(
+            `https://10.21.22.11:50000/b1s/v1/SQLQueries('OPOR_NEW')/List`,
             {
-                U_Type: "SUPPLY",
-                U_DocNum: docNum,
-                U_SessionID: sessionId,
-                U_GUID: generateGUID(),
-                U_User: "Orkun",
-                U_WhsCode: deliveryData.U_WhsCode,
-                U_CarName: deliveryData.U_CarName,
-                U_DocDate: deliveryData.U_DocDate,
-                U_NumAtCard: deliveryData.U_NumAtCard,
-                U_ItemCode: deliveryData.U_ItemCode,
-                U_ItemName: deliveryData.U_ItemName,
-                U_Quantity: deliveryData.U_Quantity,
-                U_DeliveryQty: deliveryData.U_DeliveryQty,
-                U_MissingQty: deliveryData.U_MissingQty,
-                U_DefectiveQty: deliveryData.U_DefectiveQty,
-                U_UomCode: deliveryData.U_UomCode,
-                U_Comments: deliveryData.U_Comments,
-                U_Image: deliveryData.U_Image || '',
-                U_LineNum: deliveryData.U_LineNum
-            },
-            {
+                params: {
+                    value1: "'SUPPLY'",
+                    value2: `'${whsCode}'`
+                },
                 headers: {
                     Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
                     "Content-Type": "application/json",
-                },
+                }
             }
         );
 
-        console.log("Delivery API Response:", response.data);
+        console.log("Response for whsCode:", whsCode, response.data);
         res.json(response.data);
     } catch (error) {
-        console.error("Error:", error.message);
+        console.error("Error fetching supply items:", error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Dış tedarik siparişi oluştur
+app.post("/api/supply-order", async (req, res) => {
+    const { sessionId, items } = req.body;
+
+    if (!sessionId) {
+        return res.status(401).json({ error: 'Oturum bulunamadı' });
+    }
+
+    try {
+        const guid = generateGUID(); // Tek bir GUID oluştur
+        const responses = [];
+
+        // Her ürün için sipariş oluştur
+        for (const item of items) {
+            const response = await axiosInstance.post(
+                "https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_OPOR",
+                {
+                    U_Type: "SUPPLY",
+                    U_WhsCode: item.WhsCode,
+                    U_ItemCode: item.ItemCode,
+                    U_ItemName: item.ItemName,
+                    U_Quantity: item.Quantity,
+                    U_UomCode: item.UomCode,
+                    U_CardCode: item.CardCode,
+                    U_CardName: item.CardName,
+                    U_SessionID: sessionId,
+                    U_GUID: guid, // Aynı GUID'i kullan
+                    U_User: "Orkun"
+                },
+                {
+                    headers: {
+                        Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+                        "Content-Type": "application/json",
+                    }
+                }
+            );
+            
+            responses.push(response.data);
+            console.log(`Supply order created for item ${item.ItemCode} with GUID: ${guid}`);
+        }
+
+        res.json({
+            success: true,
+            message: `Successfully created orders for ${responses.length} items`,
+            guid: guid,
+            results: responses
+        });
+    } catch (error) {
+        console.error("Error creating supply order:", error);
+        res.status(500).json({ 
+            success: false,
+            error: error.message,
+            details: error.response?.data || 'Unknown error occurred'
+        });
+    }
+});
+
+// Transfer listesini getir
+app.get("/api/transfer-list/:whsCode", async (req, res) => {
+    const { whsCode } = req.params;
+    const sessionId = req.query.sessionId;
+
+    console.log("whsCode:", whsCode);
+    console.log("sessionId:", sessionId);
+
+    if (!sessionId) {
+        return res.status(401).json({ error: 'Oturum bulunamadı' });
+    }
+
+    // https://10.21.22.11:50000/b1s/v1/SQLQueries('OWTQ_T_LIST')/List?value1= 'TRANSFER'&value2= 'WhsCode'
+
+    try {
+        const response = await axiosInstance.get(
+            `https://10.21.22.11:50000/b1s/v1/SQLQueries('OWTQ_T_LIST')/List`,
+            {
+                params: {
+                    value1: "'TRANSFER'",
+                    value2: `'${whsCode}'`
+                },
+                headers: {
+                    Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+                    "Content-Type": "application/json",
+                }
+            }
+        );
+
+        console.log("Response for whsCode:", whsCode, response.data);
+        res.json(response.data);
+    } catch (error) {
+        console.error("Error fetching transfer list:", error);
         res.status(500).json({ error: error.message });
     }
 });

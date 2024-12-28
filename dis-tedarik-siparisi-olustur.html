@@ -85,7 +85,7 @@
                 <div class="card">
                     <div class="card-body">
                         <div class="table-responsive">
-                            <table id="orderTable" class="table table-hover">
+                            <table id="orderItems" class="table table-hover">
                                 <thead>
                                     <tr>
                                         <th>Kalem Kodu</th>
@@ -97,6 +97,7 @@
                                         <th>Sipariş Miktarı</th>
                                         <th>Ölçü Birimi</th>
                                         <th>Tedarikçi</th>
+                                        <th>Tedarikçi Kodu</th>
                                     </tr>
                                 </thead>
                                 <tbody></tbody>
@@ -122,8 +123,8 @@
     <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
     <script>
         $(document).ready(async function() {
-            // Initialize DataTables with empty data first
-            const orderTable = $('#orderTable').DataTable({
+            // Initialize DataTable
+            const orderItemsTable = $('#orderItems').DataTable({
                 responsive: true,
                 columns: [
                     { data: 'ItemCode' },
@@ -132,9 +133,7 @@
                     { 
                         data: 'OnHand',
                         render: function(data) {
-                            return parseFloat(data) > 0 ? 
-                                '<span class="badge bg-success">Var</span>' : 
-                                '<span class="badge bg-danger">Yok</span>';
+                            return parseFloat(data) > 0 ? 'Var' : 'Yok';
                         }
                     },
                     { 
@@ -151,17 +150,14 @@
                     },
                     { 
                         data: null,
-                        render: function() {
-                            return '<input type="number" class="form-control quantity-input" min="0" step="0.01">';
+                        render: function(data) {
+                            return `<input type="number" class="form-control order-qty" 
+                                    min="0" step="0.01" value="0">`;
                         }
                     },
                     { data: 'UomCode' },
-                    { 
-                        data: null,
-                        render: function(data) {
-                            return `${data.CardName} (${data.CardCode})`;
-                        }
-                    }
+                    { data: 'CardName' },
+                    { data: 'CardCode' }
                 ],
                 order: [[0, 'asc']],
                 language: {
@@ -169,75 +165,93 @@
                 }
             });
 
-            // Initial load
-            await loadItems();
+            // Load items
+            try {
+                const whsCode = '1010';
+                const sessionId = api.getSessionId();
 
-            // Handle quantity input changes
-            $('#orderTable').on('input', '.quantity-input', function() {
-                const hasQuantity = [...document.querySelectorAll('.quantity-input')]
-                    .some(input => parseFloat(input.value) > 0);
+                console.log('whsCode:', whsCode);
+                console.log('sessionId:', sessionId);
                 
-                $('#submitOrder').prop('disabled', !hasQuantity);
-            });
+                const response = await fetch(`/api/supply-items-list/${whsCode}?sessionId=${sessionId}`);
 
-            // Handle order submission
+                console.log('Veriler yükleniyor...',response);
+
+
+                const data = await response.json();
+                orderItemsTable.clear().rows.add(data.value).draw();
+
+                // Handle quantity input changes
+                $('#orderItems').on('input', '.order-qty', function() {
+                    validateOrder();
+                });
+            } catch (error) {
+                console.error('Veriler yüklenirken hata:', error);
+                alert('Veriler yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.');
+            }
+
+            // Handle submit button click
             $('#submitOrder').click(async function() {
                 if (!confirm('Siparişi oluşturmak istediğinize emin misiniz?')) {
                     return;
                 }
 
                 try {
-                    const orders = [];
-                    const table = $('#orderTable').DataTable();
+                    // Get all rows from the table
+                    const orderItems = [];
+                    const table = $('#orderItems').DataTable();
                     
                     table.rows().every(function() {
                         const data = this.data();
-                        const quantity = $(this.node()).find('.quantity-input').val();
+                        const row = $(this.node());
                         
-                        if (quantity && parseFloat(quantity) > 0) {
-                            orders.push({
-                                sessionId: api.getSessionId(),
-                                orderData: {
-                                    U_Type: "SUPPLY",
-                                    U_WhsCode: api.getWhsCode(),
-                                    U_ItemCode: data.ItemCode,
-                                    U_ItemName: data.ItemName,
-                                    U_Quantity: parseFloat(quantity),
-                                    U_UomCode: data.UomCode,
-                                    U_CardCode: data.CardCode,
-                                    U_CardName: data.CardName,
-                                    U_SessionID: api.getSessionId(),
-                                    U_User: api.getUser()
-                                }
+                        // Get input values for this row
+                        const quantity = parseFloat(row.find('.order-qty').val() || 0);
+                        
+                        if (quantity > 0) {
+                            orderItems.push({
+                                WhsCode: api.getWhsCode(),
+                                ItemCode: data.ItemCode,
+                                ItemName: data.ItemName,
+                                Quantity: quantity,
+                                UomCode: data.UomCode,
+                                CardCode: data.CardCode,
+                                CardName: data.CardName
                             });
                         }
                     });
 
-                    if (orders.length === 0) {
-                        alert('Lütfen en az bir ürün için sipariş miktarı girin.');
-                        return;
+                    if (orderItems.length === 0) {
+                        throw new Error('Lütfen en az bir kalem için sipariş miktarı girin');
                     }
 
                     // Disable submit button
                     $('#submitOrder').prop('disabled', true);
 
-                    // Create orders
-                    for (const order of orders) {
-                        const response = await fetch('/api/supply-order', {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify(order)
-                        });
+                    // Send all items in a single request
+                    const response = await fetch('/api/supply-order', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            sessionId: api.getSessionId(),
+                            items: orderItems
+                        })
+                    });
 
-                        if (!response.ok) {
-                            throw new Error('Sipariş oluşturulurken bir hata oluştu');
-                        }
+                    if (!response.ok) {
+                        throw new Error('Sipariş oluşturulurken bir hata oluştu');
                     }
 
-                    alert('Sipariş başarıyla oluşturuldu.');
-                    window.location.href = 'dis-tedarik-siparisleri.html';
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        alert('Sipariş başarıyla oluşturuldu');
+                        window.location.href = 'dis-tedarik-siparisleri.html';
+                    } else {
+                        throw new Error(result.error || 'Sipariş oluşturulurken bir hata oluştu');
+                    }
 
                 } catch (error) {
                     console.error('Sipariş oluşturulurken hata:', error);
@@ -247,20 +261,12 @@
             });
         });
 
-        // Function to load items
-        async function loadItems() {
-            try {
-                const response = await fetch(`/api/supply-items?sessionId=${api.getSessionId()}&whsCode=${api.getWhsCode()}`);
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-                const data = await response.json();
-                
-                $('#orderTable').DataTable().clear().rows.add(data.value).draw();
-            } catch (error) {
-                console.error('Ürünler yüklenirken hata:', error);
-                alert('Ürünler yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.');
-            }
+        // Function to validate order
+        function validateOrder() {
+            const hasQuantity = [...document.querySelectorAll('.order-qty')]
+                .some(input => parseFloat(input.value || 0) > 0);
+            
+            $('#submitOrder').prop('disabled', !hasQuantity);
         }
     </script>
     <script src="js/api.js"></script>

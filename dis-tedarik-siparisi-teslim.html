@@ -169,10 +169,8 @@
                 window.location.href = 'dis-tedarik-siparisleri.html';
                 return;
             }
-
             // Set today as default delivery date
             $('#deliveryDate').val(new Date().toISOString().split('T')[0]);
-
             // Initialize DataTable
             const deliveryItemsTable = $('#deliveryItems').DataTable({
                 responsive: true,
@@ -216,25 +214,20 @@
                     url: 'js/datatables-tr.json'
                 }
             });
-
             // Load order details
             await loadOrderDetails(docNum);
-
             // Handle quantity input changes
             $('#deliveryItems').on('input', '.delivery-qty, .missing-qty, .defective-qty', function() {
                 validateDelivery();
             });
-
             // Handle delivery document number changes
             $('#deliveryDocNum').on('input', function() {
                 validateDelivery();
             });
-
             // Handle delivery date changes
             $('#deliveryDate').on('change', function() {
                 validateDelivery();
             });
-
             // Handle submit button click
             $('#submitDelivery').click(async function() {
                 if (!confirm('Teslimatı onaylamak istediğinize emin misiniz?')) {
@@ -257,20 +250,16 @@
                         
                         if (deliveryQty > 0 || missingQty > 0 || defectiveQty > 0) {
                             deliveryItems.push({
-                                U_WhsCode: data.WhsCode,
-                                U_CarName: data.CardName,
-                                U_DocDate: new Date().toISOString().split('T')[0],
-                                U_NumAtCard: $('#deliveryDocNum').val(),
-                                U_ItemCode: data.ItemCode,
-                                U_ItemName: data.ItemName,
-                                U_Quantity: parseFloat(data.Quantity),
-                                U_DeliveryQty: deliveryQty,
-                                U_MissingQty: missingQty,
-                                U_DefectiveQty: defectiveQty,
-                                U_UomCode: data.UomCode,
-                                U_Comments: $('#deliveryNote').val(),
-                                U_Image: '',
-                                U_LineNum: data.LineNum || 0
+                                ItemCode: data.ItemCode,
+                                ItemName: data.ItemName,
+                                WhsCode: data.WhsCode,
+                                CardName: data.CardName,
+                                Quantity: parseFloat(data.Quantity),
+                                DeliveryQty: deliveryQty,
+                                MissingQty: missingQty,
+                                DefectiveQty: defectiveQty,
+                                UomCode: data.UomCode,
+                                LineNum: data.LineNum || 0
                             });
                         }
                     });
@@ -282,27 +271,38 @@
                     // Disable submit button
                     $('#submitDelivery').prop('disabled', true);
 
-                    // Submit each delivery item
-                    for (const deliveryData of deliveryItems) {
-                        const response = await fetch(`/api/supply-delivery/${docNum}`, {
-                            method: 'POST',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            },
-                            body: JSON.stringify({
-                                sessionId: api.getSessionId(),
-                                deliveryData: deliveryData
-                            })
-                        });
+                    // Prepare delivery data
+                    const commonData = {
+                        DocDate: $('#deliveryDate').val(),
+                        NumAtCard: $('#deliveryDocNum').val(),
+                        Comments: $('#deliveryNote').val()
+                    };
 
-                        if (!response.ok) {
-                            throw new Error('Teslimat kaydedilirken bir hata oluştu');
-                        }
+                    // Send all items in a single request
+                    const response = await fetch(`/api/supply-delivery/${docNum}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            sessionId: api.getSessionId(),
+                            commonData,
+                            items: deliveryItems
+                        })
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Teslimat kaydedilirken bir hata oluştu');
                     }
 
-                    // Show success message and redirect
-                    alert('Teslimat başarıyla kaydedildi');
-                    window.location.href = 'dis-tedarik-siparisleri.html';
+                    const result = await response.json();
+                    
+                    if (result.success) {
+                        alert('Teslimat başarıyla kaydedildi');
+                        window.location.href = 'dis-tedarik-siparisleri.html';
+                    } else {
+                        throw new Error(result.error || 'Teslimat kaydedilirken bir hata oluştu');
+                    }
 
                 } catch (error) {
                     console.error('Teslimat kaydedilirken hata:', error);
@@ -311,7 +311,6 @@
                 }
             });
         });
-
         // Function to load order details
         async function loadOrderDetails(docNum) {
             try {
@@ -326,7 +325,6 @@
                     window.location.href = 'dis-tedarik-siparisleri.html';
                     return;
                 }
-
                 const order = data.value[0];
                 
                 // Update order info
@@ -334,21 +332,17 @@
                 $('#supplier').text(order.CardName);
                 $('#orderDate').text(formatDate(order.DocDate));
                 $('#status').html(getStatusBadge(order.DocStatus));
-
                 // Update items table
                 $('#deliveryItems').DataTable().clear().rows.add(data.value).draw();
-
                 // Load existing delivery info if any
                 if (order.NumAtCard) {
                     $('#deliveryDocNum').val(order.NumAtCard);
                 }
-
             } catch (error) {
                 console.error('Sipariş detayları yüklenirken hata:', error);
                 alert('Sipariş detayları yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.');
             }
         }
-
         // Function to validate delivery
         function validateDelivery() {
             const hasQuantity = [...document.querySelectorAll('.delivery-qty')]
@@ -359,18 +353,14 @@
             
             $('#submitDelivery').prop('disabled', !(hasQuantity && hasDocNum && hasDate));
         }
-
         // Format date for display
         function formatDate(date) {
         if (!date) return '';
-
         // Tarihi 'yyyyMMdd' formatından 'yyyy-MM-dd' formatına dönüştür
         const formattedDate = date.toString().replace(/^(\d{4})(\d{2})(\d{2})$/, '$1-$2-$3');
-
         const d = new Date(formattedDate);
         return d.toLocaleDateString('tr-TR');
         }
-
         // Get status badge HTML
         function getStatusBadge(status) {
             let badgeClass = '';
