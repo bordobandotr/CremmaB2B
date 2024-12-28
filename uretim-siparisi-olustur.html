@@ -195,7 +195,7 @@
                     </button>
                     <h5 class="mb-0">Üretim Siparişi Oluştur</h5>
                 </div>
-                <div>
+                <div class="d-flex gap-2">
                     <button class="btn btn-outline-secondary">
                         Çıkış Yap <i class="bi bi-box-arrow-right"></i>
                     </button>
@@ -207,6 +207,20 @@
                 <div class="card">
                     <div class="card-body">
                         <!-- Filter Controls -->
+                        <!-- <div class="row mb-3">
+                            <div class="col-md-4 mb-3">
+                                <label for="sortColumnSelect" class="form-label">Öncelikli Sıralama Kolonu:</label>
+                                <select class="form-select" id="sortColumnSelect">
+                                    <option value="">Sıralama Kolonu Seçin</option>
+                                    <option value="0">Kalem Kodu</option>
+                                    <option value="1">Kalem Tanımı</option>
+                                    <option value="2">Kalem Grubu</option>
+                                    <option value="3">Stok Miktarı</option>
+                                    <option value="4">Eldeki Miktar</option>
+                                    <option value="5">Min. Miktar</option>
+                                </select>
+                            </div>
+                        </div> -->
                         <div class="row mb-3">
                             <div class="col-md-4">
                                 <label for="kalemGrubuFilter" class="form-label">Kalem Grubu Filtresi:</label>
@@ -325,13 +339,70 @@
                         }
                     },
                     order: [
-                        [2, 'desc']
+                        [2, 'desc'],
+                        [1, 'asc'],
+                        [0, 'asc']
                     ],
                     columnDefs: [{
                         targets: -1,
                         orderable: false
                     }],
-                    processing: true
+                    processing: true,
+                    orderCellsTop: true,
+                    orderMulti: true
+                });
+
+                let primarySortColumn = null;
+                let primarySortDirection = 'asc';
+
+                // Handle sorting column selection
+                $('#sortColumnSelect').on('change', function() {
+                    const columnIdx = parseInt($(this).val());
+                    if (!isNaN(columnIdx)) {
+                        primarySortColumn = columnIdx;
+                        primarySortDirection = 'asc';
+                        
+                        // Reset all other sorting and apply only primary sort
+                        ordersTable.order([[columnIdx, primarySortDirection]]).draw();
+                    } else {
+                        primarySortColumn = null;
+                        ordersTable.order([]).draw();
+                    }
+                });
+
+                // Add click event listener to table headers for secondary sorting
+                $('#orderTable thead th').on('click', function() {
+                    const columnIdx = ordersTable.column(this).index();
+                    if (columnIdx !== undefined) {
+                        const currentOrder = ordersTable.order();
+                        let newOrder = [];
+
+                        if (primarySortColumn !== null) {
+                            // Always add primary sort as first criterion
+                            newOrder.push([primarySortColumn, primarySortDirection]);
+                            
+                            if (columnIdx !== primarySortColumn) {
+                                // If clicking a different column, add it as secondary sort
+                                // Find if this column was already in the sort order
+                                const existingSort = currentOrder.find(order => order[0] === columnIdx);
+                                const direction = existingSort ? 
+                                    (existingSort[1] === 'asc' ? 'desc' : 'asc') : 'asc';
+                                
+                                newOrder.push([columnIdx, direction]);
+                            }
+                        } else {
+                            // If no primary sort is selected, handle normal sorting
+                            if (currentOrder.length > 0 && currentOrder[0][0] === columnIdx) {
+                                // Toggle direction if clicking the same column
+                                newOrder.push([columnIdx, currentOrder[0][1] === 'asc' ? 'desc' : 'asc']);
+                            } else {
+                                // New sort on this column
+                                newOrder.push([columnIdx, 'asc']);
+                            }
+                        }
+                        
+                        ordersTable.order(newOrder).draw();
+                    }
                 });
 
                 // Custom filtering function
@@ -412,7 +483,11 @@
                                 order.OnHand,
                                 order.OnHand,
                                 order.MinQty,
-                                `<input type="number" class="form-control" placeholder="Miktar" value="0">`,
+                                `<div class="input-group">
+                                    <button class="btn btn-outline-secondary decrease-qty" type="button">-</button>
+                                    <input type="number" class="form-control text-center order-qty" value="0" min="0" style="min-width: 60px;">
+                                    <button class="btn btn-outline-secondary increase-qty" type="button">+</button>
+                                </div>`,
                                 order.UomCode
                             ]);
                         });
@@ -554,7 +629,7 @@
                         const orderData = [];
                         $('#orderTable tbody tr').each(function() {
                             const $row = $(this);
-                            const quantity = parseInt($row.find('input[type="number"]').val());
+                            const quantity = parseInt($row.find('.order-qty').val()) || 0;
                             
                             if (quantity && quantity > 0) {
                                 orderData.push({
@@ -594,7 +669,7 @@
                         alert('Üretim siparişleri başarıyla oluşturuldu.');
                         
                         // Clear all inputs
-                        $('input[type="number"]').val('0');
+                        $('.order-qty').val('0');
                         
                         // redirect to uretim-siparisileri.html
                         window.location.href = 'uretim-siparisleri.html';
@@ -605,6 +680,28 @@
                         alert(error.message || 'Üretim siparişi oluşturulurken bir hata oluştu.');
                     } finally {
                         hideLoading();
+                    }
+                });
+
+                // Handle quantity buttons
+                $('#orderTable').on('click', '.increase-qty, .decrease-qty', function() {
+                    const input = $(this).closest('.input-group').find('.order-qty');
+                    const currentValue = parseInt(input.val()) || 0;
+                    const step = 1;
+                    
+                    if ($(this).hasClass('increase-qty')) {
+                        input.val(currentValue + step);
+                    } else {
+                        const newValue = Math.max(0, currentValue - step);
+                        input.val(newValue);
+                    }
+                });
+
+                // Prevent negative values on manual input
+                $('#orderTable').on('change', '.order-qty', function() {
+                    const value = parseInt($(this).val()) || 0;
+                    if (value < 0) {
+                        $(this).val(0);
                     }
                 });
 
