@@ -14,6 +14,29 @@
     <link href="css/style.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
+    <style>
+        .input-group-text.required::after {
+            content: "*";
+            color: red;
+            margin-left: 4px;
+        }
+
+        .quantity-input {
+            width: 80px !important;
+        }
+
+        .input-group .form-control {
+            text-align: center;
+        }
+
+        .input-group .btn {
+            padding: 0.25rem 0.5rem;
+        }
+
+        .input-group .btn i {
+            font-size: 0.875rem;
+        }
+    </style>
 </head>
 
 <body>
@@ -112,8 +135,9 @@
                                     <button class="btn btn-outline-secondary" type="button" id="decreaseQty">
                                         <i class="bi bi-dash"></i>
                                     </button>
-                                    <input type="number" class="form-control text-center" id="modalMiktar" min="1"
-                                        step="1" onkeydown="return event.keyCode !== 190 && event.keyCode !== 188">
+                                    <input type="number" class="form-control text-center quantity-input"
+                                        id="modalMiktar" min="1" step="1"
+                                        onkeydown="return event.keyCode !== 190 && event.keyCode !== 188">
                                     <button class="btn btn-outline-secondary" type="button" id="increaseQty">
                                         <i class="bi bi-plus"></i>
                                     </button>
@@ -167,7 +191,8 @@
                                 <label for="modalRedMiktar" class="form-label"><strong>Transfer
                                         Miktarı:</strong></label>
                                 <div class="input-group">
-                                    <input type="number" class="form-control text-center" id="modalRedMiktar" readonly>
+                                    <input type="number" class="form-control text-center quantity-input"
+                                        id="modalRedMiktar" readonly>
                                     <span class="input-group-text" id="modalRedUomCode"></span>
                                 </div>
                             </div>
@@ -194,6 +219,127 @@
         </div>
     </div>
 
+    <!-- Transfer Teslim Modal -->
+    <div class="modal fade" id="transferTeslimModal" tabindex="-1" aria-labelledby="transferTeslimModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="transferTeslimModalLabel">Transfer Teslim Al</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-3">
+                        <!-- Transfer details section -->
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Transfer No</label>
+                                <input type="text" class="form-control" id="teslimTransferNo" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Kalem Kodu</label>
+                                <input type="text" class="form-control" id="teslimItemCode" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Kalem Tanımı</label>
+                                <input type="text" class="form-control" id="teslimItemName" readonly>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label class="form-label">Sipariş Tarihi</label>
+                                <input type="text" class="form-control" id="teslimDocDate" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Sipariş Miktarı</label>
+                                <input type="text" class="form-control" id="teslimQuantity" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Ölçü Birimi</label>
+                                <input type="text" class="form-control" id="teslimUomCode" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Kaynak Depo</label>
+                                <input type="text" class="form-control" id="teslimFromWhsName" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Hedef Depo</label>
+                                <input type="text" class="form-control" id="teslimWhsName" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label">Durum</label>
+                                <input type="text" class="form-control" id="teslimStatus" readonly>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quantity inputs section -->
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label class="form-label required">Teslimat Miktarı</label>
+                            <div class="input-group">
+                                <button class="btn btn-outline-secondary" type="button"
+                                    onclick="decrementValue(this, 'delivery')">
+                                    <i class="bi bi-dash"></i>
+                                </button>
+                                <input type="number" class="form-control quantity-input" id="teslimDeliveryQty"
+                                    value="0" min="0" step="1" onchange="validateDeliveryQuantity(this)">
+                                <button class="btn btn-outline-secondary" type="button"
+                                    onclick="incrementValue(this, 'delivery')">
+                                    <i class="bi bi-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Eksik Miktar</label>
+                            <div class="input-group">
+                                <button class="btn btn-outline-secondary" type="button"
+                                    onclick="decrementValue(this, 'missing')">
+                                    <i class="bi bi-dash"></i>
+                                </button>
+                                <input type="number" class="form-control quantity-input" id="teslimMissingQty"
+                                    value="0" min="0" step="1" onchange="validateDeliveryQuantity(this)">
+                                <button class="btn btn-outline-secondary" type="button"
+                                    onclick="incrementValue(this, 'missing')">
+                                    <i class="bi bi-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Kusurlu Miktar</label>
+                            <div class="input-group">
+                                <button class="btn btn-outline-secondary" type="button"
+                                    onclick="decrementValue(this, 'defective')">
+                                    <i class="bi bi-dash"></i>
+                                </button>
+                                <input type="number" class="form-control quantity-input" id="teslimDefectiveQty"
+                                    value="0" min="0" step="1" onchange="validateDeliveryQuantity(this)">
+                                <button class="btn btn-outline-secondary" type="button"
+                                    onclick="incrementValue(this, 'defective')">
+                                    <i class="bi bi-plus"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notes and image upload section -->
+                    <div class="mb-3">
+                        <label class="form-label">Not</label>
+                        <textarea class="form-control" id="teslimComments" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Görsel</label>
+                        <input type="file" class="form-control" id="teslimImage" accept="image/*">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-primary" onclick="submitTeslim()">Teslim Al</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
@@ -202,6 +348,168 @@
     <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
     <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
     <script>
+        // Quantity Input Functions
+        function incrementValue(button, className) {
+            const input = $(button).siblings('input');
+            const currentValue = parseFloat(input.val()) || 0;
+            input.val(currentValue + 1);
+            validateDeliveryQuantity(input[0]);
+        }
+
+        function decrementValue(button, className) {
+            const input = $(button).siblings('input');
+            const currentValue = parseFloat(input.val()) || 0;
+            if (currentValue > 0) {
+                input.val(currentValue - 1);
+                validateDeliveryQuantity(input[0]);
+            }
+        }
+
+        function validateDeliveryQuantity(input) {
+            const totalQty = parseFloat($('#teslimQuantity').val()) || 0;
+            const deliveryQty = parseFloat($('#teslimDeliveryQty').val()) || 0;
+            const missingQty = parseFloat($('#teslimMissingQty').val()) || 0;
+            const defectiveQty = parseFloat($('#teslimDefectiveQty').val()) || 0;
+
+            const total = deliveryQty + missingQty + defectiveQty;
+
+            if (total > totalQty) {
+                alert('Toplam miktar sipariş miktarını aşamaz!');
+                $(input).val(0);
+                return false;
+            }
+
+            return true;
+        }
+
+        async function showTeslimModal(docNum) {
+            // First, show the modal
+            const modal = new bootstrap.Modal(document.getElementById('transferTeslimModal'));
+            modal.show();
+
+            try {
+                showLoading('Transfer bilgileri yükleniyor...');
+
+                const response = await fetch(`https://10.21.22.11:50000/b1s/v1/SQLQueries('OWTR_T_NEW')/List?value1=TRANSFER&value2=${docNum}`);
+                const data = await response.json();
+
+                if (data && data.value && data.value.length > 0) {
+                    const transfer = data.value[0];
+                    console.log('API Response:', transfer); // For debugging
+
+                    // Fill in the transfer details
+                    $('#teslimTransferNo').val(transfer.DocNum);
+                    $('#teslimItemCode').val(transfer.ItemCode);
+                    $('#teslimItemName').val(transfer.ItemName);
+                    $('#teslimDocDate').val(formatDate(transfer.DocDate));
+                    $('#teslimQuantity').val(transfer.Quantity);
+                    $('#teslimUomCode').val(transfer.UomCode);
+
+                    // Reset quantity inputs
+                    $('#teslimDeliveryQty').val(0);
+                    $('#teslimMissingQty').val(0);
+                    $('#teslimDefectiveQty').val(0);
+                    $('#teslimComments').val('');
+                    $('#teslimImage').val('');
+                } else {
+                    throw new Error('Transfer bilgisi bulunamadı');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Transfer bilgileri yüklenirken bir hata oluştu!');
+                modal.hide();
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Helper function to get status text
+        function getStatusText(status) {
+            const statusMap = {
+                '1': 'Onay Bekliyor',
+                '2': 'Hazırlanıyor',
+                '3': 'Sevk Edildi',
+                '4': 'Tamamlandı',
+                '5': 'İptal Edildi'
+            };
+            return statusMap[status] || status;
+        }
+
+        async function submitTeslim() {
+            if (!validateDeliveryQuantity()) {
+                return;
+            }
+
+            const docNum = $('#teslimTransferNo').val();
+            const deliveryQty = parseFloat($('#teslimDeliveryQty').val()) || 0;
+            const missingQty = parseFloat($('#teslimMissingQty').val()) || 0;
+            const defectiveQty = parseFloat($('#teslimDefectiveQty').val()) || 0;
+
+            if (deliveryQty === 0 && missingQty === 0 && defectiveQty === 0) {
+                alert('En az bir miktar girilmelidir!');
+                return;
+            }
+
+            try {
+                showLoading('Transfer teslim alınıyor...');
+                
+                const imageFile = document.getElementById('teslimImage').files[0];
+                let imageBase64 = '';
+                if (imageFile) {
+                    imageBase64 = await convertImageToBase64(imageFile);
+                }
+
+                const postData = {
+                    "U_Type": "TRANSFER",
+                    "U_DocNum": parseInt(docNum),
+                    "U_ItemCode": $('#teslimItemCode').val(),
+                    "U_ItemName": $('#teslimItemName').val(),
+                    "U_DocDate": $('#teslimDocDate').val(),
+                    "U_Quantity": parseFloat($('#teslimQuantity').val()),
+                    "U_DeliveryQty": deliveryQty,
+                    "U_MissingQty": missingQty,
+                    "U_DefectiveQty": defectiveQty,
+                    "U_UomCode": $('#teslimUomCode').val(),
+                    "U_Comments": $('#teslimComments').val(),
+                    "U_Image": imageBase64,
+                    "U_SessionID": "1221",
+                    "U_GUID": generateGUID(),
+                    "U_User": "ozan",
+                    "U_DocStatus": "C"
+                };
+
+                const response = await fetch('/api/transfer-delivery/' + docNum + '?sessionId=' + getSessionId(), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(postData)
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                $('#transferTeslimModal').modal('hide');
+                $('#transferTable').DataTable().ajax.reload();
+                hideLoading();
+                alert('Transfer başarıyla teslim alındı!');
+            } catch (error) {
+                console.error('Error:', error);
+                hideLoading();
+                alert('Transfer teslim alınırken bir hata oluştu!');
+            }
+        }
+
+        async function convertImageToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = error => reject(error);
+            });
+        }
+
         // Tarih formatlama fonksiyonu
         function formatDate(date) {
             if (!date) return '';
@@ -281,7 +589,7 @@
                         if (transferQty > requestedQty) {
                             if (!confirm(
                                     'Transfer miktarı talep edilen miktardan fazla. Devam etmek istiyor musunuz?'
-                                    )) {
+                                )) {
                                 return;
                             }
                         }
@@ -300,7 +608,7 @@
                         // Close modal
                         $('#transferOnayModal').modal('hide');
 
-                        // // Refresh the table with a slight delay
+                        // Refresh the table with a slight delay
                         // setTimeout(() => {
                         //     table.ajax.reload(null, false);
                         // }, 500);
@@ -385,7 +693,7 @@
                         // setTimeout(() => {
                         //     table.ajax.reload(null, false);
                         // }, 500);
-                        
+
                     } catch (error) {
                         console.error('Transfer reddetme hatası:', error);
                     } finally {
@@ -441,15 +749,10 @@
             // Initialize DataTable
             const transferTable = $('#transferTable').DataTable({
                 responsive: true,
-                columns: [{
-                        data: 'DocNum'
-                    },
-                    {
-                        data: 'ItemCode'
-                    },
-                    {
-                        data: 'ItemName'
-                    },
+                columns: [
+                    { data: 'DocNum' },
+                    { data: 'ItemCode' },
+                    { data: 'ItemName' },
                     {
                         data: 'DocDate',
                         render: function (data) {
@@ -462,29 +765,13 @@
                             return formatDate(data);
                         }
                     },
+                    { data: 'Quantity' },
+                    { data: 'DeliveryQty' },
+                    { data: 'UomCode' },
+                    { data: 'FromWhsName' },  // Changed from FromWhsCode
+                    { data: 'WhsName' },      // Changed from ToWhsCode
                     {
-                        data: 'Quantity',
-                        render: function (data) {
-                            return parseFloat(data).toFixed(2);
-                        }
-                    },
-                    {
-                        data: 'DeliveryQty',
-                        render: function (data) {
-                            return parseFloat(data).toFixed(2);
-                        }
-                    },
-                    {
-                        data: 'UomCode'
-                    },
-                    {
-                        data: 'FromWhsName'
-                    },
-                    {
-                        data: 'WhsName'
-                    },
-                    {
-                        data: 'DocStatus',
+                        data: 'DocStatus',    // Changed from Status
                         render: function (data) {
                             const statusMap = {
                                 '1': '<span class="badge bg-warning">Onay Bekliyor</span>',
@@ -499,33 +786,27 @@
                     {
                         data: null,
                         render: function (data, type, row) {
-                            const buttons = [];
+                            let buttons = '';
 
-                            // Teslimat butonu - sadece sevk edilmiş durumda göster
+                            // Show Teslim Al button only for status 3 (Sevk Edildi)
                             if (row.DocStatus === '3') {
-                                buttons.push(`
-                                    <button class="btn btn-success btn-sm me-1 deliver-btn" data-doc-num="${row.DocNum}">
-                                        <i class="bi bi-box-seam"></i> Teslim Al
-                                    </button>
-                                `);
+                                buttons += `<button class="btn btn-success btn-sm me-1" onclick="event.preventDefault(); showTeslimModal('${row.DocNum}')">
+                                    <i class="bi bi-box-seam"></i> Teslim Al
+                                </button>`;
                             }
 
-                            // Onay butonu - sadece onay bekleyen durumda göster
+                            // Show Approve/Reject buttons only for status 1 (Onay Bekliyor)
                             if (row.DocStatus === '1') {
-                                buttons.push(`
-                                    <div class="btn-group btn-group-sm">
-                                        <button class="btn btn-sm btn-success approve-btn" data-doc-num="${row.DocNum}">
-                                            <i class="bi bi-check-lg"></i> Onayla
-                                        </button>
-                                        <button class="btn btn-sm btn-danger"
-                                            onclick="showTransferRedModal(${row.DocNum})">
-                                            <i class="bi bi-x-circle"></i> Reddet
-                                        </button>
-                                    </div>
-                                `);
+                                buttons += `<button class="btn btn-primary btn-sm me-1 approve-btn" data-doc-num="${row.DocNum}">
+                                    <i class="bi bi-check-lg"></i> Onayla
+                                </button>`;
+
+                                buttons += `<button class="btn btn-danger btn-sm" onclick="showTransferRedModal('${row.DocNum}')">
+                                    <i class="bi bi-x-lg"></i> Reddet
+                                </button>`;
                             }
 
-                            return buttons.join('');
+                            return buttons;
                         }
                     }
                 ],
@@ -537,13 +818,8 @@
                 }
             });
 
-            // Event handlers for dynamic buttons
-            $('#transferTable').on('click', '.deliver-btn', function () {
-                const docNum = $(this).data('doc-num');
-                window.location.href = `transfer-teslim.html?docNum=${docNum}`;
-            });
-
-            $('#transferTable').on('click', '.approve-btn', function () {
+            // Event listeners for dynamic buttons
+            $(document).on('click', '.approve-btn', function () {
                 const docNum = $(this).data('doc-num');
                 showTransferModal(docNum);
             });
