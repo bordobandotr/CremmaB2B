@@ -1015,40 +1015,68 @@ app.post('/api/transfer/deliver/:docNum', async (req, res) => {
     }
 });
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+// User validation endpoint
+app.post('/api/validate-user', async (req, res) => {
+    const { username, password } = req.body;
+    
+    try {
+        const users = require('./json/users.json');
+        let validUser = null;
+        let branchCode = null;
+        
+        // Check branch users first
+        for (const branch of users.branches) {
+            const user = branch.users.find(u => u.username === username && u.password === password);
+            if (user) {
+                validUser = user;
+                branchCode = branch.branchCode;
+                break;
+            }
+        }
+        
+        if (validUser) {
+            return res.json({
+                valid: true,
+                user: {
+                    type: validUser.type,
+                    branchCode: branchCode,
+                    branchName: users.branches.find(b => b.branchCode === branchCode).branchName,
+                    name: validUser.name,
+                    // Send admin credentials for SAP login
+                    username: users.admin.username,
+                    password: users.admin.password
+                }
+            });
+        }
+        
+        // If no branch user found, check if it's admin
+        if (username === users.admin.username && password === users.admin.password) {
+            return res.json({
+                valid: true,
+                user: {
+                    type: users.admin.type,
+                    branchCode: users.admin.branchCode,
+                    name: 'Admin',
+                    username: users.admin.username,
+                    password: users.admin.password
+                }
+            });
+        }
+        
+        // If no user found
+        res.json({
+            valid: false,
+            message: 'Geçersiz kullanıcı adı veya şifre'
+        });
+        
+    } catch (error) {
+        console.error('User validation error:', error);
+        res.status(500).json({
+            valid: false,
+            message: 'Kullanıcı doğrulama hatası'
+        });
+    }
+});
 
 // Handle all other routes
 app.get('*', (req, res) => {

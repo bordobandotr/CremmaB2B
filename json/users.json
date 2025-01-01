@@ -1,0 +1,190 @@
+{
+    "branchCode": "1010",
+    "admin": {
+    "username": "manager",
+    "password": "1234",
+    "type": "admin"
+  },
+  "branches": [
+    {
+      "branchCode": "1010",
+      "branchName": "Branch 1",
+      "users": [
+        {
+          "name": "Kullanıcı 1-1",
+          "username": "user11",
+          "password": "pass11",
+          "type": "branch_user"
+        },
+        {
+          "name": "Kullanıcı 1-2",
+          "username": "user12",
+          "password": "pass12",
+          "type": "branch_manager"
+        }
+      ]
+    },
+    {
+      "branchCode": "1002",
+      "branchName": "Branch 2",
+      "users": [
+        {
+          "name": "Kullanıcı 2-1",
+          "username": "user21",
+          "password": "pass21",
+          "type": "branch_user"
+        },
+        {
+          "name": "Kullanıcı 2-2",
+          "username": "user22",
+          "password": "pass22",
+          "type": "branch_manager"
+        }
+      ]
+    },
+    {
+      "branchCode": "1003",
+      "branchName": "Branch 3",
+      "users": [
+        {
+          "name": "Kullanıcı 3-1",
+          "username": "user31",
+          "password": "pass31",
+          "type": "branch_user"
+        },
+        {
+          "name": "Kullanıcı 3-2",
+          "username": "user32",
+          "password": "pass32",
+          "type": "branch_manager"
+        }
+      ]
+    },
+    {
+      "branchCode": "1004",
+      "branchName": "Branch 4",
+      "users": [
+        {
+          "name": "Kullanıcı 4-1",
+          "username": "user41",
+          "password": "pass41",
+          "type": "branch_user"
+        },
+        {
+          "name": "Kullanıcı 4-2",
+          "username": "user42",
+          "password": "pass42",
+          "type": "branch_manager"
+        }
+      ]
+    },
+    {
+      "branchCode": "1005",
+      "branchName": "Branch 5",
+      "users": [
+        {
+          "name": "Kullanıcı 5-1",
+          "username": "user51",
+          "password": "pass51",
+          "type": "branch_user"
+        },
+        {
+          "name": "Kullanıcı 5-2",
+          "username": "user52",
+          "password": "pass52",
+          "type": "branch_manager"
+        }
+      ]
+    },
+    {
+      "branchCode": "1006",
+      "branchName": "Branch 6",
+      "users": [
+        {
+          "name": "Kullanıcı 6-1",
+          "username": "user61",
+          "password": "pass61",
+          "type": "branch_user"
+        },
+        {
+          "name": "Kullanıcı 6-2",
+          "username": "user62",
+          "password": "pass62",
+          "type": "branch_manager"
+        }
+      ]
+    },
+    {
+      "branchCode": "1007",
+      "branchName": "Branch 7",
+      "users": [
+        {
+          "name": "Kullanıcı 7-1",
+          "username": "user71",
+          "password": "pass71",
+          "type": "branch_user"
+        },
+        {
+          "name": "Kullanıcı 7-2",
+          "username": "user72",
+          "password": "pass72",
+          "type": "branch_manager"
+        }
+      ]
+    },
+    {
+      "branchCode": "1008",
+      "branchName": "Branch 8",
+      "users": [
+        {
+          "name": "Kullanıcı 8-1",
+          "username": "user81",
+          "password": "pass81",
+          "type": "branch_user"
+        },
+        {
+          "name": "Kullanıcı 8-2",
+          "username": "user82",
+          "password": "pass82",
+          "type": "branch_manager"
+        }
+      ]
+    },
+    {
+      "branchCode": "1009",
+      "branchName": "Branch 9",
+      "users": [
+        {
+          "name": "Kullanıcı 9-1",
+          "username": "user91",
+          "password": "pass91",
+          "type": "branch_user"
+        },
+        {
+          "name": "Kullanıcı 9-2",
+          "username": "user92",
+          "password": "pass92",
+          "type": "branch_manager"
+        }
+      ]
+    },
+    {
+      "branchCode": "1010",
+      "branchName": "Branch 10",
+      "users": [
+        {
+          "name": "Kullanıcı 10-1",
+          "username": "user101",
+          "password": "pass101",
+          "type": "branch_user"
+        },
+        {
+          "name": "Kullanıcı 10-2",
+          "username": "user102",
+          "password": "pass102",
+          "type": "branch_manager"
+        }
+      ]
+    }
+  ]
+}

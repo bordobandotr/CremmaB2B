@@ -1,0 +1,27 @@
+<script>
+    // storage name and branchname
+    const branchCode = localStorage.getItem('branchCode');
+    const branchName = localStorage.getItem('branchName');
+    const branchUsers = JSON.parse(localStorage.getItem('branchUsers'));
+    const user = branchUsers.find(user => user.type === 'branch_manager');
+
+    // document.getElementById('sidebar-user').innerHTML = `
+    //     <div class="user-profile mt-auto p-3">
+    //         <div class="d-flex align-items-center">
+    //             <img src="img/avatar.jpg" alt="User" class="rounded-circle me-2" style="width: 32px; height: 32px;">
+    //             <span>${user ? user.name : 'Kullanıcı bilgisi alınamadı'}</span>
+    //         </div>
+    //     </div>
+    // `;
+
+    document.getElementById('userName').innerText = user ? user.name : '-';
+    document.getElementById('branchName').innerText = branchName;
+</script>
+<div class="user-info position-absolute bottom-0 start-0 p-3 w-100">
+    <div class="d-flex align-items-center">
+        <img src="img/avatar.jpg" alt="User" class="rounded-circle me-2" width="40">
+        <div class="text-white">
+            <small><span id="userName">-</span> - <span id="branchName">-</span></small>
+        </div>
+    </div>
+</div>
