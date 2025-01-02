@@ -97,10 +97,10 @@ async function initializeApp() {
     });
     
     // Logout handler
-    document.getElementById('logout').addEventListener('click', function(e) {
-        e.preventDefault();
-        window.location.href = 'login.html';
-    });
+    // document.getElementById('logout').addEventListener('click', function(e) {
+    //     e.preventDefault();
+    //     window.location.href = 'login.html';
+    // });
 }
 
 // Start the application

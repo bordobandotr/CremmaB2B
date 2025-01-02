@@ -188,6 +188,7 @@ app.get("/uretim-siparisleri-list", async (req, res) => {
 app.post("/api/production-orders", async (req, res) => {
     const orderData = req.body;
     const sessionId = req.query.sessionId;
+    const guid = generateGUID();
 
     console.log("Received order data:", orderData);
 
@@ -205,7 +206,7 @@ app.post("/api/production-orders", async (req, res) => {
                 U_Quantity: order.U_Quantity,
                 U_UomCode: order.U_UomCode,
                 U_SessionID: sessionId || order.U_SessionID,
-                U_GUID: order.U_GUID,
+                U_GUID: guid,
                 U_User: order.U_User,
                 U_FromWhsCode: null,
                 U_FromWhsName: null,

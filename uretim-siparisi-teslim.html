@@ -403,7 +403,8 @@
             try {
                 showLoading('Teslimat Kaydediliyor...');
                 const sessionId = localStorage.getItem('sessionId');
-                const username = localStorage.getItem('username');
+                const localStorageUserName = localStorage.getItem("userName");
+                console.log("localStorageUserName:", localStorageUserName);
                 const docNum = new URLSearchParams(window.location.search).get('docNum');
                 const guid = generateGUID(); // Generate one GUID for all items
                 const deliveryItems = [];
@@ -445,7 +446,7 @@
                         U_Image: imageBase64 || "",
                         U_SessionID: sessionId,
                         U_GUID: guid,
-                        U_User: username || "Orkun",
+                        U_User: localStorageUserName,
                         U_LineNum: item.lineNum // Add the LineNum to the delivery data
                     };
 

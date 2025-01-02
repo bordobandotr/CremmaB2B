@@ -13,15 +13,16 @@ document.addEventListener('DOMContentLoaded', async function() {
         // Get current page URL
         const currentPath = window.location.pathname;
         const currentPage = currentPath.split('/').pop().split('?')[0];
+        console.log('currentPage:', currentPage);
+        console.log('currentPath:', currentPath);
         
-        // Set active class based on current page
-        const isUretimPage = currentPage.startsWith('uretim-siparis');
-        if (isUretimPage) {
-            const uretimLink = sidebarNav.querySelector('a[href="uretim-siparisleri.html"]');
-            if (uretimLink) {
-                uretimLink.classList.add('active');
-            }
+        // Add active class to current page link
+        const currentLink = sidebarNav.querySelector(`a[href="${currentPage}"]`);
+        console.log('currentLink:', currentLink);
+        if (currentLink) {
+            currentLink.classList.add('active');
         }
+        
     } catch (error) {
         console.error('Error loading navigation menu:', error);
     }

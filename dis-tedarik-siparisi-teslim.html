@@ -326,7 +326,8 @@
             $('#submitDelivery').click(async function() {
                 try {
                     const sessionId = localStorage.getItem('sessionId');
-                    const username = localStorage.getItem('username') || 'Orkun';
+                    const localStorageUserName = localStorage.getItem("userName");
+                    console.log("localStorageUserName:", localStorageUserName);
                     const docNum = new URLSearchParams(window.location.search).get('docNum');
                     const deliveryDocNum = $('#deliveryDocNum').val();
                     const deliveryDate = $('#deliveryDate').val() || formatDate(new Date()); // Use current date if not set
@@ -363,7 +364,7 @@
                             U_Image: base64Image || '',
                             U_SessionID: sessionId,
                             U_GUID: guid + "_" + rowData.ItemCode,
-                            U_User: username,
+                            U_User: localStorageUserName,
                             U_LineNum: lineNum
                         });
                     });

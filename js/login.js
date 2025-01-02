@@ -40,15 +40,19 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
         }
 
         // If validation successful, proceed with SAP login using admin credentials
-        const sapResponse = await axios.post('/b1s/v1/Login', {
-            UserName: validationResponse.data.user.username,  // This will be admin username
-            Password: validationResponse.data.user.password,  // This will be admin password
-            CompanyDB: "CREMMA_TEST_111224"
-        }, {
+        const sapResponse = await axios.post(
+          "/b1s/v1/Login",
+          {
+            UserName: validationResponse.data.user.username, // This will be admin username
+            Password: validationResponse.data.user.password, // This will be admin password
+            CompanyDB: "CREMMA_SAYIM_TEST",
+          },
+          {
             headers: {
-                'Content-Type': 'application/json'
-            }
-        });
+              "Content-Type": "application/json",
+            },
+          }
+        );
 
         await new Promise(resolve => setTimeout(resolve, 2000)); // 2 second delay
 
@@ -62,6 +66,16 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
             localStorage.setItem('sessionTimeout', sapResponse.data.SessionTimeout);
             localStorage.setItem('b1Version', sapResponse.data.Version);
             
+             console.log('SessionId:', sapResponse.data.SessionId);
+             console.log('SessionTimeout:', sapResponse.data.SessionTimeout);
+             console.log('Version:', sapResponse.data.Version);
+             console.log('User Name:', validationResponse.data.user.name);
+             console.log('User Type:', validationResponse.data.user.type);
+             console.log('Branch Code:', validationResponse.data.user.branchCode);
+             console.log('Branch Name:', validationResponse.data.user.branchName);
+ 
+
+
             // Hide loading screen and redirect
             hideLoading();
             window.location.href = 'index.html';

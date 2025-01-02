@@ -368,10 +368,6 @@
 
                 console.log('Session ID:', sessionId);
 
-                // Generate GUID for this session
-                const sessionGUID = Date.now().toString();
-                console.log('Session GUID:', sessionGUID);
-
                 let selectedQuantities = new Map(); // Store quantities across pagination
 
                 // Initialize DataTables with empty data first
@@ -728,7 +724,6 @@
                     const minQty = parseFloat(input.data('min')) || 0;
                     const itemCode = input.data('item-code');
                     const isIncrease = $(this).hasClass('increase-qty');
-
                     const newValue = handleQuantityChange(currentValue, minQty, isIncrease);
                     
                     input.val(newValue);
@@ -757,7 +752,12 @@
                     });
 
                     if (orderData.length === 0) {
-                        alert('Lütfen en az bir ürün için miktar giriniz.');
+                        Swal.fire({
+    icon: 'warning',
+    title: 'Uyarı',
+    text: 'Lütfen en az bir ürün için miktar giriniz.',
+    confirmButtonText: 'Tamam'
+});
                         return;
                     }
 
@@ -792,21 +792,13 @@
                     showOrderSummaryModal();
                 });
 
-                // Function to generate UUID
-                function generateUUID() {
-                    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-                        var r = Math.random() * 16 | 0,
-                            v = c == 'x' ? r : (r & 0x3 | 0x8);
-                        return v.toString(16);
-                    });
-                }
-
                 // Create order from modal
                 $('#confirmOrderBtn').click(async function() {
                     try {
+                        showLoading('Sipariş oluşturuluyor...');
                         const orderItems = [];
                         let hasError = false;
-                        const whsCode = '1010';
+                        const whsCode = localStorage.getItem("branchCode");
 
                         // Collect all items with quantities
                         ordersTable.rows().every(function() {
@@ -814,10 +806,17 @@
                             const $row = $(this.node());
                             const quantity = parseFloat($row.find('.order-qty').val()) || 0;
                             const minQty = parseFloat(rowData[5]) || 0;
+                            const localStorageUserName = localStorage.getItem("userName");
+                            console.log("localStorageUserName:", localStorageUserName);
 
                             if (quantity > 0) {
                                 if (quantity < minQty) {
-                                    alert(`${rowData[1]} için minimum sipariş miktarı ${minQty}'dir.`);
+                                    Swal.fire({
+    icon: 'warning',
+    title: 'Uyarı',
+    text: `${rowData[1]} için minimum sipariş miktarı ${minQty}'dir.`,
+    confirmButtonText: 'Tamam'
+});
                                     hasError = true;
                                     return false;
                                 }
@@ -829,9 +828,7 @@
                                     U_ItemName: rowData[1],
                                     U_Quantity: quantity,
                                     U_UomCode: rowData[7],
-                                    U_SessionID: "1221",
-                                    U_GUID: generateUUID(),
-                                    U_User: "Orkun"
+                                    U_User: localStorageUserName
                                 });
                             }
                         });
@@ -843,9 +840,6 @@
                             return;
                         }
 
-                        // Show loading
-                        $('#loadingMessage').show();
-                        
                         // Create order
                         const response = await fetch('/api/production-orders?sessionId=' + sessionId,{
                             method: 'POST',
@@ -861,29 +855,31 @@
                             throw new Error('Sipariş oluşturulurken bir hata oluştu.');
                         }
 
-                        
-
                         const result = await response.json();
                         
                         // Hide loading and modal
-                        $('#loadingMessage').hide();
+                        hideLoading();
                         bootstrap.Modal.getInstance(document.getElementById('orderSummaryModal')).hide();
                         
                         // Show success message
-                        alert('Sipariş başarıyla oluşturuldu!');
+                        Swal.fire({
+    icon: 'success',
+    title: 'Başarılı!',
+    text: 'Sipariş başarıyla oluşturuldu!',
+    confirmButtonText: 'Tamam'
+});
                         
                         // Clear quantities and reload orders
                         selectedQuantities.clear();
                         await loadOrders();
                         
                     } catch (error) {
+                        hideLoading();
                         console.error('Error creating order:', error);
-                        $('#loadingMessage').hide();
                         alert('Sipariş oluşturulurken bir hata oluştu: ' + error.message);
                     }
                 });
 
-               
                 // Handle quantity changes in modal
                 $(document).on('click', '.decrease-modal-qty, .increase-modal-qty', function() {
                     const $button = $(this);
@@ -969,5 +965,6 @@
             return d.toLocaleDateString('tr-TR');
         }
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 </body>
 </html>

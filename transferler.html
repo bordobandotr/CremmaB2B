@@ -458,7 +458,9 @@
                 if (imageFile) {
                     imageBase64 = await convertImageToBase64(imageFile);
                 }
-
+                const localStorageUserName = localStorage.getItem("userName");
+                console.log("localStorageUserName:", localStorageUserName);
+                
                 const postData = {
                     "U_Type": "TRANSFER",
                     "U_DocNum": parseInt(docNum),
@@ -474,7 +476,7 @@
                     "U_Image": imageBase64,
                     "U_SessionID": "1221",
                     "U_GUID": generateGUID(),
-                    "U_User": "ozan",
+                    "U_User": localStorageUserName,
                     "U_DocStatus": "C"
                 };
 

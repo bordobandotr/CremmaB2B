@@ -633,7 +633,8 @@
                         showLoading('Transfer Oluşturuluyor...');
                         const sessionId = localStorage.getItem('sessionId');
                         const whsCode = '1010';
-                        const username = 'Orkun';
+                        const localStorageUserName = localStorage.getItem("userName");
+                        console.log("localStorageUserName:", localStorageUserName);
                         
                         const transferItems = [];
                         
@@ -657,7 +658,7 @@
                                     U_Comments: note,
                                     U_SessionID: sessionId,
                                     U_GUID: generateUUID(),
-                                    U_User: username
+                                    U_User: localStorageUserName
                                 });
                             }
                         });

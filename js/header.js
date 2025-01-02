@@ -18,19 +18,19 @@ async function loadUserInfo() {
     }
 }
 
-function logout() {
-    try {
-        // Clear session storage
-        localStorage.removeItem('sessionId');
-        localStorage.removeItem('sessionTimeout');
+// function logout() {
+//     try {
+//         // Clear session storage
+//         localStorage.removeItem('sessionId');
+//         localStorage.removeItem('sessionTimeout');
         
-        // Redirect to login page
-        window.location.href = 'login.html';
-    } catch (error) {
-        console.error('Error during logout:', error);
-        alert('Çıkış yapılırken bir hata oluştu.');
-    }
-}
+//         // Redirect to login page
+//         window.location.href = 'login.html';
+//     } catch (error) {
+//         console.error('Error during logout:', error);
+//         alert('Çıkış yapılırken bir hata oluştu.');
+//     }
+// }
 
 // Load user info when the page loads
 document.addEventListener('DOMContentLoaded', loadUserInfo);

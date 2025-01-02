@@ -590,6 +590,8 @@
                 try {
                     const sessionId = localStorage.getItem('sessionId');
                     const orderGuid = generateUUID(); // Generate a single GUID for all items
+                    const localStorageUserName = localStorage.getItem("userName");
+                    console.log("localStorageUserName:", localStorageUserName);
 
                     const orderItems = [];
                     $('#orderSummaryItems .item-row').each(function() {
@@ -619,7 +621,7 @@
                             U_CardCode: cardCode,
                             U_CardName: cardName,
                             U_GUID: orderGuid,
-                            U_User: localStorage.getItem('username') || 'Orkun'
+                            U_User: localStorageUserName
                         });
                     });
 
