@@ -1,27 +1,40 @@
+<script src="../js/avatarGenerator.js"></script>
 <script>
-    // storage name and branchname
-    const branchCode = localStorage.getItem('branchCode');
-    const branchName = localStorage.getItem('branchName');
-    const branchUsers = JSON.parse(localStorage.getItem('branchUsers'));
-    const user = branchUsers.find(user => user.type === 'branch_manager');
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get user data from localStorage
+        const branchUsers = JSON.parse(localStorage.getItem('branchUsers'));
+        const user = branchUsers ? branchUsers.find(user => user.type === 'branch_manager') : null;
+        const branchName = localStorage.getItem('branchName');
 
-    // document.getElementById('sidebar-user').innerHTML = `
-    //     <div class="user-profile mt-auto p-3">
-    //         <div class="d-flex align-items-center">
-    //             <img src="img/avatar.jpg" alt="User" class="rounded-circle me-2" style="width: 32px; height: 32px;">
-    //             <span>${user ? user.name : 'Kullanıcı bilgisi alınamadı'}</span>
-    //         </div>
-    //     </div>
-    // `;
+        // Update user name and branch name
+        if (user) {
+            document.getElementById('userName').textContent = user.name;
+            // Update avatar using avatarGenerator.js
+            updateUserAvatar(user.name);
+            console.log('Generated avatar for:', user.name); // Debug log
+        }
 
-    document.getElementById('userName').innerText = user ? user.name : '-';
-    document.getElementById('branchName').innerText = branchName;
+        if (branchName) {
+            document.getElementById('branchName').textContent = branchName;
+        }
+    });
 </script>
+
 <div class="user-info position-absolute bottom-0 start-0 p-3 w-100">
     <div class="d-flex align-items-center">
-        <img src="img/avatar.jpg" alt="User" class="rounded-circle me-2" width="40">
+        <img id="userAvatar" alt="User Avatar" class="user-avatar">
         <div class="text-white">
             <small><span id="userName">-</span> - <span id="branchName">-</span></small>
         </div>
     </div>
 </div>
+
+<style>
+    .user-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        margin-right: 1rem;
+        background-color: #ffffff20;
+    }
+</style>

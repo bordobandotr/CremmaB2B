@@ -5,6 +5,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CREMMA - Dış Tedarik Siparişleri</title>
+    <link rel="icon" type="image/png" href="img/favicon.png">
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- DataTables CSS -->
@@ -22,11 +23,15 @@
     <div class="d-flex">
         <!-- Sidebar -->
         <div class="sidebar">
-            <div class="logo-container p-4">
-                <h2 class="text-white">CREMMA</h2>
+            <div id="logo-container">
+                
             </div>
             <div id="sidebar-nav">
                 <!-- Navigation menu will be loaded here -->
+            </div>
+
+            <div id="sidebar-user">
+                <!-- User information will be loaded here -->
             </div>
         </div>
 
@@ -41,12 +46,6 @@
                     <h5 class="mb-0">Dış Tedarik Siparişleri</h5>
                 </div>
                 <div class="d-flex align-items-center">
-                    <div class="me-3">
-                        <span id="userInfo" class="text-muted">
-                            <i class="bi bi-person-circle me-1"></i>
-                            Yükleniyor...
-                        </span>
-                    </div>
                     <a href="dis-tedarik-siparisi-olustur.html" class="btn btn-danger me-2">
                         <i class="bi bi-plus"></i> Yeni Sipariş Oluştur
                     </a>
@@ -62,7 +61,7 @@
                 <div class="card mb-4">
                     <div class="card-body">
                         <div class="row g-3">
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <label class="form-label">Sipariş Durumu</label>
                                 <select class="form-select" id="statusFilter">
                                     <option value="">Tümü</option>
@@ -73,20 +72,15 @@
                                     <option value="5">İptal Edildi</option>
                                 </select>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <label class="form-label">Tedarikçi</label>
                                 <select class="form-select" id="supplierFilter">
                                     <option value="">Tümü</option>
                                 </select>
                             </div>
-                            <div class="col-md-3">
+                            <div class="col-md-4">
                                 <label class="form-label">Tarih Aralığı</label>
                                 <input type="date" class="form-control" id="dateFilter">
-                            </div>
-                            <div class="col-md-3 d-flex align-items-end">
-                                <button class="btn btn-primary w-100" onclick="applyFilters()">
-                                    <i class="bi bi-search"></i> Filtrele
-                                </button>
                             </div>
                         </div>
                     </div>
@@ -96,13 +90,14 @@
                 <div class="card">
                     <div class="card-body">
                         <div class="table-responsive">
-                            <table id="ordersTable" class="table table-striped">
+                            <table id="ordersTable" class="table table-hover">
                                 <thead>
                                     <tr>
                                         <th>Sipariş No</th>
                                         <th>Tedarikçi</th>
                                         <th>Sipariş Tarihi</th>
                                         <th>Tahmini Teslimat</th>
+                                        <th>Teslimat Belge No</th>
                                         <th>Durum</th>
                                         <th>İşlemler</th>
                                     </tr>
@@ -129,6 +124,8 @@
             // Initialize DataTables with empty data first
             const ordersTable = $('#ordersTable').DataTable({
                 responsive: true,
+                pageLength: 25,
+                lengthMenu: [[25, 50, 100], [25, 50, 100]],
                 columns: [
                     { data: 'DocNum' },
                     { data: 'CardName' },
@@ -145,6 +142,12 @@
                         }
                     },
                     { 
+                        data: 'NumAtCard',
+                        render: function(data) {
+                            return data || '';
+                        }
+                    },
+                    { 
                         data: 'DocStatus',
                         render: function(data) {
                             return getStatusBadge(data);
@@ -155,19 +158,19 @@
                         render: function(data) {
                             const buttons = [];
                             
-                            // View button
-                            buttons.push(`<a href="dis-tedarik-siparisi-detay.html?docNum=${data.DocNum}" 
-                                class="btn btn-sm btn-primary me-1">
-                                <i class="bi bi-eye"></i>
-                            </a>`);
-                            
-                            // Delivery button - only show for approved orders
-                            if (data.DocStatus === '3') {
-                                buttons.push(`<a href="dis-tedarik-siparisi-teslim.html?docNum=${data.DocNum}" 
-                                    class="btn btn-sm btn-success me-1">
-                                    <i class="bi bi-box-seam"></i>
-                                </a>`);
-                            }
+                            buttons.push(`<div class="btn-group">
+                                <a href="dis-tedarik-siparisi-detay.html?docNum=${data.DocNum}" 
+                                    class="btn btn-sm btn-primary">
+                                    <i class="bi bi-eye"></i> Detay
+                                </a>
+                                ${data.DocStatus === '3' ? 
+                                    `<a href="dis-tedarik-siparisi-teslim.html?docNum=${data.DocNum}" 
+                                        class="btn btn-sm btn-success">
+                                        <i class="bi bi-check-lg"></i> Teslim Al
+                                    </a>` 
+                                    : ''
+                                }
+                            </div>`);
                             
                             return buttons.join('');
                         }
@@ -183,15 +186,7 @@
             await loadOrders();
 
             // Handle filter changes
-            $('#statusFilter').change(function() {
-                loadOrders();
-            });
-
-            $('#dateFilter').change(function() {
-                loadOrders();
-            });
-
-            $('#supplierFilter').change(function() {
+            $('#statusFilter, #supplierFilter, #dateFilter').on('change', function() {
                 loadOrders();
             });
 
@@ -207,12 +202,14 @@
                 const status = $('#statusFilter').val();
                 const dateRange = $('#dateFilter').val();
                 const supplier = $('#supplierFilter').val();
+                const whsCode = localStorage.getItem("branchCode");
 
                 const queryParams = new URLSearchParams({
                     sessionId: api.getSessionId(),
                     status: status || '',
                     dateRange: dateRange || '',
-                    supplier: supplier || ''
+                    supplier: supplier || '',
+                    whsCode: whsCode
                 });
 
                 const response = await fetch(`/api/supply-orders?${queryParams}`);

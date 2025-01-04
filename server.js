@@ -3,6 +3,8 @@ const axios = require('axios');
 const https = require('https');
 const { createProxyMiddleware } = require('http-proxy-middleware');
 const path = require('path');
+const multer = require('multer');
+const fs = require('fs');
 
 const app = express();
 
@@ -13,11 +15,51 @@ const axiosInstance = axios.create({
     })
 });
 
+// Upload directory for images
+const uploadDir = path.join(__dirname, 'uploads');
+console.log('Upload directory:', uploadDir);
+
+// Create uploads directory if it doesn't exist
+if (!fs.existsSync(uploadDir)) {
+    try {
+        fs.mkdirSync(uploadDir, { recursive: true });
+        console.log('Created uploads directory');
+    } catch (error) {
+        console.error('Error creating uploads directory:', error);
+    }
+}
+
+// Configure multer for image uploads
+const storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        console.log('Saving file to:', uploadDir);
+        cb(null, uploadDir);
+    },
+    filename: function (req, file, cb) {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        const filename = uniqueSuffix + path.extname(file.originalname);
+        console.log('Generated filename:', filename);
+        cb(null, filename);
+    }
+});
+
+const upload = multer({ 
+    storage: storage,
+    limits: {
+        fileSize: 5 * 1024 * 1024 // 5MB limit
+    }
+});
+
+// Serve static files from uploads directory
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+
 // Serve static files
 app.use(express.static('.'));
+app.use('/uploads', express.static('uploads'));
 
 // Parse JSON bodies
-app.use(express.json());
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 // Proxy middleware configuration
 const proxyOptions = {
@@ -377,56 +419,72 @@ app.get('/api/delivery/:docNum', async (req, res) => {
     }
 });
 
-
 // Handle delivery submissions
-app.post('/api/delivery-submit/:docNum', async (req, res) => {
-    const { docNum } = req.params;
-    const { sessionId, deliveryData } = req.body;
-
-    console.log("Processing delivery submission for docNum:", docNum);
-    console.log("Session ID:", sessionId);
-    console.log("Delivery data:", JSON.stringify(deliveryData, null, 2));
-
-    if (!sessionId || !docNum || !deliveryData) {
-        console.error('Missing parameters:', { sessionId, docNum, hasDeliveryData: !!deliveryData });
-        return res.status(400).json({ error: 'Missing required parameters' });
-    }
-
+app.post('/api/delivery-submit/:docNum', upload.array('image'), async (req, res) => {
     try {
-        console.log('Sending request to external API...');
+        const docNum = req.params.docNum;
+        const { deliveryData, sessionId } = req.body;
+        
+        // Parse deliveryData from string to object
+        const parsedDeliveryData = typeof deliveryData === 'string' ? JSON.parse(deliveryData) : deliveryData;
+        
+        // Add image path to delivery data if file was uploaded
+        if (req.file) {
+            console.log('Uploaded file:', req.file);
+            const imagePath = '/uploads/' + req.file.filename;
+            parsedDeliveryData.U_Image = imagePath;
+            console.log('Image path:', imagePath);
+        }
+
+        console.log('Received delivery data:', parsedDeliveryData);
+
         const response = await axiosInstance.post(
             'https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_OWTR',
-            deliveryData,
+            parsedDeliveryData,
             {
                 headers: {
-                    'Cookie': 'B1SESSION=' + encodeURIComponent(sessionId),
+                    'Cookie': `B1SESSION=${sessionId}`,
                     'Content-Type': 'application/json'
                 }
             }
         );
 
-        console.log('External API Response:', response.data);
-        res.json(response.data);
+        console.log('Delivery API Response:', response.data);
+
+        // Delete the uploaded file after successful submission
+        if (req.file) {
+            fs.unlink(req.file.path, (err) => {
+                if (err) console.error('Error deleting temp file:', err);
+                else console.log('Successfully deleted file:', req.file.path);
+            });
+        }
+
+        res.json({
+            success: true,
+            data: response.data
+        });
     } catch (error) {
-        console.error('Error submitting delivery. Full error:', error);
-        console.error('Error response data:', error.response?.data);
-        console.error('Error status:', error.response?.status);
-        console.error('Error headers:', error.response?.headers);
-        
-        res.status(500).json({ 
-            error: 'Delivery submission failed', 
-            details: error.message,
-            response: error.response?.data
+        // Delete the uploaded file if there was an error
+        if (req.file) {
+            fs.unlink(req.file.path, (err) => {
+                if (err) console.error('Error deleting temp file:', err);
+                else console.log('Successfully deleted file:', req.file.path);
+            });
+        }
+
+        console.error('Error in delivery submit:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Delivery submission failed',
+            details: error.message
         });
     }
 });
 
-
-
 // External Supply Order endpoints
 app.get("/api/supply-orders", async (req, res) => {
     const sessionId = req.query.sessionId;
-    const whsCode = '1010';
+    const whsCode = req.query.whsCode;
 
     console.log("sessionId:", sessionId);
     console.log("whsCode:", whsCode);
@@ -447,98 +505,6 @@ app.get("/api/supply-orders", async (req, res) => {
             }
         );
         console.log("Response for whsCode:", whsCode, response.data);
-        res.json(response.data);
-    } catch (error) {
-        console.error("Error:", error.message);
-        res.status(500).json({ error: error.message });
-    }
-});
-
-
-app.get("/api/supply-detail-order/:docNum", async (req, res) => {
-  console.log("ewqeqweqw");
-  const sessionId = req.query.sessionId;
-  const docNum = req.params.docNum;
-
-  console.log("sessionId:", sessionId);
-  console.log("docNum:", docNum);
-
-  try {
-    const response = await axiosInstance.get(
-      "https://10.21.22.11:50000/b1s/v1/SQLQueries('OPDN_NEW')/List",
-      {
-        params: {
-          value1: "'SUPPLY'",
-          value2: `'${docNum}'`,
-        },
-        headers: {
-          Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
-          "Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
-        },
-      }
-    );
-
-    console.log("Response for docNum:", docNum, response.data);
-
-    res.json(response.data);
-  } catch (error) {
-    console.error("Error:", error.message);
-    res.status(500).json({ error: error.message });
-  }
-});
-
-
-app.get("/api/supply-order/:docNum", async (req, res) => {
-    console.log("ewqeqweqw");
-    const sessionId = req.query.sessionId;
-    const docNum = req.params.docNum;
-
-    console.log("sessionId:", sessionId);
-    console.log("docNum:", docNum);
- 
-
-try {
-  const response = await axiosInstance.get(
-    "https://10.21.22.11:50000/b1s/v1/SQLQueries('OPOR_DETAIL')/List",
-    {
-      params: {
-        value1: "'SUPPLY'",
-        value2: `'${docNum}'`,
-      },
-      headers: {
-        Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
-        "Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
-      },
-    }
-  );
-
-  console.log("Response for docNum:", docNum, response.data);
-
-  res.json(response.data);
-} catch (error) {
-  console.error("Error:", error.message);
-  res.status(500).json({ error: error.message });
-}
-});
-
-app.get("/api/supply-items", async (req, res) => {
-    const sessionId = req.query.sessionId;
-    const whsCode = req.query.whsCode;
-    
-    try {
-        const response = await axiosInstance.get(
-            "https://10.21.22.11:50000/b1s/v1/SQLQueries('OPOR_NEW')/List",
-            {
-                params: {
-                    value1: "'SUPPLY'",
-                    value2: `'${whsCode}'`,
-                },
-                headers: {
-                    Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
-                    "Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
-                },
-            }
-        );
         res.json(response.data);
     } catch (error) {
         console.error("Error:", error.message);
@@ -575,6 +541,97 @@ app.get("/api/supply-items", async (req, res) => {
 //     }
 // });
 
+app.get("/api/supply-detail-order/:docNum", async (req, res) => {
+  console.log("ewqeqweqw");
+  const sessionId = req.query.sessionId;
+  const docNum = req.params.docNum;
+
+  console.log("sessionId:", sessionId);
+  console.log("docNum:", docNum);
+
+  try {
+    const response = await axiosInstance.get(
+      "https://10.21.22.11:50000/b1s/v1/SQLQueries('OPDN_NEW')/List",
+      {
+        params: {
+          value1: "'SUPPLY'",
+          value2: `'${docNum}'`,
+        },
+        headers: {
+          Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+          "Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
+        },
+      }
+    );
+
+    console.log("Response for docNum:", docNum, response.data);
+
+    res.json(response.data);
+  } catch (error) {
+    console.error("Error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.get("/api/supply-order/:docNum", async (req, res) => {
+    console.log("ewqeqweqw");
+    const sessionId = req.query.sessionId;
+    const docNum = req.params.docNum;
+
+    console.log("sessionId:", sessionId);
+    console.log("docNum:", docNum);
+    console.log("/api/supply-order/:docNum:");
+
+try {
+  const response = await axiosInstance.get(
+    "https://10.21.22.11:50000/b1s/v1/SQLQueries('OPOR_DETAIL')/List",
+    {
+      params: {
+        value1: "'SUPPLY'",
+        value2: `'${docNum}'`,
+      },
+      headers: {
+        Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+        "Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
+      },
+    }
+  );
+
+  console.log("Response:supply-order/:docNum::::::>>>>>>", response);
+  console.log("Response for docNum:", docNum, response.data);
+
+  res.json(response.data);
+} catch (error) {
+  console.error("Error:", error.message);
+  res.status(500).json({ error: error.message });
+}
+});
+
+app.get("/api/supply-items", async (req, res) => {
+    const sessionId = req.query.sessionId;
+    const whsCode = req.query.whsCode;
+    
+    try {
+        const response = await axiosInstance.get(
+            "https://10.21.22.11:50000/b1s/v1/SQLQueries('OPOR_NEW')/List",
+            {
+                params: {
+                    value1: "'SUPPLY'",
+                    value2: `'${whsCode}'`,
+                },
+                headers: {
+                    Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+                    "Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
+                },
+            }
+        );
+        res.json(response.data);
+    } catch (error) {
+        console.error("Error:", error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 app.get("/api/supply-delivery/:docNum", async (req, res) => {
     const sessionId = req.query.sessionId;
     const docNum = req.params.docNum;
@@ -607,75 +664,139 @@ app.get("/api/supply-delivery/:docNum", async (req, res) => {
     }
 });
 
-app.post("/api/supply-delivery/:docNum", async (req, res) => {
-    const { docNum } = req.params;
-    const { sessionId, items } = req.body;
-
-    console.log("Processing delivery for docNum:", docNum);
-    console.log("Using sessionId:", sessionId);
-    console.log("Items:", items); 
- 
-
+app.post("/api/supply-delivery/:docNum", upload.single('image'), async (req, res) => {
+    console.log("Processing delivery for docNum:", req.params.docNum);
+    console.log("Using sessionId:", req.body.sessionId);
     try {
-        const guid = generateGUID(); // Tek bir GUID oluştur
-        const deliveryRequests = items.map((item) => ({
-          U_Type: "SUPPLY",
-          U_WhsCode: item.U_WhsCode,
-          U_CardName: item.U_CarName,
-          U_DocDate: item.U_DocDate,
-          U_DocNum: docNum,
-          U_NumAtCard: item.U_NumAtCard,
-          U_ItemCode: item.U_ItemCode,
-          U_ItemName: item.U_ItemName,
-          U_Quantity: item.U_Quantity,
-          U_DeliveryQty: item.U_DeliveryQty,
-          U_MissingQty: item.U_MissingQty,
-          U_DefectiveQty: item.U_DefectiveQty,
-          U_UomCode: item.U_UomCode,
-          U_Comments: item.U_Comments,
-          U_Image: "",
-          U_SessionID: sessionId,
-          U_GUID: guid, // Aynı GUID'i kullan
-          U_User: "Orkun",
-          U_LineNum: item.U_LineNum,
-        }));
- 
+        const docNum = req.params.docNum;
+        const { deliveryData, sessionId } = req.body;
+        
+        // Parse deliveryData from string to object
+        const parsedDeliveryData = typeof deliveryData === 'string' ? JSON.parse(deliveryData) : deliveryData;
+        
+        // Add image path to delivery data if file was uploaded
+        // if (req.file) {
+        //     console.log('Uploaded file:', req.file);
+        //     const imagePath = '/uploads/' + req.file.filename;
+        //     parsedDeliveryData.U_Image = imagePath;
+        //     console.log('Image path:', imagePath);
+        // }
 
-        console.log("Sending delivery requests with GUID:", guid);
+        console.log('Received delivery data:', parsedDeliveryData);
 
-        // Tüm istekleri paralel olarak gönder
-        const responses = await Promise.all(
-            deliveryRequests.map(data => 
-                axiosInstance.post(
-                    "https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_OPDN",
-                    data,
-                    {
-                        headers: {
-                            Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
-                            "Content-Type": "application/json",
-                        },
-                    }
-                )
-            )
+        const response = await axiosInstance.post(
+            'https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_OPDN',
+            parsedDeliveryData,
+            {
+                headers: {
+                    'Cookie': `B1SESSION=${sessionId}`,
+                    'Content-Type': 'application/json'
+                }
+            }
         );
 
-        console.log(`Successfully processed ${responses.length} items with GUID: ${guid}`);
+        console.log('Delivery API Response:', response.data);
+
+        // Delete the uploaded file after successful submission
+        if (req.file) {
+            fs.unlink(req.file.path, (err) => {
+                if (err) console.error('Error deleting temp file:', err);
+                else console.log('Successfully deleted file:', req.file.path);
+            });
+        }
 
         res.json({
             success: true,
-            message: `Successfully processed ${responses.length} items`,
-            guid: guid,
-            results: responses.map(r => r.data)
+            data: response.data
         });
     } catch (error) {
-        console.error("Error processing delivery:", error);
-        res.status(500).json({ 
+        // Delete the uploaded file if there was an error
+        if (req.file) {
+            fs.unlink(req.file.path, (err) => {
+                if (err) console.error('Error deleting temp file:', err);
+                else console.log('Successfully deleted file:', req.file.path);
+            });
+        }
+
+        console.error('Error in delivery submit:', error);
+        res.status(500).json({
             success: false,
-            error: error.message,
-            details: error.response?.data || 'Unknown error occurred'
+            error: 'Delivery submission failed',
+            details: error.message
         });
     }
 });
+
+// app.post("/api/supply-delivery/:docNum", async (req, res) => {
+//     const { docNum } = req.params;
+//     const { sessionId, items } = req.body;
+
+//     console.log("Processing delivery for docNum:", docNum);
+//     console.log("Using sessionId:", sessionId);
+//     console.log("Items:", items); 
+ 
+
+//     try {
+//         const guid = generateGUID(); // Tek bir GUID oluştur
+//         const deliveryRequests = items.map((item) => ({
+//           U_Type: "SUPPLY",
+//           U_WhsCode: item.U_WhsCode,
+//           U_CardName: item.U_CarName,
+//           U_DocDate: item.U_DocDate,
+//           U_DocNum: docNum,
+//           U_NumAtCard: item.U_NumAtCard,
+//           U_ItemCode: item.U_ItemCode,
+//           U_ItemName: item.U_ItemName,
+//           U_Quantity: item.U_Quantity,
+//           U_DeliveryQty: item.U_DeliveryQty,
+//           U_MissingQty: item.U_MissingQty,
+//           U_DefectiveQty: item.U_DefectiveQty,
+//           U_UomCode: item.U_UomCode,
+//           U_Comments: item.U_Comments,
+//           U_Image: "",
+//           U_SessionID: sessionId,
+//           U_GUID: guid, // Aynı GUID'i kullan
+//           U_User: item.U_User,
+//           U_LineNum: item.U_LineNum,
+//         }));
+ 
+//         console.log("Delivery requests:", deliveryRequests);
+
+//         console.log("Sending delivery requests with GUID:", guid);
+
+//         // // Tüm istekleri paralel olarak gönder
+//         // const responses = await Promise.all(
+//         //     deliveryRequests.map(data => 
+//         //         axiosInstance.post(
+//         //             "https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_OPDN",
+//         //             data,
+//         //             {
+//         //                 headers: {
+//         //                     Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+//         //                     "Content-Type": "application/json",
+//         //                 },
+//         //             }
+//         //         )
+//         //     )
+//         // );
+
+//         // console.log(`Successfully processed ${responses.length} items with GUID: ${guid}`);
+
+//         // res.json({
+//         //     success: true,
+//         //     message: `Successfully processed ${responses.length} items`,
+//         //     guid: guid,
+//         //     results: responses.map(r => r.data)
+//         // });
+//     } catch (error) {
+//         console.error("Error processing delivery:", error);
+//         res.status(500).json({ 
+//             success: false,
+//             error: error.message,
+//             details: error.response?.data || 'Unknown error occurred'
+//         });
+//     }
+// });
 
 // Dış tedarik ürünlerini getir
 app.get("/api/supply-items-list/:whsCode", async (req, res) => {
@@ -716,9 +837,11 @@ app.get("/api/supply-items-list/:whsCode", async (req, res) => {
 app.post("/api/supply-order", async (req, res) => {
     const { items } = req.body;
     const sessionId = req.query.sessionId;
+    const whsCode = req.query.whsCode;
 
     console.log("supply-order Processing supply order for items:", items);
     console.log("supply-order Using sessionId:", sessionId);
+    console.log("supply-order Using whsCode:", whsCode);
 
     
     try {
@@ -733,7 +856,7 @@ app.post("/api/supply-order", async (req, res) => {
               "https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_OPOR",
               {
                 U_Type: "SUPPLY",
-                U_WhsCode: item.U_WhsCode,
+                U_WhsCode: whsCode,
                 U_ItemCode: item.U_ItemCode,
                 U_ItemName: item.U_ItemName,
                 U_Quantity: item.U_Quantity,
@@ -757,6 +880,7 @@ app.post("/api/supply-order", async (req, res) => {
             // console.log(`Supply order created for item ${item.ItemCode} with GUID: ${guid}`);
         }
 
+        console.log("Response:supply-order/:docNum::::::>>>>>>", responses);
         console.log(`Successfully created orders for ${responses}`);
 
         res.json({
@@ -811,19 +935,6 @@ app.get("/api/transfer-list/:whsCode", async (req, res) => {
         res.status(500).json({ error: error.message });
     }
 });
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 // Transfer İşlemleri için Endpoints
 
@@ -1087,6 +1198,293 @@ app.post('/api/validate-user', async (req, res) => {
         });
     }
 });
+
+
+
+
+
+
+
+app.get('/anadepo-siparisleri', async (req, res) => {
+    const sessionId = req.query.sessionId;
+    const whsCode = req.query.whsCode;
+
+    console.log("test", sessionId);
+    try {
+        let allData = [];
+        let nextLink = null;
+        
+        // Initial request
+        const initialResponse = await axiosInstance.get(
+            "https://10.21.22.11:50000/b1s/v1/SQLQueries('OWTQ_LIST')/List",
+            {
+                params: {
+                    value1: "'MAIN'",
+                    value2: "'" + whsCode + "'",
+                },
+                headers: {
+                    Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+                    "Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
+                },
+            }
+        );
+
+        console.log("Initial response:", initialResponse);
+        console.log("Initial response data:", initialResponse.data);
+
+        // Add initial data
+        allData = [...initialResponse.data.value];
+        nextLink = initialResponse.data["odata.nextLink"];
+
+        // Continue fetching if there's more data
+        while (nextLink) {
+            console.log("Fetching next batch of data...");
+            const nextResponse = await axiosInstance.get(
+                `https://10.21.22.11:50000/b1s/v1/${nextLink}`,
+                {
+                    headers: {
+                        Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+                        "Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
+                    },
+                }
+            );
+            console.log("Next response:", nextResponse);
+            console.log("Next response:", nextResponse.data);
+            // Add next batch of data
+            allData = [...allData, ...nextResponse.data.value];
+            nextLink = nextResponse.data["odata.nextLink"];
+        }
+
+        console.log("All data:", allData);
+        console.log("Total count:", allData.length);
+
+        res.json({
+            value: allData,
+            totalCount: allData.length
+        });
+    } catch (error) {
+        console.error('Error:', error);
+        console.error("Error:", error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get("/anadepo-siparisleri-list", async (req, res) => {
+  const sessionId = req.query.sessionId;
+  const whsCode = req.query.whsCode;
+  console.log("sessionId", sessionId); 
+  console.log("whsCode", whsCode); 
+  try {
+    const response = await axiosInstance.get(
+      "https://10.21.22.11:50000/b1s/v1/SQLQueries('OWTQ_NEW')/List",
+      {
+        params: {
+          value1: "'MAIN'",
+          value2: "'" + whsCode + "'",
+        },
+        headers: {
+          Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+          "Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
+        },
+      }
+    );
+
+    console.log(response);
+    console.log(response.data);
+
+    res.json(response.data);
+  } catch (error) {
+    console.error("Error:", error);
+    console.error("Error:", error.message);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+app.post("/api/anadepo-orders", async (req, res) => {
+    const orderData = req.body;
+    const sessionId = req.query.sessionId;
+    const guid = generateGUID();
+
+    console.log("Received order data:", orderData);
+
+    if (!Array.isArray(orderData) || orderData.length === 0) {
+        return res.status(400).json({ error: 'Invalid order data format' });
+    }
+
+    try {
+        const results = await Promise.all(orderData.map(async (order) => {
+            const data = {
+                U_Type: order.U_Type,
+                U_WhsCode: order.U_WhsCode,
+                U_ItemCode: order.U_ItemCode,
+                U_ItemName: order.U_ItemName,
+                U_Quantity: order.U_Quantity,
+                U_UomCode: order.U_UomCode,
+                U_SessionID: sessionId || order.U_SessionID,
+                U_GUID: guid,
+                U_User: order.U_User,
+                U_FromWhsCode: null,
+                U_FromWhsName: null,
+                U_Comments: "Ana Depo Siparişi"
+            };
+
+            console.log("Sending api/anadepo-orders data:", data);
+            
+            const response = await axiosInstance.post(
+                "https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_OWTQ",
+                data,
+                {
+                    headers: {
+                        'Cookie': `B1SESSION=${sessionId}`,
+                        'Content-Type': 'application/json'
+                    }
+                }
+            );
+            
+            console.log('Response for item:', order.U_ItemCode, response.data);
+            return response.data;
+        }));
+
+        console.log('All results:', results);
+        res.json(results);
+    } catch (error) {
+        console.error('Error creating orders:', error);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+app.get("/api/anadepo-order/:docNum", async (req, res) => {
+    const sessionId = req.query.sessionId;
+    const docNum = req.params.docNum;
+
+    console.log("Getting order details for docNum:", docNum);
+    console.log("Using sessionId:", sessionId);
+
+    // https://10.21.22.11:50000/b1s/v1/SQLQueries('OWTQ_DETAIL')/List?value1= 'PROD'&value2= 'DocNum'
+
+    try {
+        const response = await axiosInstance.get(
+            "https://10.21.22.11:50000/b1s/v1/SQLQueries('OWTQ_DETAIL')/List",
+            {
+                params: {
+                    value1: "'MAIN'",
+                    value2: docNum,
+                },
+                headers: {
+                    Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+                    "Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
+                },
+            }
+        );
+        console.log("Response for docNum:", docNum, response.data);
+        res.json(response.data);
+    } catch (error) {
+        console.error("Error:", error);
+        console.error("Error:", error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Get delivery details
+app.get('/api/anadepo-delivery/:docNum', async (req, res) => {
+    const { docNum } = req.params;
+    const { sessionId } = req.query;
+
+    if (!sessionId || !docNum) {
+        return res.status(400).json({ error: 'Missing required parameters' });
+    }
+
+    console.log("Getting delivery details for docNum:", docNum);
+    console.log("Using sessionId:", sessionId);
+
+    try {
+        const response = await axiosInstance.get(
+            `https://10.21.22.11:50000/b1s/v1/SQLQueries('OWTR_NEW')/List`,
+            {
+                params: {
+                    value1: "'MAIN'",
+                    value2: docNum
+                },
+                headers: {
+                    'Cookie': `B1SESSION=${encodeURIComponent(sessionId)}`,
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+
+        console.log('Delivery API Response:', response.data);
+        res.json(response.data);
+    } catch (error) {
+        console.error('Error fetching delivery details:', error);
+        res.status(500).json({ 
+            error: 'Failed to fetch delivery details',
+            details: error.message 
+        });
+    }
+});
+
+// Handle delivery submissions
+app.post('/api/anadepo-delivery-submit/:docNum', upload.array('image'), async (req, res) => {
+    try {
+        const docNum = req.params.docNum;
+        const { deliveryData, sessionId } = req.body;
+        
+        // Parse deliveryData from string to object
+        const parsedDeliveryData = typeof deliveryData === 'string' ? JSON.parse(deliveryData) : deliveryData;
+        
+        // Add image path to delivery data if file was uploaded
+        if (req.file) {
+            console.log('Uploaded file:', req.file);
+            const imagePath = '/uploads/' + req.file.filename;
+            parsedDeliveryData.U_Image = imagePath;
+            console.log('Image path:', imagePath);
+        }
+
+        console.log('Received delivery data:', parsedDeliveryData);
+
+        const response = await axiosInstance.post(
+            'https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_OWTR',
+            parsedDeliveryData,
+            {
+                headers: {
+                    'Cookie': `B1SESSION=${sessionId}`,
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+
+        console.log('Delivery API Response:', response.data);
+
+        // Delete the uploaded file after successful submission
+        if (req.file) {
+            fs.unlink(req.file.path, (err) => {
+                if (err) console.error('Error deleting temp file:', err);
+                else console.log('Successfully deleted file:', req.file.path);
+            });
+        }
+
+        res.json({
+            success: true,
+            data: response.data
+        });
+    } catch (error) {
+        // Delete the uploaded file if there was an error
+        if (req.file) {
+            fs.unlink(req.file.path, (err) => {
+                if (err) console.error('Error deleting temp file:', err);
+                else console.log('Successfully deleted file:', req.file.path);
+            });
+        }
+
+        console.error('Error in delivery submit:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Delivery submission failed',
+            details: error.message
+        });
+    }
+});
+
 
 // Handle all other routes
 app.get('*', (req, res) => {

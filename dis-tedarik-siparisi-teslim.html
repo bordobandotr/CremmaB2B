@@ -12,10 +12,13 @@
     <link href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css" rel="stylesheet">
     <!-- Custom CSS -->
     <link href="css/style.css" rel="stylesheet">
+    <link href="css/orientation.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
     <script src="js/loadHeader.js"></script>
     <script src="js/sidebar-user.js"></script>
+    <script src="js/nav-menu.js"></script>
+    <script src="js/orientation.js"></script>
     
     <style>
         /* Loading Screen Styles */
@@ -61,6 +64,12 @@
             margin-top: 1rem;
         }
 
+        .input-group-text.required::after {
+            content: "*";
+            color: red;
+            margin-left: 4px;
+        }
+
         .quantity-input {
             width: 80px !important;
         }
@@ -77,8 +86,32 @@
             font-size: 0.875rem;
         }
 
+        @media (max-width: 768px) {
+            .input-group.quantity-control {
+                flex-direction: column;
+                align-items: center;
+                width: 60px !important;
+            }
+
+            .input-group.quantity-control .btn,
+            .input-group.quantity-control .form-control {
+                width: 100%;
+                margin: 0;
+                border-radius: 0.25rem !important;
+            }
+
+            .input-group.quantity-control .form-control {
+                margin: 2px 0;
+            }
+        }
+
         .note-input {
             width: 150px;
+        }
+        
+        .btn-dark {
+            background-color: black;
+            color: white;
         }
     </style>
 </head>
@@ -87,21 +120,18 @@
     <div class="d-flex">
         <!-- Sidebar -->
         <div class="sidebar">
-            <div class="logo-container p-4">
-                <h2 class="text-white">CREMMA</h2>
+            
+            <div id="logo-container">
+                
             </div>
+            
             <div id="sidebar-nav">
                 <!-- Navigation menu will be loaded here -->
             </div>
              
-            <div class="user-info position-absolute bottom-0 start-0 p-3 w-100">
-                <div class="d-flex align-items-center">
-                    <img src="img/avatar.jpg" alt="User" class="rounded-circle me-2" width="40">
-                    <div class="text-white">
-                        <small>Orkun - Caddebostan</small>
-                    </div>
-                </div>
-            </div>
+            <div id="sidebar-user">
+                <!-- User information will be loaded here -->
+            </div>  
         </div>
 
         <!-- Main Content -->
@@ -186,8 +216,9 @@
                         </div>
                     </div>
                     <div class="card-footer">
-                        <button type="button" class="btn btn-primary" id="submitDelivery" disabled>
-                            <i class="bi bi-check-lg"></i> Teslimatı Onayla
+                        
+                        <button type="submit" class="btn btn-success" id="submitBtn" onclick="submitDelivery()">
+                            <i class="bi bi-check-lg"></i> Teslim Al ve Onayla
                         </button>
                     </div>
                 </div>
@@ -243,7 +274,7 @@
                             console.log("row",row);
                             return `
                                 <div class="input-group quantity-control">
-                                    <button type="button" class="btn btn-outline-secondary decrease-qty" onclick="decrementValue(this, 'delivery-qty')">
+                                    <button type="button" class="btn btn-dark decrease-qty" onclick="decrementValue(this, 'delivery-qty')">
                                         <i class="bi bi-dash"></i>
                                     </button>
                                     <input type="number" class="form-control text-center delivery-qty" 
@@ -251,7 +282,7 @@
                                         data-item-code="${data.ItemCode}" readonly>
                                     <input type="hidden" class="initial-delivery-qty" value="${data.Quantity}">
                                     <input type="hidden" class="line-num" value="${data.LineNum}">
-                                    <button type="button" class="btn btn-outline-secondary increase-qty" onclick="incrementValue(this, 'delivery-qty')">
+                                    <button type="button" class="btn btn-dark increase-qty" onclick="incrementValue(this, 'delivery-qty')">
                                         <i class="bi bi-plus"></i>
                                     </button>
                                 </div>`;
@@ -262,14 +293,14 @@
                         render: function(data, type, row) {
                             return `
                                 <div class="input-group quantity-control">
-                                    <button type="button" class="btn btn-outline-secondary decrease-qty" onclick="decrementValue(this, 'missing-qty')">
+                                    <button type="button" class="btn btn-dark decrease-qty" onclick="decrementValue(this, 'missing-qty')">
                                         <i class="bi bi-dash"></i>
                                     </button>
                                     <input type="number" class="form-control text-center missing-qty" 
                                         value="0" min="0" max="${data.Quantity}" step="1"
                                         data-item-code="${data.ItemCode}"
                                         onchange="validateDeliveryQuantity($(this).closest('tr'))">
-                                    <button type="button" class="btn btn-outline-secondary increase-qty" onclick="incrementValue(this, 'missing-qty')">
+                                    <button type="button" class="btn btn-dark increase-qty" onclick="incrementValue(this, 'missing-qty')">
                                         <i class="bi bi-plus"></i>
                                     </button>
                                 </div>`;
@@ -280,14 +311,14 @@
                         render: function(data, type, row) {
                             return `
                                 <div class="input-group quantity-control">
-                                    <button type="button" class="btn btn-outline-secondary decrease-qty" onclick="decrementValue(this, 'defective-qty')">
+                                    <button type="button" class="btn btn-dark decrease-qty" onclick="decrementValue(this, 'defective-qty')">
                                         <i class="bi bi-dash"></i>
                                     </button>
                                     <input type="number" class="form-control text-center defective-qty" 
                                         value="0" min="0" max="${data.Quantity}" step="1"
                                         data-item-code="${data.ItemCode}"
                                         onchange="validateDeliveryQuantity($(this).closest('tr'))">
-                                    <button type="button" class="btn btn-outline-secondary increase-qty" onclick="incrementValue(this, 'defective-qty')">
+                                    <button type="button" class="btn btn-dark increase-qty" onclick="incrementValue(this, 'defective-qty')">
                                         <i class="bi bi-plus"></i>
                                     </button>
                                 </div>`;
@@ -297,13 +328,20 @@
                     {
                         data: null,
                         render: function(data) {
-                            return `<input type="text" class="form-control note-input" placeholder="Not ekle...">`;
+                            return '<input type="text" class="form-control note-input" placeholder="Not ekle...">';
                         }
                     },
                     {
                         data: null,
                         render: function(data) {
-                            return `<input type="file" class="form-control" accept="image/*" onchange="handleImageUpload(this)">`;
+                            return `
+                                <div class="input-group">
+                                    <input type="file" class="form-control" accept="image/*" onchange="handleImageUpload(this)" style="display: none;" id="imageInput_${data.LineNum}">
+                                    <button type="button" class="btn btn-outline-secondary" onclick="document.getElementById('imageInput_${data.LineNum}').click()">
+                                        <i class="bi bi-camera"></i> Görsel Yükle
+                                    </button>
+                                    <div id="imagePreview_${data.LineNum}" class="mt-2"></div>
+                                </div>`;
                         }
                     }
                 ],
@@ -315,88 +353,12 @@
             // Load order details
             await loadOrderDetails(docNum);
             // Handle quantity input changes
-            $('#deliveryItems').on('input', '.delivery-qty, .missing-qty, .defective-qty', function() {
+            $('#deliveryItems').on('input', '.delivery-qty', function() {
                 validateDeliveryQuantity($(this).closest('tr'));
             });
             // Handle delivery document number changes
             $('#deliveryDocNum').on('input', function() {
                 validateDelivery();
-            });
-            // Handle submit button click
-            $('#submitDelivery').click(async function() {
-                try {
-                    const sessionId = localStorage.getItem('sessionId');
-                    const localStorageUserName = localStorage.getItem("userName");
-                    console.log("localStorageUserName:", localStorageUserName);
-                    const docNum = new URLSearchParams(window.location.search).get('docNum');
-                    const deliveryDocNum = $('#deliveryDocNum').val();
-                    const deliveryDate = $('#deliveryDate').val() || formatDate(new Date()); // Use current date if not set
-                    const guid = generateGUID();
-                    const items = [];
-
-                    $('#deliveryItems tbody tr').each(function() {
-                        const $row = $(this);
-                        const rowData = deliveryItemsTable.row($row).data();
-
-                        const deliveryQty = parseInt($row.find('.delivery-qty').val()) || 0;
-                        const missingQty = parseInt($row.find('.missing-qty').val()) || 0;
-                        const defectiveQty = parseInt($row.find('.defective-qty').val()) || 0;
-                        const note = $row.find('.note-input').val();
-                        const imageInput = $row.find('input[type="file"]')[0];
-                        const base64Image = $(imageInput).data('base64');
-                        const lineNum = parseInt($row.find('.line-num').val());
-                        
-                        items.push({
-                            U_Type: "SUPPLY",
-                            U_WhsCode: rowData.WhsCode || '1010',
-                            U_CarName: rowData.CardName || 'TEDARIKCI',
-                            U_DocDate: deliveryDate,
-                            U_DocNum: parseInt(docNum),
-                            U_NumAtCard: deliveryDocNum,
-                            U_ItemCode: rowData.ItemCode,
-                            U_ItemName: rowData.ItemName,
-                            U_Quantity: parseInt(rowData.Quantity),
-                            U_DeliveryQty: deliveryQty,
-                            U_MissingQty: missingQty,
-                            U_DefectiveQty: defectiveQty,
-                            U_UomCode: rowData.UomCode,
-                            U_Comments: note || '',
-                            U_Image: base64Image || '',
-                            U_SessionID: sessionId,
-                            U_GUID: guid + "_" + rowData.ItemCode,
-                            U_User: localStorageUserName,
-                            U_LineNum: lineNum
-                        });
-                    });
-
-                    // Show loading screen
-                    $('.loading-screen').css('display', 'flex');
-
-                    const response = await fetch('/api/supply-delivery/' + docNum, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        },
-                        body: JSON.stringify({
-                            sessionId: sessionId,
-                            items: items
-                        })
-                    });
-
-                    if (!response.ok) {
-                        const errorData = await response.json();
-                        throw new Error(errorData.error || 'Teslimat kaydedilirken bir hata oluştu');
-                    }
-
-                    alert('Teslimat başarıyla kaydedildi!');
-                    window.location.href = 'dis-tedarik-siparisleri.html';
-                } catch (error) {
-                    console.error('Error:', error);
-                    alert('Teslimat kaydedilirken bir hata oluştu: ' + error.message);
-                } finally {
-                    // Hide loading screen
-                    $('.loading-screen').css('display', 'none');
-                }
             });
         });
         // Function to load order details
@@ -433,16 +395,30 @@
         }
         // Function to validate delivery
         function validateDelivery() {
-            const hasDocNum = $('#deliveryDocNum').val().trim() !== '';
-            
-            // Enable submit button if document number is filled
-            $('#submitDelivery').prop('disabled', !hasDocNum);
-        }
+            let isValid = true;
+            let hasDefectiveWithoutImage = false;
 
-        // Add event listener for validation
-        $('#deliveryDocNum').on('input', function() {
-            validateDelivery();
-        });
+            // Tüm satırları kontrol et
+            $('#deliveryItems tbody tr').each(function() {
+                const defectiveQty = parseInt($(this).find('.defective-qty').val()) || 0;
+                const imageInput = $(this).find('input[type="file"]')[0];
+
+                if (defectiveQty > 0 && !imageInput.files.length) {
+                    hasDefectiveWithoutImage = true;
+                    return false; // each döngüsünden çık
+                }
+            });
+
+            // Defolu ürün-görsel kontrolü
+            if (hasDefectiveWithoutImage) {
+                alert('Defolu ürün girişi yapılan tüm kalemler için görsel yüklemeniz zorunludur!');
+                isValid = false;
+            }
+
+            // Submit butonunu aktif/pasif yap
+            $('#submitBtn').prop('disabled', !isValid);
+            return isValid;
+        }
 
         function updateDeliveryQuantity(row) {
             const initialDeliveryQty = parseInt(row.find('.initial-delivery-qty').val()) || 0;
@@ -464,23 +440,27 @@
 
         function validateDeliveryQuantity(row) {
             const initialDeliveryQty = parseInt(row.find('.initial-delivery-qty').val()) || 0;
+            const deliveryQty = parseInt(row.find('.delivery-qty').val()) || 0;
             const missingQty = parseInt(row.find('.missing-qty').val()) || 0;
             const defectiveQty = parseInt(row.find('.defective-qty').val()) || 0;
 
-            // Calculate the total of missing and defective quantities
-            const totalAdjustments = missingQty + defectiveQty;
-            
-            // If total adjustments exceed initial quantity, reset the input that triggered the validation
-            if (totalAdjustments > initialDeliveryQty) {
-                alert('Eksik ve kusurlu miktarların toplamı sipariş miktarını aşamaz!');
-                // Reset the last changed input
-                $(document.activeElement).val(0);
-                updateDeliveryQuantity(row);
-                return false;
+            // Ensure the delivery quantity doesn't exceed the initial delivery quantity
+            if (deliveryQty > initialDeliveryQty) {
+                row.find('.delivery-qty').val(initialDeliveryQty);
+                alert('Teslimat miktarı başlangıç miktarını aşamaz!');
+                return;
             }
 
-            updateDeliveryQuantity(row);
-            return true;
+            // Calculate the remaining quantity that can be allocated to missing/defective
+            const remainingQty = initialDeliveryQty - deliveryQty;
+            
+            // If the current missing + defective quantities exceed the remaining quantity,
+            // reset them to 0
+            if (missingQty + defectiveQty > remainingQty) {
+                row.find('.missing-qty').val(0);
+                row.find('.defective-qty').val(0);
+                updateDeliveryQuantity(row);
+            }
         }
 
         function incrementValue(button, className) {
@@ -488,29 +468,32 @@
             const row = $(button).closest('tr');
             const initialDeliveryQty = parseInt(row.find('.initial-delivery-qty').val()) || 0;
             const currentValue = parseInt(input.val()) || 0;
-            const otherQty = className === 'missing-qty' ? 
-                parseInt(row.find('.defective-qty').val()) || 0 :
-                parseInt(row.find('.missing-qty').val()) || 0;
             
             // Calculate maximum allowed value based on initial delivery quantity
-            const maxValue = initialDeliveryQty - otherQty;
+            const maxValue = initialDeliveryQty;
             
             if (currentValue < maxValue) {
                 input.val(currentValue + 1);
-                updateDeliveryQuantity(row);
+                if (className === 'defective-qty' || className === 'missing-qty') {
+                    updateDeliveryQuantity(row);
+                }
             }
         }
 
         function decrementValue(button, className) {
             const input = $(button).siblings('input.' + className);
             const currentValue = parseInt(input.val()) || 0;
+            const row = $(button).closest('tr');
             
             if (currentValue > 0) {
                 input.val(currentValue - 1);
-                updateDeliveryQuantity($(button).closest('tr'));
+                if (className === 'defective-qty' || className === 'missing-qty') {
+                    updateDeliveryQuantity(row);
+                }
             }
         }
-
+        
+        // Function to generate GUID
         function generateGUID() {
         return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
         var r = Math.random() * 16 | 0,
@@ -561,6 +544,90 @@
             return `<span class="badge ${badgeClass}">${statusText}</span>`;
         }
 
+        // Loading screen functions
+        function showLoading(message = 'Yükleniyor...') {
+            $('.loading-screen').removeClass('d-none').css('display', 'flex');
+            $('.loading-text').text(message);
+        }
+
+        function hideLoading() {
+            $('.loading-screen').addClass('d-none');
+        }
+
+        async function submitDelivery() {
+            if (!validateDelivery()) {
+                alert('Lütfen gerekli alanları kontrol edin ve defolu ürün girilen her satır için fotoğraf yükleyin.');
+                return;
+            }
+
+            try {
+                showLoading('Teslimat Kaydediliyor...');
+                const sessionId = localStorage.getItem('sessionId');
+                const localStorageUserName = localStorage.getItem("userName");
+                const localStorageBranchCode = localStorage.getItem("branchCode");
+                const docNum = new URLSearchParams(window.location.search).get('docNum');
+                const guid = generateGUID();
+
+                // Process each item
+                for (const row of $('#deliveryItems tbody tr')) {
+                    const $row = $(row);
+                    const lineNum = $row.find('.line-num').val();
+                    // const imageInput = document.getElementById(`imageInput_${lineNum}`);
+                    
+                    const deliveryData = {
+                        U_Type: "SUPPLY",
+                        U_CardName: $('#supplier').text(),
+                        U_WhsCode: localStorageBranchCode,
+                        U_DocDate: new Date().toISOString().split('T')[0],
+                        U_DocNum: parseInt(docNum),
+                        U_NumAtCard: $('#deliveryDocNum').val(),
+                        U_ItemCode: $row.find('td:eq(0)').text(),
+                        U_ItemName: $row.find('td:eq(1)').text(),
+                        U_Quantity: parseInt($row.find('.initial-delivery-qty').val()),
+                        U_DeliveryQty: parseInt($row.find('.delivery-qty').val()) || 0,
+                        U_MissingQty: parseInt($row.find('.missing-qty').val()) || 0,
+                        U_DefectiveQty: parseInt($row.find('.defective-qty').val()) || 0,
+                        U_UomCode: $row.find('td:eq(6)').text(),
+                        U_Comments: $row.find('.note-input').val() || "",
+                        U_SessionID: sessionId,
+                        U_GUID: guid,
+                        U_User: localStorageUserName,
+                        U_LineNum: lineNum
+                    };
+
+                    console.log('Delivery data:', deliveryData);
+                  
+                    // Create FormData and append the delivery data
+                    const formData = new FormData();
+                    formData.append('deliveryData', JSON.stringify(deliveryData));
+                    formData.append('sessionId', sessionId);
+                    
+                    // Add image if exists
+                    // if (imageInput && imageInput.files.length > 0) {
+                    //     formData.append('image', imageInput.files[0]);
+                    // }
+
+                    const response = await fetch(`/api/supply-delivery/${docNum}`, {
+                    method: 'POST',
+                    body: formData
+                    });
+
+                    if (!response.ok) {
+                        const responseData = await response.json();
+                        throw new Error(`Teslimat işlemi başarısız oldu: ${responseData.details || responseData.error || 'Bilinmeyen hata'}`);
+                    }
+                }
+
+                alert('Teslimat başarıyla kaydedildi');
+                window.location.href = 'dis-tedarik-siparisleri.html';
+            } catch (error) {
+                console.error('Error submitting delivery:', error);
+                alert('Teslimat kaydedilirken bir hata oluştu: ' + error.message);
+            } finally {
+                hideLoading();
+            }
+        }
+
         // Function to handle image upload
         async function handleImageUpload(input) {
             const file = input.files[0];
@@ -572,24 +639,38 @@
                 }
                 
                 try {
-                    const base64Image = await convertImageToBase64(file);
-                    $(input).data('base64', base64Image);
+                    // Show image preview
+                    const lineNum = input.id.split('_')[1];
+                    const previewDiv = document.getElementById('imagePreview_' + lineNum);
+                    const img = document.createElement('img');
+                    img.src = URL.createObjectURL(file);
+                    img.style.maxWidth = '100px';
+                    img.style.maxHeight = '100px';
+                    img.className = 'mt-2';
+                    
+                    // Clear previous preview
+                    previewDiv.innerHTML = '';
+                    previewDiv.appendChild(img);
+                    
+                    // Add remove button
+                    const removeBtn = document.createElement('button');
+                    removeBtn.className = 'btn btn-sm btn-danger ms-2';
+                    removeBtn.innerHTML = '<i class="bi bi-trash"></i>';
+                    removeBtn.onclick = function() {
+                        input.value = '';
+                        previewDiv.innerHTML = '';
+                        validateDelivery();
+                    };
+                    previewDiv.appendChild(removeBtn);
+
+                    // Validate after successful upload
+                    validateDelivery();
                 } catch (error) {
-                    console.error('Error converting image:', error);
+                    console.error('Error handling image:', error);
                     alert('Görsel yüklenirken bir hata oluştu!');
                     input.value = '';
                 }
             }
-        }
-
-        // Function to convert image to base64
-        function convertImageToBase64(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.onload = () => resolve(reader.result.split(',')[1]);
-                reader.onerror = reject;
-                reader.readAsDataURL(file);
-            });
         }
     </script>
     <script src="js/api.js"></script>

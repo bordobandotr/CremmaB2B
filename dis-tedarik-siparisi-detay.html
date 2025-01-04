@@ -22,50 +22,19 @@
     <div class="d-flex">
         <!-- Sidebar -->
         <div class="sidebar">
-            <div class="logo-container p-4">
-                <h2 class="text-white">CREMMA</h2>
+            
+            <div id="logo-container">
+                
             </div>
+
             <div id="sidebar-nav">
                 <!-- Navigation menu will be loaded here -->
             </div>
-            <ul class="nav flex-column">
-                <li class="nav-item">
-                    <a class="nav-link" href="index.html"><i class="bi bi-house"></i> Anasayfa</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="uretim-siparisleri.html"><i class="bi bi-gear"></i> Üretim Siparişleri</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link active" href="dis-tedarik-siparisleri.html"><i class="bi bi-box"></i> Dış
-                        Tedarik</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#"><i class="bi bi-arrow-left-right"></i> Transferler</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#"><i class="bi bi-building"></i> Ana Depo</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#"><i class="bi bi-check2-square"></i> Check List</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#"><i class="bi bi-exclamation-triangle"></i> Fire ve Zayi</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#"><i class="bi bi-ticket"></i> Ticket</a>
-                </li>
-                <li class="nav-item">
-                    <a class="nav-link" href="#"><i class="bi bi-calculator"></i> Stok Sayımı</a>
-                </li>
-            </ul>
-            <div class="user-info position-absolute bottom-0 start-0 p-3 w-100">
-                <div class="d-flex align-items-center">
-                    <img src="img/avatar.jpg" alt="User" class="rounded-circle me-2" width="40">
-                    <div class="text-white">
-                        <small>Orkun - Caddebostan</small>
-                    </div>
-                </div>
+
+            <div id="sidebar-user">
+
             </div>
+            
         </div>
 
         <!-- Main Content -->
@@ -244,9 +213,6 @@
                     },
                     {
                         data: 'LineStatus',
-                        render: function (data) {
-                            return getStatusBadge(data);
-                        }
                     }
                 ],
                 order: [
@@ -263,8 +229,11 @@
 
         // Function to load order details
         async function loadOrderDetails(docNum) {
+
+            const whsCode = localStorage.getItem("branchCode");
+
             try {
-                const response = await fetch(`api/supply-order/${docNum}?sessionId=${api.getSessionId()}`);
+                const response = await fetch(`api/supply-order/${docNum}?sessionId=${api.getSessionId()}&whsCode=${whsCode}`);
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }

@@ -4,7 +4,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CREMMA - Dış Tedarik Siparişi Oluştur</title>
+    <title>CREMMA - Dış Tedarik Siparişi Oluştur</title> 
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- DataTables CSS -->
@@ -18,8 +18,8 @@
     <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
     <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css"
         rel="stylesheet" />
-
-        <script src="js/loadHeader.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="js/loadHeader.js"></script>
     <script src="js/sidebar-user.js"></script>
     
     <style>
@@ -78,20 +78,20 @@
         }
 
         .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice {
-            background-color: #e9ecef !important;
+            /* background-color: #e9ecef !important;
             border: 1px solid #dee2e6 !important;
             border-radius: 0.25rem !important;
             padding: 2px 8px !important;
             margin: 2px !important;
-            font-size: 0.875rem !important;
+            font-size: 0.875rem !important; */
         }
 
         .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice__remove {
-            border: none !important;
+            /* border: none !important;
             background: none !important;
             padding: 0 4px !important;
             float: right !important;
-            margin-left: 5px !important;
+            margin-left: 5px !important; */
         }
 
         .select2-container--bootstrap-5 .select2-dropdown {
@@ -112,6 +112,106 @@
             background-color: #e9ecef !important;
             color: #212529 !important;
         }
+
+        /* Quantity control styling */
+        .quantity-control {
+            width: 120px !important;
+            min-width: 120px !important;
+            display: flex !important;
+            align-items: center !important;
+            white-space: nowrap !important;
+        }
+
+        .quantity-control .btn {
+            padding: 0.25rem 0.5rem !important;
+            font-size: 0.875rem !important;
+            min-width: 30px !important;
+            height: 30px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            z-index: 3 !important;
+        }
+
+        .quantity-control input {
+            width: 50px !important;
+            text-align: center !important;
+            padding: 0.25rem !important;
+            font-size: 0.875rem !important;
+            height: 30px !important;
+            border-left: 0 !important;
+            border-right: 0 !important;
+        }
+
+        .quantity-control input::-webkit-outer-spin-button,
+        .quantity-control input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .quantity-control input[type=number] {
+            -moz-appearance: textfield;
+        }
+
+        /* Ensure table cell content is properly aligned */
+        .dataTables_wrapper td {
+            vertical-align: middle !important;
+            white-space: nowrap !important;
+        }
+
+        /* Column width control */
+        #orderItems th:nth-child(1) { /* Kod */
+            max-width: 100px !important;
+            width: 100px !important;
+        }
+        #orderItems th:nth-child(2) { /* Tanım */
+            max-width: 200px !important;
+            width: 200px !important;
+        }
+        #orderItems th:nth-child(3) { /* Grup */
+            max-width: 150px !important;
+            width: 150px !important;
+        }
+        #orderItems th:nth-child(9) { /* Tedarikçi */
+            max-width: 120px !important;
+            width: 120px !important;
+        }
+        
+        /* General cell styling */
+        #orderItems td {
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            vertical-align: middle !important;
+        }
+
+        /* Multi-line columns (Tanım and Tedarikçi) */
+        #orderItems td:nth-child(2),
+        #orderItems td:nth-child(9) {
+            white-space: normal !important;
+            max-height: 60px !important;
+            overflow-y: auto !important;
+            line-height: 1.2 !important;
+            padding-top: 4px !important;
+            padding-bottom: 4px !important;
+        }
+
+        /* Adjust row height for multi-line cells */
+        #orderItems tr {
+            height: auto !important;
+            min-height: 40px !important;
+        }
+
+        /* Tedarikçi column */
+        #orderItems td:nth-child(9) {
+            white-space: normal !important;
+            max-height: 48px !important;
+            overflow-y: auto !important;
+            line-height: 1.1 !important;
+            padding-top: 2px !important;
+            padding-bottom: 2px !important;
+            font-size: 0.85rem !important;
+        }
     </style>
 </head>
 
@@ -119,19 +219,18 @@
     <div class="d-flex">
         <!-- Sidebar -->
         <div class="sidebar">
-            <div class="logo-container p-4">
-                <h2 class="text-white">CREMMA</h2>
+
+            <div id="logo-container">
+                
             </div>
+         
+
             <div id="sidebar-nav">
                 
             </div>
-            <div class="user-info position-absolute bottom-0 start-0 p-3 w-100">
-                <div class="d-flex align-items-center">
-                    <img src="img/avatar.jpg" alt="User" class="rounded-circle me-2" width="40">
-                    <div class="text-white">
-                        <small>Orkun - Caddebostan</small>
-                    </div>
-                </div>
+
+            <div id="sidebar-user">
+                <!-- User information will be loaded here -->
             </div>
         </div>
 
@@ -159,46 +258,56 @@
             <div class="container-fluid p-4">
                 <div class="card">
                     <div class="card-body">
-                        <div class="table-responsive">
-                            <div class="row mb-3">
-                                <div class="col-md-3">
-                                    <label for="itemGroupFilter" class="form-label">Kalem Grubu</label>
-                                    <select id="itemGroupFilter" class="form-select" multiple>
-                                        <option value="">Tümü</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-3">
-                                    <label for="itemNameFilter" class="form-label">Kalem Tanımı</label>
-                                    <select id="itemNameFilter" class="form-select" multiple>
-                                        <option value="">Tümü</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-3">
-                                    <label for="tedarikciFilter" class="form-label">Tedarikçi</label>
-                                    <select id="tedarikciFilter" class="form-select" multiple>
-                                        <option value="">Tümü</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-3">
-                                    <label for="stoktaFilter" class="form-label">Stok Durumu</label>
-                                    <select id="stoktaFilter" class="form-select">
-                                        <option value="">Tümü</option>
-                                        <option value="Var">Stokta Var</option>
-                                        <option value="Yok">Stokta Yok</option>
-                                    </select>
-                                </div>
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <label for="itemNameFilter" class="form-label">Kalem Tanımı</label>
+                                <select id="itemNameFilter" class="form-select" multiple>
+                                    <option value="">Tümü</option>
+                                </select>
                             </div>
+                            <div class="col-md-3">
+                                <label for="itemGroupFilter" class="form-label">Kalem Grubu</label>
+                                <select id="itemGroupFilter" class="form-select" multiple>
+                                    <option value="">Tümü</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="tedarikciFilter" class="form-label">Tedarikçi</label>
+                                <select id="tedarikciFilter" class="form-select" multiple>
+                                    <option value="">Tümü</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="stoktaFilter" class="form-label">Stok Durumu</label>
+                                <select id="stoktaFilter" class="form-select">
+                                    <option value="">Tümü</option>
+                                    <option value="Var">Stokta Var</option>
+                                    <option value="Yok">Stokta Yok</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>  
+                </div>
+            </div>
+            
+
+            <!-- Content -->
+            <div class="container-fluid p-4">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            
                             <table id="orderItems" class="table table-hover">
                                 <thead>
                                     <tr>
-                                        <th>Kalem Kodu</th>
-                                        <th>Kalem Tanımı</th>
-                                        <th>Kalem Grubu</th>
+                                        <th>Kod</th>
+                                        <th>Tanım</th>
+                                        <th>Grup</th>
                                         <th>Stokta</th>
-                                        <th>Stoktaki Miktar</th>
-                                        <th>Minimum Miktar</th>
-                                        <th>Sipariş Miktarı</th>
-                                        <th>Ölçü Birimi</th>
+                                        <th>Stok Mik.</th>
+                                        <th>Min. Mik.</th>
+                                        <th>Sip. Mik.</th>
+                                        <th>Ölçü B.</th>
                                         <th>Tedarikçi</th>
                                     </tr>
                                 </thead>
@@ -207,13 +316,16 @@
                         </div>
                     </div>
                     <div class="card-footer">
-                        <button type="button" class="btn btn-primary" id="submitOrder" disabled>
-                            <i class="bi bi-check-lg"></i> Siparişi Oluştur
-                        </button>
-                        <button type="button" class="btn btn-primary" id="createOrderBtn">
-                            <i class="bi bi-check-lg"></i> Sipariş Özeti
-                        </button>
+
+                        <div class="text-end mt-3">
+                            <button type="button" class="btn btn-danger" id="createOrderBtn">
+                                <i class="bi bi-plus"></i> Sipariş Oluştur
+                            </button>
+                        </div>
+
                     </div>
+
+                    
                 </div>
             </div>
         </div>
@@ -237,6 +349,7 @@
                         data-bs-dismiss="modal">Değiştir</button>
                     <button type="button" class="btn btn-dark px-4 rounded-pill" id="confirmOrderBtn">Onayla</button>
                 </div>
+                
             </div>
         </div>
     </div>
@@ -249,11 +362,15 @@
     <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
     <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="js/nav-menu.js"></script>
+    
     <script>
         $(document).ready(async function () {
             // Initialize DataTable
             const orderItemsTable = $('#orderItems').DataTable({
+                pageLength: 25,
+                lengthMenu: [[25, 50, 100], [25, 50, 100]],
                 responsive: true,
                 columns: [
                     { data: 'ItemCode' },
@@ -282,12 +399,12 @@
                         render: function (data) {
                             return `
                                 <div class="input-group quantity-control">
-                                    <button type="button" class="btn btn-outline-secondary decrease-qty">
+                                    <button type="button" class="btn btn-sm btn-dark decrease-qty">
                                         <i class="bi bi-dash"></i>
                                     </button>
-                                    <input type="number" class="form-control text-center order-qty" 
-                                        value="0" min="0" step="1">
-                                    <button type="button" class="btn btn-outline-secondary increase-qty">
+                                    <input type="number" class="form-control form-control-sm order-qty" 
+                                        value="0" min="0" step="1" data-min="${data.MinQty}" data-item-code="${data.ItemCode}">
+                                    <button type="button" class="btn btn-sm btn-dark increase-qty">
                                         <i class="bi bi-plus"></i>
                                     </button>
                                 </div>`;
@@ -407,7 +524,7 @@
 
             // Load items
             try {
-                const whsCode = '1010';
+                const whsCode = localStorage.getItem("branchCode");
                 const sessionId = api.getSessionId();
 
                 console.log('whsCode:', whsCode);
@@ -470,7 +587,11 @@
                 });
             } catch (error) {
                 console.error('Veriler yüklenirken hata:', error);
-                alert('Veriler yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Hata',
+                    text: 'Veriler yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.'
+                });
             }
 
             // Function to show order summary modal
@@ -492,13 +613,17 @@
                             minQty: parseFloat(rowData.MinQty) || 0,
                             cardCode: rowData.CardCode || 'TDK1',
                             cardName: rowData.CardName || 'Tedarikci',
-                            whsCode: '1010'
+                            whsCode: rowData.WhsCode
                         });
                     }
                 });
 
                 if (orderData.length === 0) {
-                    alert('Lütfen en az bir ürün için miktar giriniz.');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Hata',
+                        text: 'Lütfen en az bir ürün için miktar giriniz.'
+                    });
                     return;
                 }
 
@@ -514,10 +639,10 @@
                                 <div class="d-none whs-code">${item.whsCode}</div>
                             </div>
                             <div class="d-flex align-items-center">
-                                <div class="input-group input-group-sm quantity-control" style="width: 120px;">
-                                    <button type="button" class="btn btn-outline-secondary decrease-modal-qty" data-item-code="${item.itemCode}" data-min="${item.minQty}">-</button>
-                                    <input type="number" class="form-control text-center modal-qty" value="${item.quantity}" min="0" data-item-code="${item.itemCode}" data-min="${item.minQty}">
-                                    <button type="button" class="btn btn-outline-secondary increase-modal-qty" data-item-code="${item.itemCode}" data-min="${item.minQty}">+</button>
+                                <div class="quantity-control">
+                                    <button type="button" class="btn btn-sm btn-dark decrease-modal-qty" data-item-code="${item.itemCode}" data-min="${item.minQty}">-</button>
+                                    <input type="number" class="form-control form-control-sm modal-qty" value="${item.quantity}" min="0" data-item-code="${item.itemCode}" data-min="${item.minQty}">
+                                    <button type="button" class="btn btn-sm btn-dark increase-modal-qty" data-item-code="${item.itemCode}" data-min="${item.minQty}">+</button>
                                 </div>
                                 <span class="ms-2">${item.uomCode}</span>
                             </div>
@@ -626,7 +751,11 @@
                     });
 
                     if (orderItems.length === 0) {
-                        alert('Lütfen en az bir ürün için miktar giriniz.');
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Hata',
+                            text: 'Lütfen en az bir ürün için miktar giriniz.'
+                        });
                         return;
                     }
 
@@ -651,19 +780,28 @@
                     $('#orderSummaryModal').modal('hide');
                     orderItemsTable.clear().draw();
                     
-                    alert('Sipariş başarıyla oluşturuldu!');
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Başarılı',
+                        text: 'Sipariş başarıyla oluşturuldu.'
+                    });
 
                     // Clear quantities and reload orders
                     // redirect to uretim-siparisi-olustur.html
                     window.location.href = 'dis-tedarik-siparisleri.html';
                 } catch (error) {
                     console.error('Error:', error);
-                    alert('Sipariş oluşturulurken bir hata oluştu: ' + error.message);
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Hata',
+                        text: 'Sipariş oluşturulurken bir hata oluştu: ' + error.message
+                    });
                 }
             });
         });
     </script>
     <script src="js/api.js"></script>
+    
 </body>
 
 </html>

@@ -5,8 +5,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CREMMA - Üretim Siparişleri</title>
+    <link rel="icon" type="image/png" href="img/favicon.png">
     <script src="js/loadHeader.js"></script>
     <script src="js/sidebar-user.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+    <link href="css/orientation.css" rel="stylesheet">
     <style>
         /* Loading Screen Styles */
         .loading-screen {
@@ -41,8 +45,13 @@
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         .loading-text {
@@ -64,13 +73,13 @@
     <div class="d-flex">
         <!-- Sidebar -->
         <div class="sidebar">
-            <div class="logo-container p-4">
-                <h2 class="text-white">CREMMA</h2>
+            <div id="logo-container">
+
             </div>
             <div id="sidebar-nav">
                 <!-- Navigation menu will be loaded here -->
             </div>
-            
+
             <div id="sidebar-user">
                 <!-- User information will be loaded here -->
             </div>
@@ -137,6 +146,7 @@
                                         <th>Sipariş No</th>
                                         <th>Sipariş Tarihi</th>
                                         <th>Tahmini Teslimat Tarihi</th>
+                                        <th>Teslimat Belge No</th>
                                         <th>Durum</th>
                                         <th>İşlemler</th>
                                     </tr>
@@ -160,6 +170,7 @@
     <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="js/nav-menu.js"></script>
+    <script src="js/orientation.js"></script>
     <script>
         let ordersTable;
 
@@ -180,12 +191,12 @@
         $(document).ready(async function () {
             // Initialize DataTables
             initializeDataTable([]);
-            
+
             // Initial load
             await loadOrders();
 
             // Add event listeners for filters
-            $('#statusFilter').on('change', function() {
+            $('#statusFilter').on('change', function () {
                 showLoading('Filtreleniyor...');
                 setTimeout(() => {
                     ordersTable.column(3).search(this.value).draw();
@@ -193,7 +204,7 @@
                 }, 100);
             });
 
-            $('#startDate, #endDate').on('change', function() {
+            $('#startDate, #endDate').on('change', function () {
                 showLoading('Filtreleniyor...');
                 setTimeout(() => {
                     ordersTable.draw();
@@ -202,13 +213,13 @@
             });
 
             // Custom date range filter
-            $.fn.dataTable.ext.search.push(function(settings, data, dataIndex) {
+            $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
                 const startDate = $('#startDate').val();
                 const endDate = $('#endDate').val();
                 const orderDate = data[1]; // Index of the date column
 
                 if (!startDate && !endDate) return true;
-                
+
                 const orderDateObj = new Date(orderDate.split('.').reverse().join('-'));
                 const startDateObj = startDate ? new Date(startDate) : null;
                 const endDateObj = endDate ? new Date(endDate) : null;
@@ -225,13 +236,15 @@
 
         function initializeDataTable(data) {
             showLoading('Tablo Yükleniyor...');
-            
+
             if ($.fn.DataTable.isDataTable('#ordersTable')) {
                 ordersTable.destroy();
             }
 
             ordersTable = $('#ordersTable').DataTable({
                 data: data,
+                pageLength: 25,
+                lengthMenu: [[25, 50, 100], [25, 50, 100]],
                 responsive: true,
                 language: {
                     "emptyTable": "Tabloda veri bulunmuyor",
@@ -250,9 +263,10 @@
                         "previous": "Önceki"
                     }
                 },
-                order: [[1, 'desc']], // Sort by order date descending
-                columnDefs: [
-                    {
+                order: [
+                    [0, 'desc']
+                ], // Sort by order date descending
+                columnDefs: [{
                         targets: -1,
                         orderable: false,
                         searchable: false
@@ -265,7 +279,7 @@
                 processing: true,
                 deferRender: true,
                 searching: true,
-                drawCallback: function() {
+                drawCallback: function () {
                     hideLoading();
                 }
             });
@@ -280,7 +294,7 @@
 
                 if (!sessionId) {
                     hideLoading();
-                    alert('Oturum bilgisi bulunamadı. Lütfen tekrar giriş yapın.');
+                    logout();
                     return;
                 }
 
@@ -301,7 +315,7 @@
                 }
 
                 const data = await response.json();
-                
+
                 if (!data || !data.value) {
                     throw new Error('Invalid response format');
                 }
@@ -310,7 +324,9 @@
                     order.DocNum || '',
                     formatDate(order.DocDate) || '',
                     formatDate(order.DocDueDate) || '',
-                    `<span style="display: none;">${order.DocStatus}</span>` + getStatusBadge(order.DocStatus) || '',
+                    order.NumAtCard || '',
+                    `<span style="display: none;">${order.DocStatus}</span>` + getStatusBadge(order
+                        .DocStatus) || '',
                     `<div class="btn-group">
                         <a href="uretim-siparisi-detay.html?docNum=${order.DocNum}" type="button" class="btn btn-sm btn-primary">
                             <i class="bi bi-eye"></i> Detay
@@ -356,10 +372,10 @@
                 '4': 'Tamamlandı',
                 '5': 'İptal Edildi'
             };
-            
+
             statusFilter.empty();
             statusFilter.append('<option value="">Tümü</option>');
-            
+
             const uniqueStatuses = [...new Set(orders.map(order => order.DocStatus))];
             uniqueStatuses.forEach(status => {
                 const statusText = statusMap[status] || status;
@@ -387,6 +403,12 @@
                 $('body').removeClass('show-sidebar');
             }
         });
+
+        // Logout handler
+        function logout() {
+            localStorage.removeItem('sessionId');
+            window.location.href = '/login.html';
+        }
     </script>
 </body>
 

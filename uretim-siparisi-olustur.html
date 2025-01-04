@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CREMMA - Üretim Siparişi Oluştur</title>
+    <link rel="icon" type="image/png" href="img/favicon.png">
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
     <!-- DataTables CSS -->
@@ -12,6 +13,7 @@
     <!-- Custom CSS -->
     <link href="css/style.css" rel="stylesheet">
     <link href="css/loading.css" rel="stylesheet">
+    <link href="css/orientation.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
     <!-- Select2 CSS -->
@@ -21,6 +23,7 @@
     <script src="js/loadHeader.js"></script>
     <script src="js/sidebar-user.js"></script>
     <script src="js/nav-menu.js"></script>
+    <script src="js/orientation.js"></script>
 
     <style>
         .loading-screen {
@@ -69,20 +72,20 @@
         }
 
         .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice {
-            background-color: #e9ecef !important;
+            /* background-color: #e9ecef !important;
             border: 1px solid #dee2e6 !important;
             border-radius: 0.25rem !important;
             padding: 2px 8px !important;
             margin: 2px !important;
-            font-size: 0.875rem !important;
+            font-size: 0.875rem !important; */
         }
 
         .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice__remove {
-            border: none !important;
+            /* border: none !important;
             background: none !important;
             padding: 0 4px !important;
             float: right !important;
-            margin-left: 5px !important;
+            margin-left: 5px !important; */
         }
 
         .select2-container--bootstrap-5 .select2-dropdown {
@@ -215,13 +218,13 @@
     <div class="d-flex">
         <!-- Sidebar -->
         <div class="sidebar">
-            <div class="logo-container p-4">
-                <h2 class="text-white">CREMMA</h2>
+            <div id="logo-container">
+
             </div>
             <div id="sidebar-nav">
                 <!-- Navigation menu will be loaded here -->
             </div>
-            
+
             <div id="sidebar-user">
                 <!-- User information will be loaded here -->
             </div>
@@ -245,39 +248,38 @@
                 </div>
             </header>
 
+             <div class="container-fluid p-4">
+                 <div class="card">
+                     <div class="card-body">
+                         <!-- Filter Controls -->
+                         <div class="row mb-3">
+                             <div class="col-md-4">
+                                 <label for="kalemGrubuFilter" class="form-label">Kalem Grubu Filtresi:</label>
+                                 <select class="form-select" id="kalemGrubuFilter" multiple="multiple">
+                                 </select>
+                             </div>
+                             <div class="col-md-4">
+                                 <label for="kalemTanimiFilter" class="form-label">Kalem Tanımı Filtresi:</label>
+                                 <select class="form-select" id="kalemTanimiFilter" multiple="multiple">
+                                 </select>
+                             </div>
+                             <div class="col-md-4">
+                                 <label for="stoktaFilter" class="form-label">Stokta Filtresi:</label>
+                                 <select class="form-select" id="stoktaFilter">
+                                     <option value="">Tümü</option>
+                                     <option value="Var">Var</option>
+                                     <option value="Yok">Yok</option>
+                                 </select>
+                             </div>
+                         </div>
+                     </div> 
+                 </div>
+             </div>
+
             <!-- Content -->
             <div class="container-fluid p-4">
                 <div class="card">
-                    <div class="card-body">
-                        <!-- Filter Controls -->
-                        <div class="row mb-3">
-                            <div class="col-md-4">
-                                <label for="kalemGrubuFilter" class="form-label">Kalem Grubu Filtresi:</label>
-                                <select class="form-select" id="kalemGrubuFilter" multiple="multiple">
-                                </select>
-                                <div id="selectedFilters" class="mt-2">
-                                    <small class="text-muted">Seçili Gruplar:</small>
-                                    <div class="selected-items mt-1"></div>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <label for="kalemTanimiFilter" class="form-label">Kalem Tanımı Filtresi:</label>
-                                <select class="form-select" id="kalemTanimiFilter" multiple="multiple">
-                                </select>
-                                <div id="selectedTanimFilters" class="mt-2">
-                                    <small class="text-muted">Seçili Tanımlar:</small>
-                                    <div class="selected-items mt-1"></div>
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <label for="stoktaFilter" class="form-label">Stokta Filtresi:</label>
-                                <select class="form-select" id="stoktaFilter">
-                                    <option value="">Tümü</option>
-                                    <option value="Var">Var</option>
-                                    <option value="Yok">Yok</option>
-                                </select>
-                            </div>
-                        </div>
+                    <div class="card-body"> 
                         <div class="table-responsive">
                             <table id="orderTable" class="table table-hover">
                                 <thead>
@@ -299,9 +301,6 @@
                         <div class="text-end mt-3">
                             <button type="button" class="btn btn-danger" id="createOrderBtn">
                                 <i class="bi bi-plus"></i> Sipariş Oluştur
-                            </button>
-                            <button type="button" class="btn btn-primary" id="showOrderSummary">
-                                <i class="bi bi-list"></i> Sipariş Özeti
                             </button>
                         </div>
                     </div>
@@ -373,6 +372,8 @@
                 // Initialize DataTables with empty data first
                 const ordersTable = $('#orderTable').DataTable({
                     responsive: true,
+                    pageLength: 25,
+                    lengthMenu: [[25, 50, 100], [25, 50, 100]],
                     language: {
                         "emptyTable": "Tabloda veri bulunmuyor",
                         "info": "_TOTAL_ kayıttan _START_ - _END_ arası gösteriliyor",
@@ -390,9 +391,7 @@
                             "previous": "Önceki"
                         }
                     },
-                    order: [
-                        [2, 'desc'],
-                        [1, 'asc'],
+                    order: [ 
                         [0, 'asc']
                     ],
                     columnDefs: [{
@@ -401,62 +400,14 @@
                     }],
                     processing: true,
                     orderCellsTop: true,
-                    orderMulti: true
+                    orderMulti: true,
+                    ordering: true
                 });
 
                 let primarySortColumn = null;
-                let primarySortDirection = 'asc';
+                
 
-                // Handle sorting column selection
-                $('#sortColumnSelect').on('change', function() {
-                    const columnIdx = parseInt($(this).val());
-                    if (!isNaN(columnIdx)) {
-                        primarySortColumn = columnIdx;
-                        primarySortDirection = 'asc';
-                        
-                        // Reset all other sorting and apply only primary sort
-                        ordersTable.order([[columnIdx, primarySortDirection]]).draw();
-                    } else {
-                        primarySortColumn = null;
-                        ordersTable.order([]).draw();
-                    }
-                });
-
-                // Add click event listener to table headers for secondary sorting
-                $('#orderTable thead th').on('click', function() {
-                    const columnIdx = ordersTable.column(this).index();
-                    if (columnIdx !== undefined) {
-                        const currentOrder = ordersTable.order();
-                        let newOrder = [];
-
-                        if (primarySortColumn !== null) {
-                            // Always add primary sort as first criterion
-                            newOrder.push([primarySortColumn, primarySortDirection]);
-                            
-                            if (columnIdx !== primarySortColumn) {
-                                // If clicking a different column, add it as secondary sort
-                                // Find if this column was already in the sort order
-                                const existingSort = currentOrder.find(order => order[0] === columnIdx);
-                                const direction = existingSort ? 
-                                    (existingSort[1] === 'asc' ? 'desc' : 'asc') : 'asc';
-                                
-                                newOrder.push([columnIdx, direction]);
-                            }
-                        } else {
-                            // If no primary sort is selected, handle normal sorting
-                            if (currentOrder.length > 0 && currentOrder[0][0] === columnIdx) {
-                                // Toggle direction if clicking the same column
-                                newOrder.push([columnIdx, currentOrder[0][1] === 'asc' ? 'desc' : 'asc']);
-                            } else {
-                                // New sort on this column
-                                newOrder.push([columnIdx, 'asc']);
-                            }
-                        }
-                        
-                        ordersTable.order(newOrder).draw();
-                    }
-                });
-
+                
                 // Custom filtering function
                 $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
                     const kalemGrubuValues = $('#kalemGrubuFilter').val() || [];

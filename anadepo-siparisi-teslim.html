@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CREMMA - Anadepo Siparişi Teslim Al</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- DataTables CSS -->
+    <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="css/style.css" rel="stylesheet">
+    <link href="css/orientation.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script src="js/loadHeader.js"></script>
+    <script src="js/sidebar-user.js"></script>
+    <script src="js/nav-menu.js"></script>
+    <script src="js/orientation.js"></script>
+    
+    <style>
+        /* Loading Screen Styles */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .loading-content {
+            text-align: center;
+            background: white;
+            padding: 2rem;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .loading-spinner {
+            width: 4rem;
+            height: 4rem;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #dc3545;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .loading-text {
+            color: #333;
+            font-size: 1.1rem;
+            margin-top: 1rem;
+        }
+
+        .input-group-text.required::after {
+            content: "*";
+            color: red;
+            margin-left: 4px;
+        }
+
+        .quantity-input {
+            width: 80px !important;
+        }
+
+        .input-group .form-control {
+            text-align: center;
+        }
+
+        .input-group .btn {
+            padding: 0.25rem 0.5rem;
+        }
+
+        .input-group .btn i {
+            font-size: 0.875rem;
+        }
+
+        @media (max-width: 768px) {
+            .input-group.quantity-control {
+                flex-direction: column;
+                align-items: center;
+                width: 60px !important;
+            }
+
+            .input-group.quantity-control .btn,
+            .input-group.quantity-control .form-control {
+                width: 100%;
+                margin: 0;
+                border-radius: 0.25rem !important;
+            }
+
+            .input-group.quantity-control .form-control {
+                margin: 2px 0;
+                text-align: center;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="d-flex">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div id="logo-container">
+
+            </div>
+            <div id="sidebar-nav">
+                <!-- Navigation menu will be loaded here -->
+            </div>
+
+            <div id="sidebar-user">
+                <!-- User information will be loaded here -->
+            </div>
+            
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <header class="d-flex justify-content-between p-3 bg-white">
+                <div class="d-flex align-items-center">
+                    <button id="sidebarToggle" class="btn btn-link d-md-none">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <h5 class="mb-0">Teslim Al ve Onayla</h5>
+                </div>
+                <div class="d-flex align-items-center">
+                    <div class="me-3">
+                        <span id="userInfo" class="text-muted">
+                            <i class="bi bi-person-circle me-1"></i>
+                            Yükleniyor...
+                        </span>
+                    </div>
+                    <button class="btn btn-outline-secondary" onclick="logout()">
+                        Çıkış Yap <i class="bi bi-box-arrow-right"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Content -->
+            <div class="container-fluid p-4">
+                <div class="card">
+                    <div class="card-body">
+                        <form id="deliveryForm">
+                            <div class="row mb-3">
+                                <div class="col-md-3">
+                                    <label class="form-label">Şube Kodu (WhsCode)</label>
+                                    <input type="text" class="form-control" id="whsCode" readonly
+                                        style="background-color: #e9ecef;">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Sipariş Tarihi (DocDate)</label>
+                                    <input type="text" class="form-control" id="docDate" readonly
+                                        style="background-color: #e9ecef;">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Sipariş No (DocNum)</label>
+                                    <input type="text" class="form-control" id="docNum" readonly
+                                        style="background-color: #e9ecef;">
+                                </div>
+                                <div class="col-md-3">
+                                    <label class="form-label">Teslimat Belge No</label>
+                                    <input type="text" class="form-control" id="numAtCard" required>
+                                </div>
+                            </div>
+
+                            <div class="table-responsive">
+                                <table class="table table-hover" id="itemsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Kalem Kodu</th>
+                                            <th>Kalem Tanımı</th>
+                                            <th>Sipariş Miktarı</th>
+                                            <th>Teslimat Miktarı</th>
+                                            <th>Eksik Miktar</th>
+                                            <th>Kusurlu Miktar</th>
+                                            <th>Not</th>
+                                            <th>Görsel</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="itemsTableBody">
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <div class="mt-4 text-end">
+                                <button type="button" class="btn btn-secondary me-2" onclick="window.history.back()">
+                                    <i class="bi bi-arrow-left"></i> Geri Dön
+                                </button>
+                                <button type="submit" class="btn btn-success" id="submitBtn">
+                                    <i class="bi bi-check-lg"></i> Teslim Al ve Onayla
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Screen -->
+    <div class="loading-screen d-none">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Yükleniyor...</div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/nav-menu.js"></script>
+    <script>
+        // Loading Screen Functions
+        function showLoading(message = 'Yükleniyor...') {
+            const loadingScreen = document.querySelector('.loading-screen');
+            const loadingText = loadingScreen.querySelector('.loading-text');
+            loadingText.textContent = message;
+            loadingScreen.classList.remove('d-none');
+            loadingScreen.style.display = 'flex';
+        }
+
+        function hideLoading() {
+            const loadingScreen = document.querySelector('.loading-screen');
+            loadingScreen.style.display = 'none';
+        }
+
+        $(document).ready(async function () {
+            const urlParams = new URLSearchParams(window.location.search);
+            const docNum = urlParams.get('docNum');
+
+            if (!docNum) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Hata',
+                    text: 'Sipariş numarası bulunamadı'
+                }).then(() => {
+                    window.history.back();
+                });
+                return;
+            }
+
+            const sessionId = localStorage.getItem('sessionId');
+            if (!sessionId) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Hata',
+                    text: 'Oturum bilgisi bulunamadı. Lütfen tekrar giriş yapın.'
+                }).then(() => {
+                    window.location.href = '/login.html';
+                });
+                return;
+            }
+
+            try {
+                showLoading('Sipariş Detayları Yükleniyor...');
+                const response = await fetch(`/api/anadepo-delivery/${docNum}?sessionId=${sessionId}`);
+                const data = await response.json();
+
+                if (!data.value || data.value.length === 0) {
+                    throw new Error('Sipariş bulunamadı');
+                }
+
+                // Fill header information
+                const firstItem = data.value[0];
+                $('#whsCode').val(firstItem.WhsCode);
+                $('#docDate').val(formatDate(firstItem.DocDate));
+                $('#docNum').val(docNum);
+                // Only set NumAtCard if it exists
+                if (firstItem.NumAtCard) {
+                    $('#numAtCard').val(firstItem.NumAtCard);
+                }
+
+                // Fill the table with order items
+                const tableBody = $('#itemsTableBody');
+                data.value.forEach(item => {
+                    tableBody.append(`
+                        <tr data-item-code="${item.ItemCode}" data-line-num="${item.LineNum}">
+                            <td>${item.ItemCode}</td>
+                            <td>${item.ItemName}</td>
+                            <td>${item.Quantity}</td>
+                            <td>
+                                <div class="input-group quantity-control">
+                                    <input type="number" class="form-control form-control-sm delivery-qty" 
+                                           value="${item.DeliveryQty}" min="0" max="${item.DeliveryQty}" step="1">
+                                </div>
+                            </td>
+                            <td>
+                                <div class="input-group quantity-control">
+                                    <button type="button" class="btn btn-dark btn-sm" onclick="decrementValue(this, 'missing-qty')">
+                                        <i class="bi bi-dash"></i>
+                                    </button>
+                                    <input type="number" class="form-control form-control-sm missing-qty" 
+                                           value="0" min="0" step="1">
+                                    <button type="button" class="btn btn-dark btn-sm" onclick="incrementValue(this, 'missing-qty')">
+                                        <i class="bi bi-plus"></i>
+                                    </button>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="input-group quantity-control">
+                                    <button type="button" class="btn btn-dark btn-sm" onclick="decrementValue(this, 'defective-qty')">
+                                        <i class="bi bi-dash"></i>
+                                    </button>
+                                    <input type="number" class="form-control form-control-sm defective-qty" 
+                                           value="0" min="0" step="1">
+                                    <button type="button" class="btn btn-dark btn-sm" onclick="incrementValue(this, 'defective-qty')">
+                                        <i class="bi bi-plus"></i>
+                                    </button>
+                                </div>
+                            </td>
+                            <td>
+                                <input type="text" class="form-control form-control-sm item-note" 
+                                       placeholder="Not...">
+                            </td>
+                            <td>
+                                <input type="file" class="form-control form-control-sm item-image" 
+                                    accept="image/*" 
+                                    capture="environment"
+                                    aria-label="Fotoğraf Çek">
+                            </td>
+                            <td style="display:none;">
+                                <input type="hidden" class="uom-code" value="${item.UomCode}">
+                                <input type="hidden" class="initial-delivery-qty" value="${item.DeliveryQty}">
+                            </td>
+                        </tr>
+                    `);
+                });
+
+                // Add event listeners for quantity inputs
+                $('.missing-qty, .defective-qty').on('input', function() {
+                    updateDeliveryQuantity($(this).closest('tr'));
+                });
+
+                $('.delivery-qty').on('input', function() {
+                    validateDeliveryQuantity($(this).closest('tr'));
+                });
+
+                // Handle form submission
+                $('#deliveryForm').on('submit', async function (e) {
+                    e.preventDefault();
+                    await submitDelivery();
+                });
+
+                // Add change event listener for file inputs
+                $(document).on('change', '.item-image', function() {
+                    validateSubmitButton();
+                });
+
+            } catch (error) {
+                console.error('Error loading order:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Hata',
+                    text: 'Sipariş detayları yüklenirken bir hata oluştu.'
+                });
+            } finally {
+                hideLoading();
+            }
+        });
+
+        function updateDeliveryQuantity(row) {
+            const initialDeliveryQty = parseInt(row.find('.initial-delivery-qty').val()) || 0;
+            const missingQty = parseInt(row.find('.missing-qty').val()) || 0;
+            const defectiveQty = parseInt(row.find('.defective-qty').val()) || 0;
+            
+            // Calculate new delivery quantity
+            let newDeliveryQty = initialDeliveryQty - (missingQty + defectiveQty);
+            
+            // Ensure delivery quantity doesn't go below 0
+            newDeliveryQty = Math.max(0, newDeliveryQty);
+            
+            // Update delivery quantity input
+            row.find('.delivery-qty').val(newDeliveryQty);
+        }
+
+        function validateDeliveryQuantity(row) {
+            const initialDeliveryQty = parseInt(row.find('.initial-delivery-qty').val()) || 0;
+            const deliveryQty = parseInt(row.find('.delivery-qty').val()) || 0;
+            const missingQty = parseInt(row.find('.missing-qty').val()) || 0;
+            const defectiveQty = parseInt(row.find('.defective-qty').val()) || 0;
+
+            // Ensure the delivery quantity doesn't exceed the initial delivery quantity
+            if (deliveryQty > initialDeliveryQty) {
+                row.find('.delivery-qty').val(initialDeliveryQty);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Hata',
+                    text: 'Teslimat miktarı başlangıç miktarını aşamaz!'
+                });
+                return;
+            }
+
+            // Calculate the remaining quantity that can be allocated to missing/defective
+            const remainingQty = initialDeliveryQty - deliveryQty;
+            
+            // If the current missing + defective quantities exceed the remaining quantity,
+            // reset them to 0
+            if (missingQty + defectiveQty > remainingQty) {
+                row.find('.missing-qty').val(0);
+                row.find('.defective-qty').val(0);
+            }
+        }
+
+        function validateSubmitButton() {
+            let canSubmit = true;
+            $('#itemsTableBody tr').each(function() {
+                const defectiveQty = parseInt($(this).find('.defective-qty').val()) || 0;
+                const hasImage = $(this).find('.item-image')[0].files.length > 0;
+                
+                if (defectiveQty > 0 && !hasImage) {
+                    canSubmit = false;
+                    return false; // break the loop
+                }
+            });
+            
+            $('#submitBtn').prop('disabled', !canSubmit);
+            return canSubmit;
+        }
+
+        function incrementValue(button, className) {
+            const input = $(button).siblings('input.' + className);
+            const currentValue = parseInt(input.val()) || 0;
+            const row = $(button).closest('tr');
+            const initialDeliveryQty = parseInt(row.find('td:eq(2)').text());
+            
+            if (currentValue < initialDeliveryQty) {
+                input.val(currentValue + 1);
+                updateDeliveryQuantity(row);
+                if (className === 'defective-qty') {
+                    validateSubmitButton();
+                }
+            }
+        }
+
+        function decrementValue(button, className) {
+            const input = $(button).siblings('input.' + className);
+            const currentValue = parseInt(input.val()) || 0;
+            
+            if (currentValue > 0) {
+                input.val(currentValue - 1);
+                const row = $(button).closest('tr');
+                updateDeliveryQuantity(row);
+                if (className === 'defective-qty') {
+                    validateSubmitButton();
+                }
+            }
+        }
+
+        async function submitDelivery() {
+            if (!validateSubmitButton()) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Hata',
+                    text: 'Lütfen kusurlu ürün girilen her satır için fotoğraf yükleyin.'
+                });
+                return;
+            }
+
+            try {
+                showLoading('Teslimat Kaydediliyor...');
+                const sessionId = localStorage.getItem('sessionId');
+                const localStorageUserName = localStorage.getItem("userName");
+                const docNum = new URLSearchParams(window.location.search).get('docNum');
+                const guid = generateGUID();
+
+                // Process each item
+                for (const row of $('#itemsTableBody tr')) {
+                    const $row = $(row);
+                    const imageInput = $row.find('.item-image')[0];
+                    
+                    const deliveryData = {
+                        U_Type: "MAIN",
+                        U_WhsCode: $('#whsCode').val(),
+                        U_DocDate: new Date().toISOString().split('T')[0],
+                        U_DocNum: parseInt(docNum),
+                        U_NumAtCard: $('#numAtCard').val(),
+                        U_ItemCode: $row.data('item-code'),
+                        U_ItemName: $row.find('td:eq(1)').text(),
+                        U_Quantity: parseInt($row.find('td:eq(2)').text()),
+                        U_DeliveryQty: parseInt($row.find('.delivery-qty').val()) || 0,
+                        U_MissingQty: parseInt($row.find('.missing-qty').val()) || 0,
+                        U_DefectiveQty: parseInt($row.find('.defective-qty').val()) || 0,
+                        U_UomCode: $row.find('.uom-code').val(),
+                        U_Comments: $row.find('.item-note').val() || "",
+                        U_SessionID: sessionId,
+                        U_GUID: guid,
+                        U_User: localStorageUserName,
+                        U_LineNum: $row.data('line-num')
+                    };
+
+                    // Create FormData and append the delivery data and image
+                    const formData = new FormData();
+                    formData.append('deliveryData', JSON.stringify(deliveryData));
+                    formData.append('sessionId', sessionId);
+                    
+                    if (imageInput.files.length > 0) {
+                        formData.append('image', imageInput.files[0]);
+                    }
+
+                    const response = await fetch(`/api/anadepo-delivery-submit/${docNum}`, {
+                        method: 'POST',
+                        body: formData
+                    });
+
+                    if (!response.ok) {
+                        const responseData = await response.json();
+                        throw new Error(`Teslimat işlemi başarısız oldu: ${responseData.details || responseData.error || 'Bilinmeyen hata'}`);
+                    }
+                }
+
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Başarılı',
+                    text: 'Teslimat başarıyla kaydedildi'
+                }).then(() => {
+                    window.location.href = 'anadepo-siparisleri.html';
+                });
+            } catch (error) {
+                console.error('Error submitting delivery:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Hata',
+                    text: 'Teslimat kaydedilirken bir hata oluştu: ' + error.message
+                });
+            } finally {
+                hideLoading();
+            }
+        }
+
+        async function compressImage(file) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = function(event) {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = function() {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        
+                        // Calculate new dimensions (max 800px width/height)
+                        let width = img.width;
+                        let height = img.height;
+                        if (width > height) {
+                            if (width > 800) {
+                                height *= 800 / width;
+                                width = 800;
+                            }
+                        } else {
+                            if (height > 800) {
+                                width *= 800 / height;
+                                height = 800;
+                            }
+                        }
+                        
+                        canvas.width = width;
+                        canvas.height = height;
+                        
+                        // Draw and compress image
+                        ctx.drawImage(img, 0, 0, width, height);
+                        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
+                        
+                        resolve(compressedDataUrl);
+                    };
+                };
+            });
+        }
+
+        async function convertImageToBase64(file) {
+            try {
+                // Compress image before converting to base64
+                const compressedDataUrl = await compressImage(file);
+                return compressedDataUrl.split(',')[1]; // Remove data:image/jpeg;base64, prefix
+            } catch (error) {
+                console.error('Error compressing image:', error);
+                return '';
+            }
+        }
+
+        function generateGUID() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+                var r = Math.random() * 16 | 0,
+                    v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        function formatDate(date) {
+            if (!date) return '';
+
+            // Tarihi 'yyyyMMdd' formatından 'yyyy-MM-dd' formatına dönüştür
+            const formattedDate = date.toString().replace(/^(\d{4})(\d{2})(\d{2})$/, '$1-$2-$3');
+
+            const d = new Date(formattedDate);
+            return d.toLocaleDateString('tr-TR');
+        }
+
+        function logout() {
+            localStorage.removeItem('sessionId');
+            window.location.href = '/login.html';
+        }
+    </script>
+</body>
+
+</html>
