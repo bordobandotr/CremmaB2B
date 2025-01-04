@@ -7,184 +7,203 @@
   },
   "branches": [
     {
-      "branchCode": "1010",
-      "branchName": "Branch 1",
+      "branchCode": "1000",
+      "branchName": "Koşuyolu",
       "users": [
         {
-          "name": "Kullanıcı 1-1",
-          "username": "user11",
-          "password": "pass11",
+          "name": "Koşuyolu 1000",
+          "username": "1000",
+          "password": "Crm1453@",
           "type": "branch_user"
         },
         {
-          "name": "Kullanıcı 1-2",
-          "username": "user12",
-          "password": "pass12",
-          "type": "branch_manager"
-        }
-      ]
-    },
-    {
-      "branchCode": "1002",
-      "branchName": "Branch 2",
-      "users": [
-        {
-          "name": "Kullanıcı 2-1",
-          "username": "user21",
-          "password": "pass21",
-          "type": "branch_user"
-        },
-        {
-          "name": "Kullanıcı 2-2",
-          "username": "user22",
-          "password": "pass22",
-          "type": "branch_manager"
-        }
-      ]
-    },
-    {
-      "branchCode": "1003",
-      "branchName": "Branch 3",
-      "users": [
-        {
-          "name": "Kullanıcı 3-1",
-          "username": "user31",
-          "password": "pass31",
-          "type": "branch_user"
-        },
-        {
-          "name": "Kullanıcı 3-2",
-          "username": "user32",
-          "password": "pass32",
-          "type": "branch_manager"
-        }
-      ]
-    },
-    {
-      "branchCode": "1004",
-      "branchName": "Branch 4",
-      "users": [
-        {
-          "name": "Kullanıcı 4-1",
-          "username": "user41",
-          "password": "pass41",
-          "type": "branch_user"
-        },
-        {
-          "name": "Kullanıcı 4-2",
-          "username": "user42",
-          "password": "pass42",
+          "name": "Koşuyolu Admin",
+          "username": "A1000",
+          "password": "P@ssw0rd1453@",
           "type": "branch_manager"
         }
       ]
     },
     {
       "branchCode": "1005",
-      "branchName": "Branch 5",
+      "branchName": "Caddebostan",
       "users": [
         {
-          "name": "Kullanıcı 5-1",
-          "username": "user51",
-          "password": "pass51",
+          "name": "Caddebostan 1005",
+          "username": "1005",
+          "password": "Crm1453@",
           "type": "branch_user"
         },
         {
-          "name": "Kullanıcı 5-2",
-          "username": "user52",
-          "password": "pass52",
-          "type": "branch_manager"
-        }
-      ]
-    },
-    {
-      "branchCode": "1006",
-      "branchName": "Branch 6",
-      "users": [
-        {
-          "name": "Kullanıcı 6-1",
-          "username": "user61",
-          "password": "pass61",
-          "type": "branch_user"
-        },
-        {
-          "name": "Kullanıcı 6-2",
-          "username": "user62",
-          "password": "pass62",
-          "type": "branch_manager"
-        }
-      ]
-    },
-    {
-      "branchCode": "1007",
-      "branchName": "Branch 7",
-      "users": [
-        {
-          "name": "Kullanıcı 7-1",
-          "username": "user71",
-          "password": "pass71",
-          "type": "branch_user"
-        },
-        {
-          "name": "Kullanıcı 7-2",
-          "username": "user72",
-          "password": "pass72",
-          "type": "branch_manager"
-        }
-      ]
-    },
-    {
-      "branchCode": "1008",
-      "branchName": "Branch 8",
-      "users": [
-        {
-          "name": "Kullanıcı 8-1",
-          "username": "user81",
-          "password": "pass81",
-          "type": "branch_user"
-        },
-        {
-          "name": "Kullanıcı 8-2",
-          "username": "user82",
-          "password": "pass82",
-          "type": "branch_manager"
-        }
-      ]
-    },
-    {
-      "branchCode": "1009",
-      "branchName": "Branch 9",
-      "users": [
-        {
-          "name": "Kullanıcı 9-1",
-          "username": "user91",
-          "password": "pass91",
-          "type": "branch_user"
-        },
-        {
-          "name": "Kullanıcı 9-2",
-          "username": "user92",
-          "password": "pass92",
+          "name": "Caddebostan Admin",
+          "username": "A1005",
+          "password": "P@ssw0rd1453",
           "type": "branch_manager"
         }
       ]
     },
     {
       "branchCode": "1010",
-      "branchName": "Branch 10",
+      "branchName": "Suadiye",
       "users": [
         {
-          "name": "Kullanıcı 10-1",
-          "username": "user101",
-          "password": "pass101",
+          "name": "Suadiye 1010",
+          "username": "1010",
+          "password": "Crm1453@",
           "type": "branch_user"
         },
         {
-          "name": "Kullanıcı 10-2",
-          "username": "user102",
-          "password": "pass102",
+          "name": "Suadiye Admin",
+          "username": "A1010",
+          "password": "P@ssw0rd1453",
+          "type": "branch_manager"
+        }
+      ]
+    },
+    {
+      "branchCode": "1015",
+      "branchName": "Galataport",
+      "users": [
+        {
+          "name": "Galataport 1015",
+          "username": "1015",
+          "password": "Crm1453@",
+          "type": "branch_user"
+        },
+        {
+          "name": "Galataport Admin",
+          "username": "A1015",
+          "password": "P@ssw0rd1453",
+          "type": "branch_manager"
+        }
+      ]
+    },
+    {
+      "branchCode": "1020",
+      "branchName": "Kazasker",
+      "users": [
+        {
+          "name": "Kazasker 1020",
+          "username": "1020",
+          "password": "Crm1453@",
+          "type": "branch_user"
+        },
+        {
+          "name": "Kazasker Admin",
+          "username": "A1020",
+          "password": "P@ssw0rd1453",
+          "type": "branch_manager"
+        }
+      ]
+    },
+    {
+      "branchCode": "1025",
+      "branchName": "Küçükyalı",
+      "users": [
+        {
+          "name": "Küçükyalı 1025",
+          "username": "1025",
+          "password": "Crm1453@",
+          "type": "branch_user"
+        },
+        {
+          "name": "Küçükyalı Admin",
+          "username": "A1025",
+          "password": "P@ssw0rd1453",
+          "type": "branch_manager"
+        }
+      ]
+    },
+    {
+      "branchCode": "1030",
+      "branchName": "Hilltown Avm",
+      "users": [
+        {
+          "name": "Hilltown Avm 1030",
+          "username": "1030",
+          "password": "Crm1453@",
+          "type": "branch_user"
+        },
+        {
+          "name": "Hilltown Admin",
+          "username": "A1030",
+          "password": "P@ssw0rd1453",
+          "type": "branch_manager"
+        }
+      ]
+    },
+    {
+      "branchCode": "1035",
+      "branchName": "Emin Ali Paşa",
+      "users": [
+        {
+          "name": "Emin Ali Paşa 1035",
+          "username": "1035",
+          "password": "Crm1453@",
+          "type": "branch_user"
+        },
+        {
+          "name": "Emin Ali Paşa Admin",
+          "username": "A1035",
+          "password": "P@ssw0rd1453",
+          "type": "branch_manager"
+        }
+      ]
+    },
+    {
+      "branchCode": "1040",
+      "branchName": "Piazza Avm",
+      "users": [
+        {
+          "name": "Piazza Avm 1040",
+          "username": "1040",
+          "password": "Crm1453@",
+          "type": "branch_user"
+        },
+        {
+          "name": "Piazza Avm Admin",
+          "username": "A1040",
+          "password": "P@ssw0rd1453",
+          "type": "branch_manager"
+        }
+      ]
+    },
+    {
+      "branchCode": "1045",
+      "branchName": "Lens",
+      "users": [
+        {
+          "name": "Lens 1045",
+          "username": "1045",
+          "password": "Crm1453@",
+          "type": "branch_user"
+        },
+        {
+          "name": "Lens Admin",
+          "username": "A1045",
+          "password": "P@ssw0rd1453",
+          "type": "branch_manager"
+        }
+      ]
+    },
+    {
+      "branchCode": "1050",
+      "branchName": "TuzlaPort",
+      "users": [
+        {
+          "name": "TuzlaPort 1050",
+          "username": "1050",
+          "password": "Crm1453@",
+          "type": "branch_user"
+        },
+        {
+          "name": "TuzlaPort Admin",
+          "username": "A1050",
+          "password": "P@ssw0rd1453",
           "type": "branch_manager"
         }
       ]
     }
   ]
 }
+

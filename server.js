@@ -79,6 +79,8 @@ function generateGUID() {
 // Test route using axiosInstance with pagination
 app.get('/test', async (req, res) => {
     const sessionId = req.query.sessionId;
+    const whsCode = req.query.whsCode;
+
     console.log("test", sessionId);
     try {
         let allData = [];
@@ -90,7 +92,7 @@ app.get('/test', async (req, res) => {
             {
                 params: {
                     value1: "'PROD'",
-                    value2: "'1010'",
+                    value2: "'" + whsCode + "'",
                 },
                 headers: {
                     Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
@@ -98,6 +100,9 @@ app.get('/test', async (req, res) => {
                 },
             }
         );
+
+        console.log("Initial response:", initialResponse);
+        console.log("Initial response data:", initialResponse.data);
 
         // Add initial data
         allData = [...initialResponse.data.value];
@@ -115,11 +120,15 @@ app.get('/test', async (req, res) => {
                     },
                 }
             );
-            
+            console.log("Next response:", nextResponse);
+            console.log("Next response:", nextResponse.data);
             // Add next batch of data
             allData = [...allData, ...nextResponse.data.value];
             nextLink = nextResponse.data["odata.nextLink"];
         }
+
+        console.log("All data:", allData);
+        console.log("Total count:", allData.length);
 
         res.json({
             value: allData,

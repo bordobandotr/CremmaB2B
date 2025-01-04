@@ -276,13 +276,15 @@
             showLoading('Siparişler Yükleniyor...');
             try {
                 const sessionId = localStorage.getItem('sessionId');
+                const whsCode = localStorage.getItem("branchCode");
+
                 if (!sessionId) {
                     hideLoading();
                     alert('Oturum bilgisi bulunamadı. Lütfen tekrar giriş yapın.');
                     return;
                 }
 
-                const response = await fetch('/test?sessionId=' + sessionId, {
+                const response = await fetch('/test?sessionId=' + sessionId + '&whsCode=' + whsCode, {
                     method: 'GET',
                     credentials: 'include',
                     headers: {
@@ -291,6 +293,8 @@
                         'Cookie': `B1SESSION=${sessionId}`
                     }
                 });
+
+                console.log('Response:', response);
 
                 if (!response.ok) {
                     throw new Error(`HTTP error! status: ${response.status}`);
