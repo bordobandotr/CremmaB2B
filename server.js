@@ -566,6 +566,8 @@ app.get("/api/supply-detail-order/:docNum", async (req, res) => {
       }
     );
 
+    console.log("Response:supply-detail-order/:docNum::::::>>>>>>", response);
+
     console.log("Response for docNum:", docNum, response.data);
 
     res.json(response.data);
@@ -858,7 +860,7 @@ app.post("/api/supply-order", async (req, res) => {
               "https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_OPOR",
               {
                 U_Type: "SUPPLY",
-                U_WhsCode: whsCode,
+                U_WhsCode: item.U_WhsCode,
                 U_ItemCode: item.U_ItemCode,
                 U_ItemName: item.U_ItemName,
                 U_Quantity: item.U_Quantity,
@@ -867,7 +869,7 @@ app.post("/api/supply-order", async (req, res) => {
                 U_CardName: item.U_CardName,
                 U_SessionID: sessionId,
                 U_GUID: guid + "_" + item.U_CardCode, // Aynı GUID'i kullan
-                U_User: "Orkun",
+                U_User: item.U_User
               },
               {
                 headers: {

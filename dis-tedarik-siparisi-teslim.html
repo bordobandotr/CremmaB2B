@@ -205,7 +205,7 @@
                                         <th>Sipariş Miktarı</th>
                                         <th>Teslimat Miktarı</th>
                                         <th>Eksik Miktarı</th>
-                                        <th>Defolu Miktarı</th>
+                                        <th>Kusurlu Miktar</th>
                                         <th>Ölçü Birimi</th>
                                         <th>Not</th>
                                         <th>Görsel</th>
@@ -378,6 +378,7 @@
                     return;
                 }
                 const order = data.value[0];
+                console.log("order",order);
                 
                 // Update order info
                 $('#orderNumber').text(order.DocNum);

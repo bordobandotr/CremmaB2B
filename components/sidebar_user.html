@@ -1,23 +1,49 @@
 <script src="../js/avatarGenerator.js"></script>
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        // Get user data from localStorage
-        const branchUsers = JSON.parse(localStorage.getItem('branchUsers'));
-        const user = branchUsers ? branchUsers.find(user => user.type === 'branch_manager') : null;
-        const branchName = localStorage.getItem('branchName');
+    // Wait for both DOM and avatarGenerator.js to be ready
+    function initializeUser() {
+        try {
+            // Get user data from localStorage
+            const branchUsers = JSON.parse(localStorage.getItem('branchUsers'));
+            const user = branchUsers ? branchUsers.find(user => user.type === 'branch_manager') : null;
+            const branchName = localStorage.getItem('branchName');
 
-        // Update user name and branch name
-        if (user) {
-            document.getElementById('userName').textContent = user.name;
-            // Update avatar using avatarGenerator.js
-            updateUserAvatar(user.name);
-            console.log('Generated avatar for:', user.name); // Debug log
-        }
+            console.log('Branch Users:', branchUsers);
+            console.log('User:', user);
+            console.log('Branch Name:', branchName);
 
-        if (branchName) {
-            document.getElementById('branchName').textContent = branchName;
+            // Update user name and branch name
+            if (user) {
+                const userNameElement = document.getElementById('userName');
+                if (userNameElement) {
+                    userNameElement.textContent = user.name;
+                }
+                // Update avatar using avatarGenerator.js
+                if (typeof updateUserAvatar === 'function') {
+                    updateUserAvatar(user.name);
+                    console.log('Avatar generation attempted for:', user.name);
+                } else {
+                    console.error('updateUserAvatar function not found');
+                }
+            }
+
+            if (branchName) {
+                const branchElement = document.getElementById('branchName');
+                if (branchElement) {
+                    branchElement.textContent = branchName;
+                }
+            }
+        } catch (error) {
+            console.error('Error initializing user:', error);
         }
-    });
+    }
+
+    // Check if DOM is already loaded
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initializeUser);
+    } else {
+        initializeUser();
+    }
 </script>
 
 <div class="user-info position-absolute bottom-0 start-0 p-3 w-100">

@@ -718,12 +718,14 @@
                     const localStorageUserName = localStorage.getItem("userName");
                     console.log("localStorageUserName:", localStorageUserName);
 
+
                     const orderItems = [];
                     $('#orderSummaryItems .item-row').each(function() {
                         const $row = $(this);
                         
                         // Get all required values and trim them
-                        const whsCode = $row.find('.whs-code').text().trim();
+                        // const whsCode = $row.find('.whs-code').text().trim();
+                        const whsCode = localStorage.getItem("branchCode");
                         const itemCode = $row.find('.item-code').text().trim();
                         const itemName = $row.find('.item-name').text().trim();
                         const cardCode = $row.find('.card-code').text().trim();
