@@ -192,7 +192,7 @@
                     <button id="sidebarToggle" class="btn btn-link d-md-none">
                         <i class="bi bi-list"></i>
                     </button>
-                    <h4 class="mb-0">Transfer Oluştur</h4>
+                    <h5 class="mb-0">Transfer Oluştur</h5>
                 </div>
                 <div class="d-flex gap-2">
                     <button id="showTransferSummary" class="btn btn-outline-primary">
@@ -204,58 +204,62 @@
                 </div>
             </header>
 
-            <!-- Main Content Area -->
-            <div class="container-fluid py-4">
-                <!-- Filters -->
-                <div class="card mb-4">
-                    <div class="card-body">
-                        <div class="row g-3">
-                            <div class="col-md-3">
-                                <label class="form-label">Kalem Grubu</label>
-                                <select id="kalemGrubuFilter" class="form-select" multiple>
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Kalem Tanımı</label>
-                                <select id="kalemTanimiFilter" class="form-select" multiple>
-                                </select>
-                            </div>
-                            <div class="col-md-3">
-                                <label class="form-label">Stokta</label>
-                                <select id="stoktaFilter" class="form-select">
-                                    <option value="">Tümü</option>
-                                    <option value="var">Var</option>
-                                    <option value="yok">Yok</option>
-                                </select>
-                            </div>
-                            <div class="col-md-3 d-flex align-items-end">
-                                <button id="resetFilters" class="btn btn-secondary w-100">Filtreleri Sıfırla</button>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Table -->
+            <!-- Filters -->
+            <div class="container-fluid p-4">
                 <div class="card">
                     <div class="card-body">
-                        <table id="transferTable" class="table table-striped w-100">
-                            <thead>
-                                <tr>
-                                    <th>Kalem Kodu</th>
-                                    <th>Kalem Tanımı</th>
-                                    <th>Kalem Grubu</th>
-                                    <th>Şube Kodu</th>
-                                    <th>Şube Adı</th>
-                                    <th>Stokta</th>
-                                    <th>Stoktaki Miktar</th>
-                                    <th>Gerekli Miktar</th>
-                                    <th>Sipariş Miktarı</th>
-                                    <th>Ölçü Birimi</th>
-                                    <th>Not</th>
-                                </tr>
-                            </thead>
-                        </table>
-                    </div>
+                        <div class="row mb-3">
+                            <div class="col-md-3">
+                                <label for="itemNameFilter" class="form-label">Kalem Tanımı</label>
+                                <select id="itemNameFilter" class="form-select" multiple>
+                                    <option value="">Tümü</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="itemGroupFilter" class="form-label">Kalem Grubu</label>
+                                <select id="itemGroupFilter" class="form-select" multiple>
+                                    <option value="">Tümü</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="depoFilter" class="form-label">Depo</label>
+                                <select id="depoFilter" class="form-select" multiple>
+                                    <option value="">Tümü</option>
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label for="stoktaFilter" class="form-label">Stok Durumu</label>
+                                <select id="stoktaFilter" class="form-select">
+                                    <option value="">Tümü</option>
+                                    <option value="Var">Stokta Var</option>
+                                    <option value="Yok">Stokta Yok</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>  
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="card">
+                <div class="card-body">
+                    <table id="transferTable" class="table table-striped w-100">
+                        <thead>
+                            <tr>
+                                <th>Kalem Kodu</th>
+                                <th>Kalem Tanımı</th>
+                                <th>Kalem Grubu</th>
+                                <th>Şube Kodu</th>
+                                <th>Şube Adı</th>
+                                <th>Stokta</th>
+                                <th>Stoktaki Miktar</th>
+                                <th>Gerekli Miktar</th>
+                                <th>Sipariş Miktarı</th>
+                                <th>Ölçü Birimi</th>
+                                <th>Not</th>
+                            </tr>
+                        </thead>
+                    </table>
                 </div>
             </div>
         </div>
@@ -304,15 +308,11 @@
             try {
                 showLoading('Veriler Yükleniyor...');
                 const sessionId = localStorage.getItem('sessionId');
-                // if (!sessionId) {
-                //     window.location.href = '/login.html';
-                //     return;
-                // }
-
+                
                 // Initialize Select2
-                $('#kalemGrubuFilter, #kalemTanimiFilter').select2({
+                $('#itemNameFilter, #itemGroupFilter, #depoFilter').select2({
                     theme: 'bootstrap-5',
-                    placeholder: 'Seçiniz',
+                    placeholder: 'Seçiniz...',
                     allowClear: true
                 });
 
@@ -389,24 +389,30 @@
 
                 // Custom filtering function
                 $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
-                    const kalemGrubuValues = $('#kalemGrubuFilter').val() || [];
-                    const kalemTanimiValues = $('#kalemTanimiFilter').val() || [];
-                    const stokta = $('#stoktaFilter').val();
+                    const itemNames = $('#itemNameFilter').val() || [];
+                    const itemGroups = $('#itemGroupFilter').val() || [];
+                    const warehouses = $('#depoFilter').val() || [];
+                    const stockStatus = $('#stoktaFilter').val();
 
-                    // Kalem Grubu filter
-                    if (kalemGrubuValues.length && !kalemGrubuValues.includes(data[2])) {
+                    // Item name filter
+                    if (itemNames.length && !itemNames.includes(data[1])) {
                         return false;
                     }
 
-                    // Kalem Tanımı filter
-                    if (kalemTanimiValues.length && !kalemTanimiValues.includes(data[1])) {
+                    // Item group filter
+                    if (itemGroups.length && !itemGroups.includes(data[2])) {
                         return false;
                     }
 
-                    // Stokta filter
-                    if (stokta) {
-                        const stokDurumu = parseFloat(data[6]) > 0 ? 'var' : 'yok';
-                        if (stokta !== stokDurumu) {
+                    // Warehouse filter
+                    if (warehouses.length && !warehouses.includes(data[5])) {
+                        return false;
+                    }
+
+                    // Stock status filter
+                    if (stockStatus) {
+                        const stockStatusValue = parseFloat(data[6]) > 0 ? 'Var' : 'Yok';
+                        if (stockStatusValue !== stockStatus) {
                             return false;
                         }
                     }
@@ -415,14 +421,7 @@
                 });
 
                 // Filter change handlers
-                $('#kalemGrubuFilter, #kalemTanimiFilter, #stoktaFilter').change(function() {
-                    table.draw();
-                });
-
-                // Reset filters
-                $('#resetFilters').click(function() {
-                    $('#kalemGrubuFilter, #kalemTanimiFilter').val(null).trigger('change');
-                    $('#stoktaFilter').val('').trigger('change');
+                $('#itemNameFilter, #itemGroupFilter, #depoFilter, #stoktaFilter').change(function() {
                     table.draw();
                 });
 
@@ -451,16 +450,24 @@
                         table.clear().rows.add(data.value).draw();
 
                         // Filtreleri güncelle
-                        const kalemGrubu = [...new Set(data.value.map(item => item.ItemGroup))];
-                        const kalemTanimi = [...new Set(data.value.map(item => item.ItemName))];
+                        const itemNames = [...new Set(data.value.map(item => item.ItemName))].sort();
+                        const itemGroups = [...new Set(data.value.map(item => item.ItemGroup))].sort();
+                        const warehouses = [...new Set(data.value.map(item => item.FromWhsName))].sort();
 
-                        $('#kalemGrubuFilter').empty().append(
-                            kalemGrubu.map(group => `<option value="${group}">${group}</option>`)
-                        );
+                        $('#itemNameFilter').empty().append('<option value="">Tümü</option>');
+                        itemNames.forEach(name => {
+                            $('#itemNameFilter').append(`<option value="${name}">${name}</option>`);
+                        });
 
-                        $('#kalemTanimiFilter').empty().append(
-                            kalemTanimi.map(name => `<option value="${name}">${name}</option>`)
-                        );
+                        $('#itemGroupFilter').empty().append('<option value="">Tümü</option>');
+                        itemGroups.forEach(group => {
+                            $('#itemGroupFilter').append(`<option value="${group}">${group}</option>`);
+                        });
+
+                        $('#depoFilter').empty().append('<option value="">Tümü</option>');
+                        warehouses.forEach(warehouse => {
+                            $('#depoFilter').append(`<option value="${warehouse}">${warehouse}</option>`);
+                        });
 
                     } catch (error) {
                         console.error('Error loading transfers:', error);

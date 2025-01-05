@@ -14,7 +14,7 @@
             <!-- Left Image Section -->
             <div class="col-md-6">
                 <div class="image-section">
-                    <img src="assets/cremma-store.png" alt="Cremma Store" class="w-100 h-100 object-fit-cover">
+                    <img src="assets/cremma-store.png" alt="Cremma Store" class="w-100 h-100 object-fit-cover" style="position: absolute;">
                 </div>
             </div>
             
@@ -22,15 +22,15 @@
             <div class="col-md-6">
                 <div class="form-section">
                     <div class="form-container">
-                        <h2 class="mb-4 text-center">Giriş Yap</h2>
-                        <form id="loginForm">
-                            <div class="mb-3">
-                                <label for="username" class="form-label">Kullanıcı Kodu</label>
-                                <input type="text" class="form-control" id="username" required>
+                        <div class="logo">
+                            <img src="assets/img/_cremma.png" alt="Cremma Logo" class="w-100 h-100 object-fit-cover">
+                        </div>
+                        <form id="loginForm" class="mt-5">
+                            <div class="mb-3"> 
+                                <input type="text" class="form-control" id="username" required placeholder="Kullanıcı Adı">
                             </div>
-                            <div class="mb-3">
-                                <label for="password" class="form-label">Şifre</label>
-                                <input type="password" class="form-control" id="password" required>
+                            <div class="mb-3"> 
+                                <input type="password" class="form-control" id="password" required placeholder="Sifre">
                             </div>
                             <div class="d-grid">
                                 <button type="submit" class="btn btn-login">Giriş Yap</button>

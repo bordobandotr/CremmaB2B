@@ -12,7 +12,10 @@
     <meta name="theme-color" content="#000000">
     <meta name="msapplication-navbutton-color" content="#000000">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link href="css/orientation.css" rel="stylesheet">
     <script src="js/loadHeader.js"></script>
+    <script src="js/sidebar-user.js"></script>
+    <script src="js/orientation.js"></script>
 
 </head>
 
@@ -20,12 +23,15 @@
     <div class="d-flex">
         <!-- Sidebar -->
         <div class="sidebar">
-            <div class="logo-container p-4">
-                <h2 class="text-white">CREMMA</h2>
+            <div id="logo-container">
+                
             </div>
             <div id="sidebar-nav">
                 <!-- Navigation menu will be loaded here -->
             </div>
+<div id="sidebar-user">
+    <!-- User information will be loaded here -->
+</div>
         </div>
 
         <!-- Main Content -->
@@ -38,7 +44,7 @@
                     </button>
                     <h5 class="mb-0">Anasayfa</h5>
                 </div>
-                <button class="btn btn-outline-secondary">
+                <button class="btn btn-outline-secondary" onclick="logout()">
                     Çıkış Yap <i class="bi bi-box-arrow-right"></i>
                 </button>
             </header>
@@ -227,30 +233,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
     <script src="js/main.js"></script>
     <script src="js/nav-menu.js"></script>
-
-    <script> 
-        // sube kontrol
-        // const urlParams = localStorage.getItem("branchCode");
-        // if (!urlParams) {
-        //     // redirect to login page
-        //     window.location.href = 'login.html';
-        //     return;
-        // }                         
-    </script>
-</body>
-
-</html>
-    <script src="js/nav-menu.js"></script>
-
-    <script> 
-        // sube kontrol
-        // const urlParams = localStorage.getItem("branchCode");
-        // if (!urlParams) {
-        //     // redirect to login page
-        //     window.location.href = 'login.html';
-        //     return;
-        // }                         
-    </script>
+ 
 </body>
 
 </html>

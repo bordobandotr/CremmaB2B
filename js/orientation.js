@@ -71,3 +71,16 @@ if (screen.orientation && screen.orientation.lock) {
         console.log('Orientation lock failed:', error);
     });
 }
+    // sube kontrol
+        const urlParams = localStorage.getItem("branchCode");
+        if (!urlParams) {
+            // redirect to login page
+            localStorage.clear();
+            window.location.href = 'login.html';
+        }           
+        
+        function logout() {
+            localStorage.clear();
+            window.location.href = '/login.html';
+        }
+

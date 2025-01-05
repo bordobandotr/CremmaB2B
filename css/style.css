@@ -36,12 +36,18 @@ body {
     color: rgba(255,255,255,0.8);
     padding: 0.8rem 1.5rem;
     transition: var(--transition);
+    margin-bottom: 8px;
+}
+
+.sidebar .nav-link:last-child {
+    margin-bottom: 0;
 }
 
 .sidebar .nav-link:hover,
 .sidebar .nav-link.active {
-    color: #fff;
-    background-color: rgba(255,255,255,0.1);
+    color: #333;
+    border-radius: 8px;
+    background-color: rgba(255,255,255);
 }
 
 .sidebar .nav-link i {

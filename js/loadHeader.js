@@ -20,5 +20,6 @@ document.addEventListener('DOMContentLoaded', async function() {
     if (logo) {
         logo.insertAdjacentHTML('afterbegin', logoContent);
     }
+    
 
 });
