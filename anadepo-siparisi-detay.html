@@ -12,12 +12,15 @@
     <link href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css" rel="stylesheet">
     <!-- Custom CSS -->
     <link href="css/style.css" rel="stylesheet">
+    <link href="css/orientation.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
 
+    <link href="css/orientation.css" rel="stylesheet">
     <script src="js/loadHeader.js"></script>
     <script src="js/sidebar-user.js"></script>
     <script src="js/nav-menu.js"></script>
+    <script src="js/orientation.js"></script>
 
     <style>
         /* Loading Screen Styles */
@@ -77,8 +80,8 @@
     <div class="d-flex">
         <!-- Sidebar -->
         <div class="sidebar">
-            <div class="logo-container p-4">
-                <h2 class="text-white">CREMMA</h2>
+            <div id="logo-container">
+                
             </div>
             <div id="sidebar-nav">
                 <!-- Navigation menu will be loaded here -->
@@ -111,11 +114,11 @@
             </header>
 
             <!-- Content --> 
-            <div class="container-fluid py-4">
+            <div class="container-fluid p-4">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <div class="d-flex align-items-center">
-                        <i class="bi bi-box-seam fs-3 me-2"></i>
-                        <h1 class="header-title mb-0">Ana Depo Siparişleri</h1>
+                        <i class="bi bi-building fs-3 me-2"></i>
+                        <h3 class="header-title mb-0">Ana Depo Siparişi: <strong><span id="headerDocNum"></span></strong></h3>
                     </div>
                     <div>
                         <button class="btn btn-secondary me-2" onclick="window.history.back()">
@@ -124,7 +127,7 @@
                     </div>
                 </div>
 
-                <div class="card">
+                <div class="card mb-4">
                     <div class="card-body">
                         <div class="row mb-4">
                             <div class="col-md-6">
@@ -164,6 +167,16 @@
                                 </div>
                             </div>
                         </div>
+ 
+                    </div>
+                </div>
+
+
+                <div class="card">
+                    <div class="card-header">
+                        <h6 class="mb-0">Sipariş Kalemleri</h6>
+                    </div>
+                    <div class="card-body"> 
 
                         <h5 class="mb-3">Sipariş Kalemleri</h5>
                         <div class="table-responsive">
@@ -265,6 +278,7 @@
                 const order = data.value[0];
                 
                 // Fill in the order details
+                $('#headerDocNum').text(order.DocNum || '-');
                 $('#docNum').text(order.DocNum || '-');
                 $('#docDate').text(formatDate(order.DocDate) || '-');
                 $('#docDueDate').text(formatDate(order.DocDueDate) || '-');

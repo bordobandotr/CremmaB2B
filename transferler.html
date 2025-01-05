@@ -6,14 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>CREMMA - Transferler</title>
     <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- DataTables CSS -->
-    <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet">
-    <link href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css" rel="stylesheet">
-    <!-- Custom CSS -->
+    <link rel="icon" type="image/png" href="img/favicon.png">
+    <script src="js/loadHeader.js"></script>
+    <script src="js/sidebar-user.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
     <link href="css/style.css" rel="stylesheet">
-    <!-- Bootstrap Icons -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
+    <link href="css/orientation.css" rel="stylesheet">
     <style>
         .input-group-text.required::after {
             content: "*";
@@ -751,6 +749,11 @@
             // Initialize DataTable
             const transferTable = $('#transferTable').DataTable({
                 responsive: true,
+                pageLength: 25,
+                lengthMenu: [[25, 50, 100], [25, 50, 100]],
+                language: {
+                    url: 'js/datatables-tr.json'
+                },
                 columns: [
                     { data: 'DocNum' },
                     { data: 'ItemCode' },
@@ -814,10 +817,7 @@
                 ],
                 order: [
                     [0, 'desc']
-                ],
-                language: {
-                    url: 'js/datatables-tr.json'
-                }
+                ]
             });
 
             // Event listeners for dynamic buttons

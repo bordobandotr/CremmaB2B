@@ -12,12 +12,14 @@
     <link href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css" rel="stylesheet">
     <!-- Custom CSS -->
     <link href="css/style.css" rel="stylesheet">
+    <link href="css/orientation.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
 
     <script src="js/loadHeader.js"></script>
     <script src="js/sidebar-user.js"></script>
     <script src="js/nav-menu.js"></script>
+    <script src="js/orientation.js"></script>
 
     <style>
         /* Loading Screen Styles */
@@ -77,9 +79,11 @@
     <div class="d-flex">
         <!-- Sidebar -->
         <div class="sidebar">
-            <div class="logo-container p-4">
-                <h2 class="text-white">CREMMA</h2>
+            
+            <div id="logo-container">
+                
             </div>
+
             <div id="sidebar-nav">
                 <!-- Navigation menu will be loaded here -->
             </div>
@@ -111,11 +115,12 @@
             </header>
 
             <!-- Content --> 
-            <div class="container-fluid py-4">
+            <div class="container-fluid p-4">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <div class="d-flex align-items-center">
-                        <i class="bi bi-box-seam fs-3 me-2"></i>
-                        <h1 class="header-title mb-0">Üretim Siparişleri</h1>
+                        <i class="bi bi-gear fs-3 me-2"></i>
+                        <h3 class="header-title mb-0">Üretim Siparişi: <strong><span id="headerDocNum"></span></strong>
+                        </h3>
                     </div>
                     <div>
                         <button class="btn btn-secondary me-2" onclick="window.history.back()">
@@ -123,49 +128,59 @@
                         </button>
                     </div>
                 </div>
+                
+                 <div class="card mb-4">
+                     <div class="card-body">
+                         <div class="row">
+                             <div class="col-md-6">
+                                 <div class="mb-3">
+                                     <label class="detail-label">Sipariş No:</label>
+                                     <div id="docNum"></div>
+                                 </div>
+                                 <div class="mb-3">
+                                     <label class="detail-label">Sipariş Tarihi:</label>
+                                     <div id="docDate"></div>
+                                 </div>
+                                 <div class="mb-3">
+                                     <label class="detail-label">Sipariş Özeti:</label>
+                                     <div id="orderSummary"></div>
+                                 </div>
+                                 <div class="mb-3">
+                                     <label class="detail-label">Şube Kodu:</label>
+                                     <div id="whsCode"></div>
+                                 </div>
+                             </div>
+                             <div class="col-md-6">
+                                 <div class="mb-3">
+                                     <label class="detail-label">Tahmini Teslimat Tarihi:</label>
+                                     <div id="docDueDate"></div>
+                                 </div>
+                                 <div class="mb-3">
+                                     <label class="detail-label">Sipariş Durumu:</label>
+                                     <div id="docStatus"></div>
+                                 </div>
+                                 <div class="mb-3">
+                                     <label class="detail-label">Teslimat Belge No:</label>
+                                     <div id="numAtCard"></div>
+                                 </div>
+                                 <div class="mb-3">
+                                     <label class="detail-label">Sipariş Notu:</label>
+                                     <div id="comments"></div>
+                                 </div>
+                             </div>
+                         </div>
 
-                <div class="card">
+                          
+                     </div>
+                 </div>
+
+                <div class="card mt-4">
+                    <div class="card-header">
+                        <h6 class="mb-0">Sipariş Kalemleri</h6>
+                    </div>
                     <div class="card-body">
                         <div class="row mb-4">
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label class="detail-label">Sipariş No:</label>
-                                    <div id="docNum"></div>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="detail-label">Sipariş Tarihi:</label>
-                                    <div id="docDate"></div>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="detail-label">Sipariş Özeti:</label>
-                                    <div id="orderSummary"></div>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="detail-label">Şube Kodu:</label>
-                                    <div id="whsCode"></div>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="mb-3">
-                                    <label class="detail-label">Tahmini Teslimat Tarihi:</label>
-                                    <div id="docDueDate"></div>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="detail-label">Sipariş Durumu:</label>
-                                    <div id="docStatus"></div>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="detail-label">Teslimat Belge No:</label>
-                                    <div id="numAtCard"></div>
-                                </div>
-                                <div class="mb-3">
-                                    <label class="detail-label">Sipariş Notu:</label>
-                                    <div id="comments"></div>
-                                </div>
-                            </div>
-                        </div>
 
-                        <h5 class="mb-3">Sipariş Kalemleri</h5>
                         <div class="table-responsive">
                             <table class="table table-hover">
                                 <thead>
@@ -266,6 +281,7 @@
                 
                 // Fill in the order details
                 $('#docNum').text(order.DocNum || '-');
+                $('#headerDocNum').text(order.DocNum || ''); 
                 $('#docDate').text(formatDate(order.DocDate) || '-');
                 $('#docDueDate').text(formatDate(order.DocDueDate) || '-');
                 $('#orderSummary').text(order.OrderSummary || '-');

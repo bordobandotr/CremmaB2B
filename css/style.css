@@ -4,6 +4,7 @@
     --light-bg: #F5F5F5;
     --border-radius: 8px;
     --transition: all 0.3s ease;
+    touch-action: pan-x pan-y;
 }
 
 body {

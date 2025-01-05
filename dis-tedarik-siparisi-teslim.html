@@ -258,6 +258,11 @@
             // Initialize DataTable
             const deliveryItemsTable = $('#deliveryItems').DataTable({
                 responsive: true,
+                pageLength: 25,
+                lengthMenu: [[25, 50, 100], [25, 50, 100]],
+                language: {
+                    url: 'js/datatables-tr.json'
+                },
                 columns: [
                     { data: 'ItemCode' },
                     { data: 'ItemName' },
@@ -336,9 +341,9 @@
                         render: function(data) {
                             return `
                                 <div class="input-group">
-                                    <input type="file" class="form-control" accept="image/*" onchange="handleImageUpload(this)" style="display: none;" id="imageInput_${data.LineNum}">
+                                    <input type="file" class="form-control" accept="image/*" capture="environment" onchange="handleImageUpload(this)" style="display: none;" id="imageInput_${data.LineNum}">
                                     <button type="button" class="btn btn-outline-secondary" onclick="document.getElementById('imageInput_${data.LineNum}').click()">
-                                        <i class="bi bi-camera"></i> Görsel Yükle
+                                        <i class="bi bi-camera"></i> Fotoğraf Çek
                                     </button>
                                     <div id="imagePreview_${data.LineNum}" class="mt-2"></div>
                                 </div>`;
@@ -346,9 +351,6 @@
                     }
                 ],
                 order: [[0, 'asc']],
-                language: {
-                    url: 'js/datatables-tr.json'
-                }
             });
             // Load order details
             await loadOrderDetails(docNum);

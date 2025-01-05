@@ -199,7 +199,7 @@
             $('#statusFilter').on('change', function () {
                 showLoading('Filtreleniyor...');
                 setTimeout(() => {
-                    ordersTable.column(3).search(this.value).draw();
+                    ordersTable.column(4).search(this.value).draw();
                     hideLoading();
                 }, 100);
             });
@@ -247,21 +247,7 @@
                 lengthMenu: [[25, 50, 100], [25, 50, 100]],
                 responsive: true,
                 language: {
-                    "emptyTable": "Tabloda veri bulunmuyor",
-                    "info": "_TOTAL_ kayıttan _START_ - _END_ arası gösteriliyor",
-                    "infoEmpty": "Kayıt yok",
-                    "infoFiltered": "(_MAX_ kayıt içerisinden bulunan)",
-                    "lengthMenu": "Sayfada _MENU_ kayıt göster",
-                    "loadingRecords": "Yükleniyor...",
-                    "processing": "İşleniyor...",
-                    "search": "Ara:",
-                    "zeroRecords": "Eşleşen kayıt bulunamadı",
-                    "paginate": {
-                        "first": "İlk",
-                        "last": "Son",
-                        "next": "Sonraki",
-                        "previous": "Önceki"
-                    }
+                    url: 'js/datatables-tr.json'
                 },
                 order: [
                     [0, 'desc']
@@ -325,8 +311,7 @@
                     formatDate(order.DocDate) || '',
                     formatDate(order.DocDueDate) || '',
                     order.NumAtCard || '',
-                    `<span style="display: none;">${order.DocStatus}</span>` + getStatusBadge(order
-                        .DocStatus) || '',
+                    `<span style="display: none;">${order.DocStatus}</span>${getStatusBadge(order.DocStatus)}`,
                     `<div class="btn-group">
                         <a href="uretim-siparisi-detay.html?docNum=${order.DocNum}" type="button" class="btn btn-sm btn-primary">
                             <i class="bi bi-eye"></i> Detay

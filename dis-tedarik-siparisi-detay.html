@@ -12,10 +12,12 @@
     <link href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css" rel="stylesheet">
     <!-- Custom CSS -->
     <link href="css/style.css" rel="stylesheet">
+    <link href="css/orientation.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
     <script src="js/loadHeader.js"></script>
     <script src="js/sidebar-user.js"></script>
+    <script src="js/orientation.js"></script>
 </head>
 
 <body>
@@ -48,9 +50,10 @@
                     <h5 class="mb-0">Dış Tedarik Siparişi Detay</h5>
                 </div>
                 <div class="d-flex align-items-center">
-                    <a href="dis-tedarik-siparisleri.html" class="btn btn-outline-secondary me-2">
-                        <i class="bi bi-arrow-left"></i> Geri
+                    <a href="dis-tedarik-siparisi-olustur.html" class="btn btn-danger me-2">
+                        <i class="bi bi-plus"></i> Yeni Sipariş Oluştur
                     </a>
+                    
                     <button class="btn btn-outline-secondary" onclick="logout()">
                         Çıkış Yap <i class="bi bi-box-arrow-right"></i>
                     </button>
@@ -59,6 +62,20 @@
 
             <!-- Content -->
             <div class="container-fluid p-4">
+
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-box fs-3 me-2"></i>
+                        <h3 class="header-title mb-0">Dış Tedarik Siparişi: <strong><span id="headerDocNum"></span></strong>
+                        </h3>
+                    </div>
+                    <div>
+                        <button class="btn btn-secondary me-2" onclick="window.history.back()">
+                            <i class="bi bi-arrow-left"></i> Geri Dön
+                        </button>
+                    </div>
+                </div>
+
                 <!-- Order Info -->
                 <div class="card mb-4">
                     <div class="card-body">
@@ -190,6 +207,8 @@
             // Initialize DataTable
             const orderItemsTable = $('#orderItems').DataTable({
                 responsive: true,
+                pageLength: 25,
+                lengthMenu: [[25, 50, 100], [25, 50, 100]],
                 columns: [{
                         data: 'ItemCode'
                     },
@@ -248,6 +267,7 @@
                 const order = data.value[0];
 
                 // Update order info
+                $('#headerDocNum').text(order.DocNum || '-');
                 $('#orderNumber').text(order.DocNum || '-');
                 $('#supplier').text(order.CardName || '-');
                 $('#orderDate').text(formatDate(order.DocDate) || '-');
