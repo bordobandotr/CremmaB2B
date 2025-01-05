@@ -420,7 +420,7 @@ app.get('/api/delivery/:docNum', async (req, res) => {
 });
 
 // Handle delivery submissions
-app.post('/api/delivery-submit/:docNum', upload.array('image'), async (req, res) => {
+app.post('/api/delivery-submit/:docNum', upload.array('images'), async (req, res) => {
     try {
         const docNum = req.params.docNum;
         const { deliveryData, sessionId } = req.body;
@@ -428,12 +428,14 @@ app.post('/api/delivery-submit/:docNum', upload.array('image'), async (req, res)
         // Parse deliveryData from string to object
         const parsedDeliveryData = typeof deliveryData === 'string' ? JSON.parse(deliveryData) : deliveryData;
         
-        // Add image path to delivery data if file was uploaded
-        if (req.file) {
-            console.log('Uploaded file:', req.file);
-            const imagePath = '/uploads/' + req.file.filename;
-            parsedDeliveryData.U_Image = imagePath;
-            console.log('Image path:', imagePath);
+        // Add image paths to delivery data if files were uploaded
+        if (req.files && req.files.length > 0) {
+            const imageFile = req.files.find(file => file.originalname === `${parsedDeliveryData.U_LineNum}.jpg`);
+            if (imageFile) {
+                const imagePath = '/uploads/' + imageFile.filename;
+                parsedDeliveryData.U_Image = imagePath;
+                console.log('Image path for line', parsedDeliveryData.U_LineNum, ':', imagePath);
+            }
         }
 
         console.log('Received delivery data:', parsedDeliveryData);
@@ -1423,8 +1425,8 @@ app.get('/api/anadepo-delivery/:docNum', async (req, res) => {
     }
 });
 
-// Handle delivery submissions
-app.post('/api/anadepo-delivery-submit/:docNum', upload.array('image'), async (req, res) => {
+
+app.post('/api/anadepo-delivery-submit/:docNum', upload.array('images'), async (req, res) => {
     try {
         const docNum = req.params.docNum;
         const { deliveryData, sessionId } = req.body;
@@ -1432,12 +1434,14 @@ app.post('/api/anadepo-delivery-submit/:docNum', upload.array('image'), async (r
         // Parse deliveryData from string to object
         const parsedDeliveryData = typeof deliveryData === 'string' ? JSON.parse(deliveryData) : deliveryData;
         
-        // Add image path to delivery data if file was uploaded
-        if (req.file) {
-            console.log('Uploaded file:', req.file);
-            const imagePath = '/uploads/' + req.file.filename;
-            parsedDeliveryData.U_Image = imagePath;
-            console.log('Image path:', imagePath);
+        // Add image paths to delivery data if files were uploaded
+        if (req.files && req.files.length > 0) {
+            const imageFile = req.files.find(file => file.originalname === `${parsedDeliveryData.U_LineNum}.jpg`);
+            if (imageFile) {
+                const imagePath = '/uploads/' + imageFile.filename;
+                parsedDeliveryData.U_Image = imagePath;
+                console.log('Image path for line', parsedDeliveryData.U_LineNum, ':', imagePath);
+            }
         }
 
         console.log('Received delivery data:', parsedDeliveryData);
@@ -1484,7 +1488,6 @@ app.post('/api/anadepo-delivery-submit/:docNum', upload.array('image'), async (r
         });
     }
 });
-
 
 // Handle all other routes
 app.get('*', (req, res) => {

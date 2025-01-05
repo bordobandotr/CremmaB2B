@@ -489,7 +489,12 @@
                     formData.append('sessionId', sessionId);
                     
                     if (imageInput.files.length > 0) {
-                        formData.append('image', imageInput.files[0]);
+                        const imageFile = imageInput.files[0];
+                        // Create a new file with the line number as the name
+                        const renamedFile = new File([imageFile], `${deliveryData.U_LineNum}.jpg`, {
+                            type: imageFile.type
+                        });
+                        formData.append('images', renamedFile);
                     }
 
                     const response = await fetch(`/api/delivery-submit/${docNum}`, {
