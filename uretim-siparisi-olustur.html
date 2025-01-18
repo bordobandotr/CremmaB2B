@@ -763,11 +763,11 @@
                             if (quantity > 0) {
                                 if (quantity < minQty) {
                                     Swal.fire({
-    icon: 'warning',
-    title: 'Uyarı',
-    text: `${rowData[1]} için minimum sipariş miktarı ${minQty}'dir.`,
-    confirmButtonText: 'Tamam'
-});
+                                        icon: 'warning',
+                                        title: 'Uyarı',
+                                        text: `${rowData[1]} için minimum sipariş miktarı ${minQty}'dir.`,
+                                        confirmButtonText: 'Tamam'
+                                    });
                                     hasError = true;
                                     return false;
                                 }

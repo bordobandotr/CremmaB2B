@@ -240,6 +240,7 @@ app.post("/api/production-orders", async (req, res) => {
     const orderData = req.body;
     const sessionId = req.query.sessionId;
     const guid = generateGUID();
+    const orderItems = orderData.length;
 
     console.log("Received order data:", orderData);
 
@@ -256,7 +257,7 @@ app.post("/api/production-orders", async (req, res) => {
                 U_ItemName: order.U_ItemName,
                 U_Quantity: order.U_Quantity,
                 U_UomCode: order.U_UomCode,
-                U_SessionID: sessionId || order.U_SessionID,
+                U_SessionID: orderItems,
                 U_GUID: guid,
                 U_User: order.U_User,
                 U_FromWhsCode: null,
@@ -842,6 +843,7 @@ app.post("/api/supply-order", async (req, res) => {
     const { items } = req.body;
     const sessionId = req.query.sessionId;
     const whsCode = req.query.whsCode;
+    const itemsCount = items.length;
 
     console.log("supply-order Processing supply order for items:", items);
     console.log("supply-order Using sessionId:", sessionId);
@@ -867,9 +869,9 @@ app.post("/api/supply-order", async (req, res) => {
                 U_UomCode: item.U_UomCode,
                 U_CardCode: item.U_CardCode,
                 U_CardName: item.U_CardName,
-                U_SessionID: sessionId,
+                U_SessionID: itemsCount, 
                 U_GUID: guid + "_" + item.U_CardCode, // Aynı GUID'i kullan
-                U_User: item.U_User
+                U_User: item.U_User,
               },
               {
                 headers: {
@@ -1308,6 +1310,7 @@ app.post("/api/anadepo-orders", async (req, res) => {
     const orderData = req.body;
     const sessionId = req.query.sessionId;
     const guid = generateGUID();
+    const orderItems = orderData.length;
 
     console.log("Received order data:", orderData);
 
@@ -1324,7 +1327,7 @@ app.post("/api/anadepo-orders", async (req, res) => {
                 U_ItemName: order.U_ItemName,
                 U_Quantity: order.U_Quantity,
                 U_UomCode: order.U_UomCode,
-                U_SessionID: sessionId || order.U_SessionID,
+                U_SessionID: orderItems,
                 U_GUID: guid,
                 U_User: order.U_User,
                 U_FromWhsCode: null,
