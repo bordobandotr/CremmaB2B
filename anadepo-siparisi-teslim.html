@@ -467,6 +467,7 @@
                 for (const row of $('#itemsTableBody tr')) {
                     const $row = $(row);
                     const imageInput = $row.find('.item-image')[0];
+                    const totalLines = $('#itemsTableBody tr').length;
 
                     const deliveryData = {
                         U_Type: "MAIN",
@@ -482,7 +483,7 @@
                         U_DefectiveQty: parseInt($row.find('.defective-qty').val()) || 0,
                         U_UomCode: $row.find('.uom-code').val(),
                         U_Comments: $row.find('.item-note').val() || "",
-                        U_SessionID: sessionId,
+                        U_SessionID: totalLines,
                         U_GUID: guid,
                         U_User: localStorageUserName,
                         U_LineNum: $row.data('line-num')

@@ -570,6 +570,7 @@
                 const localStorageBranchCode = localStorage.getItem("branchCode");
                 const docNum = new URLSearchParams(window.location.search).get('docNum');
                 const guid = generateGUID();
+                const totalLines = $('#itemsTableBody tr').length;
 
                 // Process each item
                 for (const row of $('#deliveryItems tbody tr')) {
@@ -592,7 +593,7 @@
                         U_DefectiveQty: parseInt($row.find('.defective-qty').val()) || 0,
                         U_UomCode: $row.find('td:eq(6)').text(),
                         U_Comments: $row.find('.note-input').val() || "",
-                        U_SessionID: sessionId,
+                        U_SessionID: totalLines,
                         U_GUID: guid,
                         U_User: localStorageUserName,
                         U_LineNum: lineNum

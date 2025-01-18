@@ -45,7 +45,7 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
           {
             UserName: validationResponse.data.user.username, // This will be admin username
             Password: validationResponse.data.user.password, // This will be admin password
-            CompanyDB: "CREMMA_SAYIM_TEST",
+            CompanyDB: "CREMMA_CANLI",
           },
           {
             headers: {
