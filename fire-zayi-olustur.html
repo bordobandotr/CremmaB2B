@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CREMMA - Fire/Zayi Kaydı Oluştur</title>
+    <link rel="icon" type="image/png" href="img/favicon.png">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- DataTables CSS -->
+    <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="css/style.css" rel="stylesheet">
+    <link href="css/loading.css" rel="stylesheet">
+    <link href="css/orientation.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+
+    <script src="js/loadHeader.js"></script>
+    <script src="js/sidebar-user.js"></script>
+    <script src="js/nav-menu.js"></script>
+    <script src="js/orientation.js"></script>
+    <script src="js/sidebar-toggle.js"></script>
+
+    <style>
+        .loading-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 10px;
+        }
+
+        .loading-text {
+            color: white;
+            font-size: 18px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .quantity-btn {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background-color: #212529;
+            border: none;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .quantity-btn:hover {
+            background-color: #343a40;
+            transform: scale(1.1);
+        }
+
+        .quantity-btn:active {
+            transform: scale(0.95);
+        }
+
+        .quantity-input {
+            width: 70px !important;
+            text-align: center;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 4px;
+            font-size: 14px;
+        }
+
+        .quantity-input:focus {
+            border-color: #212529;
+            box-shadow: 0 0 0 0.2rem rgba(33, 37, 41, 0.25);
+        }
+
+        .image-preview {
+            max-width: 100px;
+            max-height: 100px;
+            margin-top: 10px;
+        }
+
+        .thumbnail-image {
+            max-width: 50px;
+            max-height: 50px;
+            cursor: pointer;
+        }
+
+        .select2-container {
+            width: 100% !important;
+        }
+
+        .select2-container .select2-selection--multiple {
+            min-height: 38px !important;
+            border: 1px solid #ced4da !important;
+            border-radius: 0.375rem !important;
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Loading Screen -->
+    <div class="loading-screen">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Yükleniyor...</div>
+    </div>
+
+    <div class="d-flex">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div id="logo-container"></div>
+            <div id="sidebar-nav"></div>
+            <div id="sidebar-user"></div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <header class="d-flex justify-content-between p-3 bg-white">
+                <div class="d-flex align-items-center">
+                    <button id="sidebarToggle" class="btn btn-link d-md-none">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <h5 class="mb-0">Fire/Zayi Kaydı Oluştur</h5>
+                </div>
+                <div class="d-flex align-items-center">
+                    <button class="btn btn-outline-secondary" onclick="window.location.href='fire-zayi.html'">
+                        <i class="bi bi-arrow-left"></i> Geri
+                    </button>
+                </div>
+            </header>
+
+            <!-- Content -->
+            <div class="container-fluid p-4">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <div class="btn-group w-100" role="group">
+                                    <input type="radio" class="btn-check" name="recordType" id="fireType" value="1" checked>
+                                    <label class="btn btn-outline-success btn-lg" for="fireType">Fire</label>
+                                    
+                                    <input type="radio" class="btn-check" name="recordType" id="zayiType" value="2">
+                                    <label class="btn btn-outline-danger btn-lg" for="zayiType">Zayi</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="itemNameFilter" class="form-label">Kalem Tanımı</label>
+                                    <select class="form-select" id="itemNameFilter" multiple>
+                                        <!-- Options will be populated dynamically -->
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="itemGroupFilter" class="form-label">Kalem Grubu</label>
+                                    <select class="form-select" id="itemGroupFilter" multiple>
+                                        <!-- Options will be populated dynamically -->
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="table-responsive">
+                            <table id="itemsTable" class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Kalem Kodu</th>
+                                        <th>Kalem Tanımı</th>
+                                        <th>Kalem Grubu</th>
+                                        <th>Ölçü Birimi</th>
+                                        <th>Miktar</th>
+                                        <th>Açıklama</th>
+                                        <th>Görsel</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Data will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+
+                        <div class="text-end mt-3">
+                            <button type="button" class="btn btn-secondary me-2" onclick="window.location.href='fire-zayi.html'">İptal</button>
+                            <button type="button" class="btn btn-primary" onclick="saveLostItems()">Kaydet</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        let itemsTable;
+        const selectedQuantities = new Map();
+        const itemDescriptions = new Map();
+        const itemImages = new Map();
+        let itemsData = new Map(); // Store item data when loading
+
+        function showLoading(message = 'Yükleniyor...') {
+            const loadingScreen = document.querySelector('.loading-screen');
+            const loadingText = loadingScreen.querySelector('.loading-text');
+            loadingText.textContent = message;
+            loadingScreen.style.display = 'flex';
+        }
+
+        function hideLoading() {
+            document.querySelector('.loading-screen').style.display = 'none';
+        }
+
+        function generateGUID() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0,
+                    v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        function handleQuantityChange(itemCode, change) {
+            const currentQuantity = selectedQuantities.get(itemCode) || 0;
+            const newQuantity = Math.max(0, currentQuantity + change);
+            selectedQuantities.set(itemCode, newQuantity);
+            
+            // Update the display
+            const quantityElement = document.getElementById(`quantity-${itemCode}`);
+            if (quantityElement) {
+                quantityElement.value = newQuantity;
+            }
+        }
+
+        function handleManualQuantityChange(itemCode, value) {
+            const newQuantity = Math.max(0, parseFloat(value) || 0);
+            selectedQuantities.set(itemCode, newQuantity);
+            
+            // Update the display
+            const quantityElement = document.getElementById(`quantity-${itemCode}`);
+            if (quantityElement) {
+                quantityElement.value = newQuantity;
+            }
+        }
+
+        function handleDescriptionChange(itemCode, value) {
+            itemDescriptions.set(itemCode, value);
+        }
+
+        function handleImageChange(itemCode, file) {
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const preview = document.querySelector(`#preview-${itemCode}`);
+                    preview.src = e.target.result;
+                    preview.style.display = 'block';
+                    itemImages.set(itemCode, file);
+                }
+                reader.readAsDataURL(file);
+            }
+        }
+
+        async function loadItems() {
+            try {
+                showLoading();
+
+                const sessionId = localStorage.getItem('sessionId');
+                const whsCode = localStorage.getItem('branchCode');
+
+                const response = await fetch(`/api/lost-items/new?sessionId=${sessionId}&whsCode=${whsCode}`);
+                const data = await response.json();
+
+                console.log(data);
+
+                if (!data.value || !Array.isArray(data.value)) {
+                    throw new Error('Invalid data format received from server');
+                }
+
+                itemsTable = $('#itemsTable').DataTable({
+                    data: data.value,
+                    responsive: true,
+                    columns: [
+                        { 
+                            data: 'ItemCode',
+                            render: function(data, type, row) {
+                                itemsData.set(data, {
+                                    itemName: row.ItemName,
+                                    itemGroup: row.ItemGroup,
+                                    unit: row.UomCode
+                                });
+                                return data;
+                            }
+                        },
+                        { data: 'ItemName' },
+                        { data: 'ItemGroup' },
+                        { data: 'UomCode' },
+                        {
+                            data: null,
+                            render: function(data, type, row) {
+                                const itemCode = row.ItemCode;
+                                return `
+                                    <div class="quantity-badge">
+                                        <div class="quantity-controls">
+                                            <button type="button" class="quantity-btn" onclick="handleQuantityChange('${itemCode}', -1)">-</button>
+                                            <input type="number" class="form-control form-control-sm quantity-input" 
+                                                id="quantity-${itemCode}" 
+                                                value="0" 
+                                                min="0" 
+                                                step="1"
+                                                style="width: 70px; text-align: center;"
+                                                onchange="handleManualQuantityChange('${itemCode}', this.value)" />
+                                            <button type="button" class="quantity-btn" onclick="handleQuantityChange('${itemCode}', 1)">+</button>
+                                        </div>
+                                    </div>
+                                `;
+                            }
+                        },
+                        {
+                            data: null,
+                            render: function(data, type, row) {
+                                return `
+                                    <textarea class="form-control" 
+                                        onchange="handleDescriptionChange('${row.ItemCode}', this.value)" 
+                                        rows="2"></textarea>
+                                `;
+                            }
+                        },
+                        {
+                            data: null,
+                            render: function(data, type, row) {
+                                return `
+                                    <div>
+                                        <input type="file" 
+                                            class="form-control" 
+                                            accept="image/*"
+                                            onchange="handleImageChange('${row.ItemCode}', this.files[0])" />
+                                        <img id="preview-${row.ItemCode}" 
+                                            class="image-preview" 
+                                            style="display: none;" />
+                                    </div>
+                                `;
+                            }
+                        }
+                    ],
+                    language: {
+                        url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/tr.json'
+                    }
+                });
+
+                // Initialize filters after table is loaded
+                initializeFilters(data.value);
+
+                hideLoading();
+            } catch (error) {
+                console.error('Error loading items:', error);
+                hideLoading();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Hata',
+                    text: 'Kalemler yüklenirken bir hata oluştu.',
+                    confirmButtonText: 'Tamam'
+                });
+            }
+        }
+
+        function initializeFilters(data) {
+            const itemNames = new Set();
+            const itemGroups = new Set();
+
+            data.forEach(item => {
+                if (item.ItemName) itemNames.add(item.ItemName);
+                if (item.ItemGroup) itemGroups.add(item.ItemGroup);
+            });
+
+            // Initialize Select2 for ItemName filter
+            $('#itemNameFilter').empty();
+            Array.from(itemNames).sort().forEach(name => {
+                $('#itemNameFilter').append(new Option(name, name));
+            });
+            $('#itemNameFilter').select2({
+                theme: 'bootstrap-5',
+                placeholder: 'Kalem Tanımı Seçin',
+                allowClear: true
+            });
+
+            // Initialize Select2 for ItemGroup filter
+            $('#itemGroupFilter').empty();
+            Array.from(itemGroups).sort().forEach(group => {
+                $('#itemGroupFilter').append(new Option(group, group));
+            });
+            $('#itemGroupFilter').select2({
+                theme: 'bootstrap-5',
+                placeholder: 'Kalem Grubu Seçin',
+                allowClear: true
+            });
+
+            // Add filter event listeners
+            $('#itemNameFilter, #itemGroupFilter').on('change', function() {
+                applyFilters();
+            });
+        }
+
+        function applyFilters() {
+            const selectedNames = $('#itemNameFilter').val() || [];
+            const selectedGroups = $('#itemGroupFilter').val() || [];
+
+            $.fn.dataTable.ext.search.push(
+                function(settings, data, dataIndex) {
+                    const itemName = data[1]; // Index 1 is ItemName column
+                    const itemGroup = data[2]; // Index 2 is ItemGroup column
+
+                    const nameMatch = selectedNames.length === 0 || selectedNames.includes(itemName);
+                    const groupMatch = selectedGroups.length === 0 || selectedGroups.includes(itemGroup);
+
+                    return nameMatch && groupMatch;
+                }
+            );
+
+            itemsTable.draw();
+
+            // Clear the custom filter
+            $.fn.dataTable.ext.search.pop();
+        }
+
+        async function saveLostItems() {
+            try {
+                const items = [];
+                let hasItems = false;
+
+                selectedQuantities.forEach((quantity, itemCode) => {
+                    if (quantity > 0) {
+                        hasItems = true;
+                        const itemInfo = itemsData.get(itemCode);
+                        if (!itemInfo) {
+                            throw new Error(`Item data not found for code: ${itemCode}`);
+                        }
+                        
+                        items.push({
+                            itemCode,
+                            itemName: itemInfo.itemName,
+                            itemGroup: itemInfo.itemGroup,
+                            unit: itemInfo.unit,
+                            quantity: parseFloat(quantity),
+                            description: itemDescriptions.get(itemCode) || '',
+                            image: itemImages.get(itemCode)
+                        });
+                    }
+                });
+
+                if (!hasItems) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Uyarı',
+                        text: 'Lütfen en az bir kalem için miktar giriniz.',
+                        confirmButtonText: 'Tamam'
+                    });
+                    return;
+                }
+
+                showLoading('Kaydediliyor...');
+
+                const sessionId = localStorage.getItem('sessionId');
+                const whsCode = localStorage.getItem('branchCode');
+                const username = localStorage.getItem('userName');
+                const recordType = document.querySelector('input[name="recordType"]:checked').value;
+
+                const formData = new FormData();
+                formData.append('whsCode', whsCode);
+                formData.append('sessionId', sessionId);
+                formData.append('username', username);
+                formData.append('recordType', recordType);
+                formData.append('items', JSON.stringify(items));
+
+                items.forEach((item, index) => {
+                    if (item.image instanceof File) {
+                        formData.append('image', item.image);
+                    }
+                });
+
+                const response = await fetch('/api/lost-items/create', {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Başarılı',
+                        text: 'Kayıt başarıyla oluşturuldu.',
+                        confirmButtonText: 'Tamam'
+                    }).then(() => {
+                        window.location.href = 'fire-zayi.html';
+                    });
+                } else {
+                    throw new Error(result.error || 'Kayıt oluşturulurken bir hata oluştu.');
+                }
+            } catch (error) {
+                console.error('Error saving items:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Hata',
+                    text: error.message || 'Kayıt oluşturulurken bir hata oluştu.',
+                    confirmButtonText: 'Tamam'
+                });
+            } finally {
+                hideLoading();
+            }
+        }
+
+        // Initialize
+        $(document).ready(function() {
+            loadItems();
+        });
+
+        // Sidebar toggle for mobile
+        $('#sidebarToggle').click(function () {
+            $('body').toggleClass('show-sidebar');
+        });
+    </script>
+    <script src="js/datatable-helper.js"></script>
+</body>
+</html>

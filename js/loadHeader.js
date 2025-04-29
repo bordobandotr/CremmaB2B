@@ -23,3 +23,28 @@ document.addEventListener('DOMContentLoaded', async function() {
     
 
 });
+
+// Add versioning function to prevent cache issues
+function getVersionedUrl(url) {
+    // Add a version parameter based on current timestamp
+    // This ensures browsers will load fresh versions when files change
+    return url + (url.includes('?') ? '&' : '?') + 'v=' + (new Date().getTime());
+}
+
+// Function to dynamically load CSS with versioning
+function loadCSS(href) {
+    const link = document.createElement('link');
+    link.rel = 'stylesheet';
+    link.type = 'text/css';
+    link.href = getVersionedUrl(href);
+    document.head.appendChild(link);
+}
+
+// Function to dynamically load JS with versioning
+function loadJS(src, async = false, defer = false) {
+    const script = document.createElement('script');
+    script.src = getVersionedUrl(src);
+    script.async = async;
+    script.defer = defer;
+    document.body.appendChild(script);
+}

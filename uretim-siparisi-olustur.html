@@ -24,6 +24,7 @@
     <script src="js/sidebar-user.js"></script>
     <script src="js/nav-menu.js"></script>
     <script src="js/orientation.js"></script>
+    <script src="js/sidebar-toggle.js"></script>
 
     <style>
         .loading-screen {
@@ -405,9 +406,7 @@
                 });
 
                 let primarySortColumn = null;
-                
-
-                
+                   
                 // Custom filtering function
                 $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
                     const kalemGrubuValues = $('#kalemGrubuFilter').val() || [];
@@ -445,10 +444,11 @@
                     return pass;
                 });
 
+                const whsCode = localStorage.getItem("branchCode");
                 // Function to load orders
                 async function loadOrders() {
                     try {
-                        const response = await fetch('/uretim-siparisleri-list?sessionId=' + sessionId, {
+                        const response = await fetch('/uretim-siparisleri-list?sessionId=' + sessionId + '&whsCode=' + whsCode, {
                             method: 'GET',
                             credentials: 'include',
                             headers: {
@@ -917,5 +917,6 @@
         }
     </script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="js/datatable-helper.js"></script>
 </body>
 </html>

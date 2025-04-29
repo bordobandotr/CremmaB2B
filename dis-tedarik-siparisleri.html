@@ -19,6 +19,7 @@
     <script src="js/loadHeader.js"></script>
     <script src="js/sidebar-user.js"></script>
     <script src="js/orientation.js"></script>
+    <script src="js/sidebar-toggle.js"></script>
 </head>
 
 <body>
@@ -100,8 +101,7 @@
                                     <tr>
                                         <th>Sipariş No</th>
                                         <th>Tedarikçi</th>
-                                        <th>Sipariş Tarihi</th>
-                                        <th>Tahmini Teslimat</th>
+                                        <th>Sipariş / Teslimat Tarihi</th>
                                         <th>Teslimat Belge No</th>
                                         <th>Durum</th>
                                         <th>İşlemler</th>
@@ -138,21 +138,20 @@
                         data: 'DocNum',
                         width: '90px'
                     },
-                    { data: 'CardName' },
-                    { 
-                        data: 'DocDate',
-                        render: function(data) {
-                            return formatDate(data);
-                        }
+                    {
+                         data: 'CardName',
+                         width: '200px',
                     },
                     { 
-                        data: 'DocDueDate',
+                        data: null,
                         render: function(data) {
-                            return formatDate(data);
-                        }
+                            return `${formatDate(data.DocDate)}<br>${formatDate(data.DocDueDate)}`;
+                        },
+                        width: '170px',
                     },
                     { 
                         data: 'NumAtCard',
+                        width: '120px',
                         render: function(data) {
                             return data || '';
                         }
@@ -161,21 +160,23 @@
                         data: 'DocStatus',
                         render: function(data) {
                             return `<span style="display: none;">${data}</span>${getStatusBadge(data)}`;
-                        }
+                        },
+                        width: '90px'
                     },
                     {
                         data: null,
+                        width: '120px',
                         render: function(data) {
                             const buttons = [];
                             
-                            buttons.push(`<div class="btn-group">
+                            buttons.push(`<div class="d-flex flex-column gap-1">
                                 <a href="dis-tedarik-siparisi-detay.html?docNum=${data.DocNum}" 
                                     class="btn btn-sm btn-primary">
                                     <i class="bi bi-eye"></i> Detay
                                 </a>
                                 ${data.DocStatus === '3' ? 
                                     `<a href="dis-tedarik-siparisi-teslim.html?docNum=${data.DocNum}" 
-                                        class="btn btn-sm btn-success">
+                                        class="btn  btn-success">
                                         <i class="bi bi-check-lg"></i> Teslim Al
                                     </a>` 
                                     : ''
@@ -215,7 +216,7 @@
 
             // Handle filter changes
             $('#statusFilter').on('change', function() {
-                ordersTable.column(5).search(this.value).draw();
+                ordersTable.column(4).search(this.value).draw();
             });
 
             $('#supplierFilter').on('change', function() {
@@ -319,6 +320,7 @@
         }
     </script>
     <script src="js/api.js"></script>
+    <script src="js/datatable-helper.js"></script>
 </body>
 
 </html>

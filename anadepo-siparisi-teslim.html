@@ -14,12 +14,15 @@
     <link href="css/style.css" rel="stylesheet">
     <link href="css/orientation.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
+     <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.2/dist/sweetalert2.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
 
     <script src="js/loadHeader.js"></script>
     <script src="js/sidebar-user.js"></script>
     <script src="js/nav-menu.js"></script>
     <script src="js/orientation.js"></script>
+    <script src="js/sidebar-toggle.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.2/dist/sweetalert2.all.min.js"></script>
 
     <style>
         /* Loading Screen Styles */
@@ -251,15 +254,25 @@
             const docNum = urlParams.get('docNum');
 
             if (!docNum) {
-                alert('Sipariş numarası bulunamadı');
-                window.history.back();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Hata',
+                    text: 'Sipariş numarası bulunamadı'
+                }).then(() => {
+                    window.history.back();
+                });
                 return;
             }
 
             const sessionId = localStorage.getItem('sessionId');
             if (!sessionId) {
-                alert('Oturum bilgisi bulunamadı. Lütfen tekrar giriş yapın.');
-                window.location.href = '/login.html';
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Hata',
+                    text: 'Oturum bilgisi bulunamadı. Lütfen tekrar giriş yapın.'
+                }).then(() => {
+                    window.location.href = '/login.html';
+                });
                 return;
             }
 
@@ -360,7 +373,11 @@
 
             } catch (error) {
                 console.error('Error loading order:', error);
-                alert('Sipariş detayları yüklenirken bir hata oluştu.');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Hata',
+                    text: 'Sipariş detayları yüklenirken bir hata oluştu.'
+                });
             } finally {
                 hideLoading();
             }
@@ -390,7 +407,11 @@
             // Ensure the delivery quantity doesn't exceed the initial delivery quantity
             if (deliveryQty > initialDeliveryQty) {
                 row.find('.delivery-qty').val(initialDeliveryQty);
-                alert('Teslimat miktarı başlangıç miktarını aşamaz!');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Uyarı',
+                    text: 'Teslimat miktarı;baseş miktarını aşamaz!'
+                });
                 return;
             }
 
@@ -452,7 +473,11 @@
 
         async function submitDelivery() {
             if (!validateSubmitButton()) {
-                alert('Lütfen kusurlu ürün girilen her satır için fotoğraf yükleyin.');
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Uyarı',
+                    text: 'Lütfen kusurlu ürün girilen her satır için fotoğraf yükleyin.'
+                });
                 return;
             }
 
@@ -468,6 +493,8 @@
                     const $row = $(row);
                     const imageInput = $row.find('.item-image')[0];
                     const totalLines = $('#itemsTableBody tr').length;
+                    
+                    console.log('Processing item:', totalLines);
 
                     const deliveryData = {
                         U_Type: "MAIN",
@@ -516,11 +543,26 @@
                     }
                 }
 
-                alert('Teslimat başarıyla kaydedildi');
-                window.location.href = 'anadepo-siparisleri.html';
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Başarılı',
+                    text: 'Teslimat başarıyla kaydedildi',
+                    showConfirmButton: true,
+                    confirmButtonText: 'Listeye Dön',
+                    allowOutsideClick: false
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        window.location.href = 'anadepo-siparisleri.html';
+                    }
+                });
+
             } catch (error) {
                 console.error('Error submitting delivery:', error);
-                alert('Teslimat kaydedilirken bir hata oluştu: ' + error.message);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Teslimat kaydedilirken bir hata oluştu',
+                    text: error.message
+                });
             } finally {
                 hideLoading();
             }
@@ -595,6 +637,7 @@
         }
  
     </script>
+    <script src="js/datatable-helper.js"></script>
 </body>
 
 </html>

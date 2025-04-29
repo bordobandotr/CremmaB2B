@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CREMMA - Check List</title>
+    <link rel="icon" type="image/png" href="img/favicon.png">
+    <script src="js/loadHeader.js"></script>
+    <script src="js/sidebar-user.js"></script>
+    <script src="js/sidebar-toggle.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+    <link href="css/orientation.css" rel="stylesheet">
+    <style>
+        .table > :not(caption) > * > * {
+            padding: 1rem;
+        }
+        
+        .table tbody tr {
+            border-bottom: 1px solid #dee2e6;
+        }
+
+        .table thead {
+            background-color: #f8f9fa;
+        }
+
+        .form-check {
+            display: flex;
+            justify-content: center;
+            margin: 0;
+        }
+
+        .form-check-input {
+            width: 3em;
+            height: 3em;
+            margin: 0;
+            cursor: pointer;
+        }
+
+        .form-check-input:checked {
+            background-color: #198754;
+            border-color: #198754;
+        }
+
+        .table tbody tr:nth-of-type(odd) {
+            background-color: rgba(0, 0, 0, 0.02);
+        }
+
+        .table tbody tr:hover {
+            background-color: rgba(0, 0, 0, 0.04);
+        }
+
+        #kaydetBtn {
+            padding: 0.5rem 1.5rem;
+            font-size: 1rem;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="d-flex">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div id="logo-container"></div>
+            <div id="sidebar-nav"></div>
+            <div id="sidebar-user"></div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <header class="d-flex justify-content-between p-3 bg-white">
+                <div class="d-flex align-items-center">
+                    <button id="sidebarToggle" class="btn btn-link d-md-none">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <h5 class="mb-0">Check List</h5>
+                </div>
+                <div class="d-flex align-items-center">
+                    <button class="btn btn-dark" onclick="logout()">
+                        Çıkış Yap <i class="bi bi-box-arrow-right"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Content -->
+            <div class="container-fluid p-4">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <h4 class="mb-0">Check List</h4>
+                            <button class="btn btn-dark" id="kaydetBtn">Kaydet</button>
+                        </div>
+                        <div class="table-responsive">
+                            <table class="table">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 5%">No</th>
+                                        <th style="width: 20%">İş Tanımı</th>
+                                        <th style="width: 10%; text-align: center;">İşlem</th>
+                                        <th style="width: 25%">Açıklama</th>
+                                        <th style="width: 20%">Sorumlu Personel</th>
+                                        <th style="width: 10%">Sıklık</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Table content will be dynamically populated -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            loadCheckList();
+            document.getElementById('kaydetBtn').addEventListener('click', saveCheckList);
+        });
+
+        async function loadCheckList() {
+            try {
+                const sessionId = localStorage.getItem('sessionId');
+                const whsCode = localStorage.getItem("branchCode");
+
+                console.log('sessionId:', sessionId);
+                console.log('whsCode:', whsCode);
+
+                if (!sessionId || !whsCode) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Hata',
+                        text: 'Oturum bilgisi bulunamadı. Lütfen tekrar giriş yapın.'
+                    });
+                    return;
+                }
+
+                const response = await fetch(`/api/checklist?sessionId=${sessionId}&whsCode=${whsCode}`);
+                const data = await response.json();
+
+                if (data.success) {
+                    populateCheckList(data.data);
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                console.error('Error loading checklist:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Hata',
+                    text: 'Kontrol listesi yüklenirken bir hata oluştu.'
+                });
+            }
+        }
+
+        function populateCheckList(items) {
+            const tbody = document.querySelector('tbody');
+            tbody.innerHTML = '';
+
+            items.forEach(item => {
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td class="align-middle">${item.RowCnt}</td>
+                    <td class="align-middle">${item.WorkName}</td>
+                    <td class="align-middle text-center">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" ${item.WorkStatus === 'True' ? 'checked disabled' : ''}>
+                        </div>
+                    </td>
+                    <td class="align-middle">${item.FreeText || ''}</td>
+                    <td class="align-middle">${item.Responsible || ''}</td>
+                    <td class="align-middle">${item.Frequency  || ''}</td>
+                `;
+                row.dataset.workCode = item.WorkCode;
+                tbody.appendChild(row);
+            });
+        }
+
+        async function saveCheckList() {
+            try {
+                const sessionId = localStorage.getItem('sessionId');
+                const whsCode = localStorage.getItem("branchCode");
+                const localStorageUserName = localStorage.getItem("userName");
+
+                if (!sessionId || !whsCode) {
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Hata',
+                        text: 'Oturum bilgisi bulunamadı. Lütfen tekrar giriş yapın.'
+                    });
+                    return;
+                }
+
+                // Get only checked AND not disabled checkboxes
+                const checkboxes = document.querySelectorAll('.form-check-input:checked:not([disabled])');
+                const tasks = Array.from(checkboxes).map(checkbox => {
+                    const row = checkbox.closest('tr');
+                    return {
+                        LineNum: parseInt(row.cells[0].textContent),
+                        TaskCode: row.dataset.workCode,
+                        TaskName: row.cells[1].textContent,
+                        Status: 'C',  // Since we're only sending checked items
+                        Description: row.cells[3].textContent,
+                        Frequency: row.cells[5].textContent,
+                    };
+                });
+
+                if (tasks.length === 0) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Uyarı',
+                        text: 'Lütfen en az bir işlem seçin.'
+                    });
+                    return;
+                }
+
+                console.log('Tasks to be sent:', tasks);
+                const response = await fetch(`/api/checklist/update?sessionId=` + sessionId, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        whsCode,
+                        localStorageUserName,
+                        tasks
+                    })
+                });
+
+                console.log('Response:', response);
+                const data = await response.json();
+                console.log('Response:', data);
+
+                if (data.success) {
+                    Swal.fire({
+                        icon: 'success',
+                        title: 'Başarılı',
+                        text: 'Değişiklikler kaydedildi.'
+                    });
+                    loadCheckList();
+                } else {
+                    throw new Error(data.error);
+                }
+            } catch (error) {
+                console.error('Error saving checklist:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Hata',
+                    text: 'Değişiklikler kaydedilirken bir hata oluştu.'
+                });
+            }
+        }
+    </script>
+    <script src="js/api.js"></script>
+    <script src="js/nav-menu.js"></script>
+</body>
+
+</html>

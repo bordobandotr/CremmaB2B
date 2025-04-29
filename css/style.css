@@ -4,6 +4,8 @@
     --light-bg: #F5F5F5;
     --border-radius: 8px;
     --transition: all 0.3s ease;
+    --sidebar-width: 250px;
+    --sidebar-collapsed-width: 70px;
     touch-action: pan-x pan-y;
 }
 
@@ -14,9 +16,13 @@ body {
   font-optical-sizing: auto;
 }
 
+.sidebar.collapsed .nav-link i.me-2{
+    margin-right: 0 !important;
+}
+
 /* Sidebar Styles */
 .sidebar {
-    width: 250px;
+    width: var(--sidebar-width);
     height: 100vh;
     background-color: var(--sidebar-bg);
     position: fixed;
@@ -26,10 +32,20 @@ body {
     transition: var(--transition);
     border-top-right-radius: 32px;
     border-bottom-right-radius: 32px;
+    overflow-x: hidden;
+}
+
+.sidebar.collapsed {
+    width: var(--sidebar-collapsed-width);
 }
 
 .sidebar .logo-container {
     border-bottom: 1px solid rgba(255,255,255,0.1);
+    transition: var(--transition);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 1rem 0;
 }
 
 .sidebar .nav-link {
@@ -37,6 +53,9 @@ body {
     padding: 0.8rem 1.5rem;
     transition: var(--transition);
     margin-bottom: 8px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .sidebar .nav-link:last-child {
@@ -56,12 +75,64 @@ body {
     text-align: center;
 }
 
+.sidebar.collapsed .nav-link {
+    text-align: center;
+    padding: 0.8rem 0.5rem;
+}
+
+.sidebar.collapsed .nav-link i {
+    margin-right: 0;
+    font-size: 1.25rem;
+}
+
+.sidebar.collapsed .nav-link span {
+    display: none;
+}
+
+.sidebar #logo-container img {
+    max-width: 100%;
+    height: auto;
+    transition: var(--transition);
+}
+
+.sidebar.collapsed #logo-container img {
+    max-width: 80%;
+}
+
+.sidebar.collapsed #logo-container img.sidebar-logo-small {
+    display: block;
+    margin-left: 8px;
+    overflow: hidden;
+    border-radius: 13px;
+    margin-top: 20px;
+}
+
+.sidebar #sidebar-user {
+    padding: 1rem;
+    transition: var(--transition);
+}
+
+.sidebar.collapsed #sidebar-user {
+    text-align: center;
+    padding: 1rem 0.5rem;
+}
+
+.sidebar.collapsed #sidebar-user .user-info-text {
+    display: none;
+}
+
 /* Main Content Styles */
 .main-content {
-    margin-left: 250px;
-    width: calc(100% - 250px);
+    margin-left: var(--sidebar-width);
+    width: calc(100% - var(--sidebar-width));
     min-height: 100vh;
     background-color: var(--light-bg);
+    transition: var(--transition);
+}
+
+.main-content.sidebar-collapsed {
+    margin-left: var(--sidebar-collapsed-width);
+    width: calc(100% - var(--sidebar-collapsed-width));
 }
 
 /* Card Styles */
@@ -181,6 +252,35 @@ body {
     border-top: 1px solid rgba(255,255,255,0.1);
 }
 
+/* Toggle Button */
+#sidebarToggleBtn {
+    color: white;
+    position: fixed;
+    left: calc(var(--sidebar-width) - 16px);
+    bottom: 20px;
+    z-index: 1001;
+    width: 32px;
+    height: 32px;
+    background: red;
+    border-radius: 50%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border: 1px solid rgb(124, 0, 0);
+    cursor: pointer;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    transition: var(--transition);
+}
+
+#sidebarToggleBtn.collapsed {
+    left: calc(var(--sidebar-collapsed-width) - 16px);
+}
+
+#sidebarToggleBtn i {
+    font-size: 14px;
+    transition: var(--transition);
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .sidebar {
@@ -197,7 +297,16 @@ body {
     }
     
     .show-sidebar .main-content {
-        margin-left: 250px;
+        margin-left: var(--sidebar-width);
+    }
+
+    #sidebarToggleBtn {
+        left: 20px; /* Move toggle button to corner on mobile */
+        top: 20px;
+    }
+    
+    #sidebarToggleBtn.show-sidebar {
+        left: calc(var(--sidebar-width) - 16px);
     }
 }
 
@@ -219,4 +328,23 @@ body {
 }
 .fade-enter, .fade-leave-to {
     opacity: 0;
+}
+
+/* Logo transition styles */
+.sidebar .sidebar-logo {
+    display: block;
+    transition: var(--transition);
+}
+
+.sidebar .sidebar-logo-small {
+    display: none;
+    transition: var(--transition);
+}
+
+.sidebar.collapsed .sidebar-logo {
+    display: none;
+}
+
+.sidebar.collapsed .sidebar-logo-small {
+    display: block;
 }

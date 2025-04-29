@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CREMMA - Ticket Oluştur</title>
+    <link rel="icon" type="image/png" href="img/favicon.png">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- DataTables CSS -->
+    <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="css/style.css" rel="stylesheet">
+    <link href="css/loading.css" rel="stylesheet">
+    <link href="css/orientation.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css"
+        rel="stylesheet" />
+
+    <script src="js/loadHeader.js"></script>
+    <script src="js/sidebar-user.js"></script>
+    <script src="js/nav-menu.js"></script>
+    <script src="js/orientation.js"></script>
+    <script src="js/sidebar-toggle.js"></script>
+    <style>
+        .loading-screen {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            z-index: 9999;
+            justify-content: center;
+            align-items: center;
+            flex-direction: column;
+        }
+
+        .loading-spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin-bottom: 10px;
+        }
+
+        .loading-text {
+            color: white;
+            font-size: 18px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .quantity-controls {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .quantity-btn {
+            width: 32px;
+            height: 32px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            background-color: #212529;
+            border: none;
+            color: white;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .quantity-btn:hover {
+            background-color: #343a40;
+            transform: scale(1.1);
+        }
+
+        .quantity-btn:active {
+            transform: scale(0.95);
+        }
+
+        .quantity-input {
+            width: 70px !important;
+            text-align: center;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 4px;
+            font-size: 14px;
+        }
+
+        .quantity-input:focus {
+            border-color: #212529;
+            box-shadow: 0 0 0 0.2rem rgba(33, 37, 41, 0.25);
+        }
+
+        .image-preview {
+            max-width: 100px;
+            max-height: 100px;
+            margin-top: 10px;
+        }
+
+        .thumbnail-image {
+            max-width: 50px;
+            max-height: 50px;
+            cursor: pointer;
+        }
+
+        .select2-container {
+            width: 100% !important;
+        }
+
+        .select2-container .select2-selection--multiple {
+            min-height: 38px !important;
+            border: 1px solid #ced4da !important;
+            border-radius: 0.375rem !important;
+        }
+    </style>
+    
+    <style>
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+
+        .loading-screen .spinner-border {
+            width: 3rem;
+            height: 3rem;
+        }
+
+        .priority-btn {
+            border: 2px solid transparent;
+            padding: 8px 16px;
+            margin: 0 4px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .priority-btn.dusuk {
+            border-color: #FFD43B;
+            color: #FFD43B;
+        }
+
+        .priority-btn.orta {
+            border-color: #51CF66;
+            color: #51CF66;
+        }
+
+        .priority-btn.yuksek {
+            border-color: #FF6B6B;
+            color: #FF6B6B;
+        }
+
+        .priority-btn.active.dusuk {
+            background-color: #FFD43B;
+            color: white;
+        }
+
+        .priority-btn.active.orta {
+            background-color: #51CF66;
+            color: white;
+        }
+
+        .priority-btn.active.yuksek {
+            background-color: #FF6B6B;
+            color: white;
+        }
+
+        .image-preview {
+            max-width: 200px;
+            max-height: 200px;
+            margin-top: 10px;
+        }
+
+        .select2-container {
+            width: 100% !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div class="loading-screen">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Yükleniyor...</div>
+    </div>
+
+    <div class="d-flex">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div id="logo-container"></div>
+            <div id="sidebar-nav"></div>
+            <div id="sidebar-user"></div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+
+            <!-- Main Content -->
+            <div class="container mt-4">
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0">Yeni Ticket Oluştur</h5>
+                    </div>
+                    <div class="card-body">
+                        <form id="ticketForm">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="fromWhsCode" class="form-label">Şube</label>
+                                    <select class="form-select" id="fromWhsCode" name="fromWhsCode" required>
+                                        <option value="">Şube Seçiniz</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="userNameSelect" class="form-label">Ticket Alıcı</label>
+                                    <select class="form-select" id="userNameSelect" name="userName" required>
+                                        <option value="">Kullanıcı Seçiniz</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="mb-3">
+                                <label class="form-label">Ticket Öncelik</label>
+                                <div class="d-flex">
+                                    <button type="button" class="btn priority-btn dusuk" data-priority="dusuk">Düşük</button>
+                                    <button type="button" class="btn priority-btn orta" data-priority="orta">Orta</button>
+                                    <button type="button" class="btn priority-btn yuksek" data-priority="yuksek">Yüksek</button>
+                                </div>
+                                <input type="hidden" id="priority" name="priority" required>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="freeText" class="form-label">Açıklama</label>
+                                <textarea class="form-control" id="freeText" name="freeText" rows="4" required></textarea>
+                            </div>
+
+                            <div class="mb-3">
+                                <label for="image" class="form-label">Görsel</label>
+                                <input type="file" class="form-control" id="image" name="image" accept="image/*">
+                                <img id="imagePreview" class="image-preview d-none" alt="Görsel Önizleme">
+                            </div>
+
+                            <div class="d-flex justify-content-end gap-2">
+                                <button type="button" class="btn btn-secondary" onclick="window.location.href='ticket.html'">İptal</button>
+                                <button type="submit" class="btn btn-primary">Gönder</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+     </div>
+     
+
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.10.1/dist/sweetalert2.all.min.js"></script>
+    <script>
+        // Check orientation on page load
+        checkOrientation();
+
+        function showLoading() {
+            $('.loading-screen').css('display', 'flex');
+        }
+
+        function hideLoading() {
+            $('.loading-screen').css('display', 'none');
+        }
+
+        function generateGUID() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0,
+                    v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        async function loadBranches() {
+            try {
+                const sessionId = localStorage.getItem('sessionId');
+                const response = await fetch('/api/branches?sessionId=' + sessionId, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+                const data = await response.json();
+                
+                const select = $('#fromWhsCode');
+                data.forEach(branch => {
+                    select.append(new Option(branch.Name, branch.Code));
+                });
+                
+                select.select2({
+                    theme: 'bootstrap-5',
+                    placeholder: 'Şube Seçiniz',
+                    allowClear: true
+                });
+            } catch (error) {
+                console.error('Error loading branches:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Hata',
+                    text: 'Şubeler yüklenirken bir hata oluştu.',
+                    confirmButtonText: 'Tamam'
+                });
+            }
+        }
+
+        async function loadUsers() {
+            try {
+                const sessionId = localStorage.getItem('sessionId');
+                console.log('Loading users with sessionId:', sessionId);
+
+                const response = await fetch('/api/users?sessionId=' + sessionId, {
+                    headers: {
+                        'Content-Type': 'application/json',
+                    }
+                });
+
+                const data = await response.json();
+                console.log('User data received:', data);
+
+                const select = $('#userNameSelect');
+                 
+                
+                // Add default placeholder option
+                select.append(new Option('Kullanıcı Seçiniz', '', true, true));
+
+                // Add user options
+                if (Array.isArray(data)) {
+                    data.forEach(user => {
+                        // Log each user object
+                        console.log('Processing user:', user);
+                        select.append(new Option(user.Name, user.Code));
+                    });
+                }
+
+                // Initialize Select2
+                select.select2({
+                    theme: 'bootstrap-5',
+                    placeholder: 'Kullanıcı Seçiniz',
+                    allowClear: true,
+                    width: '100%'
+                });
+
+            } catch (error) {
+                console.error('Error loading users:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Hata',
+                    text: 'Kullanıcılar yüklenirken bir hata oluştu.',
+                    confirmButtonText: 'Tamam'
+                });
+            }
+        }
+
+        // Handle priority button clicks
+        $('.priority-btn').click(function() {
+            $('.priority-btn').removeClass('active');
+            $(this).addClass('active');
+            $('#priority').val($(this).data('priority'));
+        });
+
+        // Handle image upload and preview
+        $('#image').change(function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    $('#imagePreview')
+                        .attr('src', e.target.result)
+                        .removeClass('d-none');
+                };
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Handle form submission
+        $('#ticketForm').submit(async function(e) {
+            e.preventDefault();
+            
+            try {
+                if (!$('#priority').val()) {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Uyarı',
+                        text: 'Lütfen bir öncelik seçiniz.',
+                        confirmButtonText: 'Tamam'
+                    });
+                    return;
+                }
+
+                showLoading();
+                
+                const sessionId = localStorage.getItem('sessionId');
+                const whsCode = localStorage.getItem('branchCode');
+                const currentUser = localStorage.getItem('userName');
+
+                // Create FormData from the form
+                const formData = new FormData();
+                
+                // Add the file if selected
+                const imageInput = document.getElementById('image');
+                if (imageInput.files.length > 0) {
+                    formData.append('image', imageInput.files[0]);
+                }
+
+                // Add other form data
+                formData.append('U_WhsCode', whsCode);
+                formData.append('U_FromWhsName', $('#fromWhsCode').val());
+                formData.append('U_DocDate', new Date().toISOString().split('T')[0]);
+                formData.append('U_UserName', $('#userNameSelect').val());
+                formData.append('U_Priority', $('#priority').val());
+                formData.append('U_FreeText', $('#freeText').val());
+                formData.append('U_SessionID', sessionId);
+                formData.append('U_GUID', generateGUID());
+                formData.append('U_User', currentUser);
+
+                console.log('Submitting form with file:', imageInput.files[0]);
+
+                const response = await fetch('/api/tickets?sessionId=' + sessionId, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) {
+                    throw new Error('Failed to create ticket');
+                }
+
+                const result = await response.json();
+
+                hideLoading();
+
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Başarılı',
+                    text: 'Ticket başarıyla oluşturuldu.',
+                    confirmButtonText: 'Tamam'
+                });
+
+                window.location.href = 'ticket.html';
+            } catch (error) {
+                console.error('Error creating ticket:', error);
+                hideLoading();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Hata',
+                    text: 'Ticket oluşturulurken bir hata oluştu.',
+                    confirmButtonText: 'Tamam'
+                });
+            }
+        });
+
+        // Load nav menu
+        $(document).ready(function() {
+            loadBranches();
+            loadUsers();
+        });
+    </script>
+    <script src="js/datatable-helper.js"></script>
+</body>
+</html>

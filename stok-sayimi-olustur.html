@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CREMMA - Stok Sayımı Oluştur</title>
+    <link rel="icon" type="image/png" href="img/favicon.png">
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- DataTables CSS -->
+    <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link href="css/style.css" rel="stylesheet">
+    <link href="css/loading.css" rel="stylesheet">
+    <link href="css/orientation.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css"
+        rel="stylesheet" />
+
+    <script src="js/loadHeader.js"></script>
+    <script src="js/sidebar-user.js"></script>
+    <script src="js/nav-menu.js"></script>
+    <script src="js/orientation.js"></script>
+    <script src="js/sidebar-toggle.js"></script>
+    <style>
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(255, 255, 255, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+            flex-direction: column;
+        }
+
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 20px;
+        }
+
+        .loading-text {
+            font-size: 1.2em;
+            color: #333;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .quantity-control {
+            width: 120px !important;
+            min-width: 120px !important;
+            display: flex !important;
+            align-items: center !important;
+            white-space: nowrap !important;
+        }
+
+        .quantity-control .btn {
+            padding: 0.25rem 0.5rem !important;
+            font-size: 0.875rem !important;
+            min-width: 30px !important;
+            height: 30px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            z-index: 3 !important;
+        }
+
+        .quantity-control input {
+            width: 50px !important;
+            text-align: center !important;
+            padding: 0.25rem !important;
+            font-size: 0.875rem !important;
+            height: 30px !important;
+            border-left: 0 !important;
+            border-right: 0 !important;
+        }
+
+        .quantity-control input::-webkit-outer-spin-button,
+        .quantity-control input::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        .quantity-control input[type=number] {
+            -moz-appearance: textfield;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div class="loading-screen">
+        <div class="loading-spinner"></div>
+        <div class="loading-text">Yükleniyor...</div>
+    </div>
+
+    <div class="d-flex">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div id="logo-container">
+
+            </div>
+            <div id="sidebar-nav">
+                <!-- Navigation menu will be loaded here -->
+            </div>
+
+            <div id="sidebar-user">
+                <!-- User information will be loaded here -->
+            </div>
+
+        </div>  
+
+        <!-- Main Content -->
+        <div class="content">
+            <!-- Header -->
+            <div id="header"></div>
+
+            <!-- Main Container -->
+            <div class="container-fluid mt-3">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title mb-0">Stok Sayımı Oluştur</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table id="countTable" class="table table-striped table-hover" style="width:100%">
+                                <thead>
+                                    <tr>
+                                        <th>Kalem Kodu</th>
+                                        <th>Kalem Tanımı</th>
+                                        <th>Kalem Grubu</th>
+                                        <th>Miktar</th>
+                                        <th>Ölçü Birimi</th>
+                                        <th>Giriş Tarihi</th>
+                                    </tr>
+                                </thead>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Required Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        function showLoading(message = 'Yükleniyor...') {
+            $('.loading-screen .loading-text').text(message);
+            $('.loading-screen').css('display', 'flex');
+        }
+
+        function hideLoading() {
+            $('.loading-screen').hide();
+        }
+
+        function logout() {
+            localStorage.clear();
+            window.location.href = 'login.html';
+        }
+
+        function generateUUID() {
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0,
+                    v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
+
+        function handleQuantityChange(currentValue, isIncrease) {
+            currentValue = parseFloat(currentValue) || 0;
+            if (isIncrease) {
+                return currentValue + 1;
+            } else {
+                return Math.max(0, currentValue - 1);
+            }
+        }
+
+        $(document).ready(async function () {
+            try {
+                showLoading('Veriler Yükleniyor...');
+                const sessionId = localStorage.getItem('sessionId');
+                const whsCode = localStorage.getItem('whsCode');
+
+                if (!sessionId) {
+                    logout();
+                    return;
+                }
+
+                const table = $('#countTable').DataTable({
+                    ajax: {
+                        url: '/api/count-list',
+                        method: 'GET',
+                        data: function(d) {
+                            return {
+                                ...d,
+                                sessionId: sessionId,
+                                whsCode: whsCode
+                            };
+                        },
+                        dataSrc: ''
+                    },
+                    responsive: true,
+                    columns: [
+                        { data: 'ItemCode' },
+                        { data: 'ItemName' },
+                        { data: 'ItemGroup' },
+                        {
+                            data: null,
+                            render: function(data, type, row) {
+                                if (type === 'display') {
+                                    const quantity = row.Quantity || 0;
+                                    return `
+                                        <div class="quantity-control">
+                                            <button class="btn btn-outline-secondary decrease-qty">-</button>
+                                            <input type="number" class="form-control count-qty" value="${quantity}" min="0" step="1">
+                                            <button class="btn btn-outline-secondary increase-qty">+</button>
+                                        </div>
+                                    `;
+                                }
+                                return data.Quantity || 0;
+                            }
+                        },
+                        { data: 'UomCode' },
+                        {
+                            data: null,
+                            render: function(data, type, row) {
+                                const today = new Date().toISOString().split('T')[0];
+                                return `<input type="date" class="form-control doc-date" value="${row.DocDate || today}">`;
+                            }
+                        }
+                    ],
+                    order: [[0, 'asc']]
+                });
+
+                // Quantity change handlers
+                $('#countTable').on('click', '.decrease-qty, .increase-qty', function() {
+                    const $button = $(this);
+                    const $input = $button.siblings('.count-qty');
+                    const currentValue = parseFloat($input.val()) || 0;
+                    const isIncrease = $button.hasClass('increase-qty');
+                    
+                    const newValue = handleQuantityChange(currentValue, isIncrease);
+                    $input.val(newValue);
+                    
+                    const row = table.row($button.closest('tr'));
+                    const rowData = row.data();
+                    
+                    // Update the data
+                    const updatedData = {
+                        U_WhsCode: whsCode,
+                        U_ItemCode: rowData.ItemCode,
+                        U_ItemName: rowData.ItemName,
+                        U_Quantity: newValue,
+                        U_UomCode: rowData.UomCode,
+                        U_DocDate: $button.closest('tr').find('.doc-date').val(),
+                        U_SessionID: sessionId,
+                        U_GUID: generateUUID(),
+                        U_User: localStorage.getItem('username')
+                    };
+
+                    // Send update to server
+                    $.ajax({
+                        url: '/api/count-update',
+                        method: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify(updatedData),
+                        success: function(response) {
+                            console.log('Update successful:', response);
+                        },
+                        error: function(error) {
+                            console.error('Update failed:', error);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Hata',
+                                text: 'Güncelleme sırasında bir hata oluştu.'
+                            });
+                        }
+                    });
+                });
+
+                // Date change handler
+                $('#countTable').on('change', '.doc-date', function() {
+                    const $input = $(this);
+                    const row = table.row($input.closest('tr'));
+                    const rowData = row.data();
+                    
+                    const updatedData = {
+                        U_WhsCode: whsCode,
+                        U_ItemCode: rowData.ItemCode,
+                        U_ItemName: rowData.ItemName,
+                        U_Quantity: parseFloat($input.closest('tr').find('.count-qty').val()) || 0,
+                        U_UomCode: rowData.UomCode,
+                        U_DocDate: $input.val(),
+                        U_SessionID: sessionId,
+                        U_GUID: generateUUID(),
+                        U_User: localStorage.getItem('username')
+                    };
+
+                    // Send update to server
+                    $.ajax({
+                        url: '/api/count-update',
+                        method: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify(updatedData),
+                        success: function(response) {
+                            console.log('Update successful:', response);
+                        },
+                        error: function(error) {
+                            console.error('Update failed:', error);
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Hata',
+                                text: 'Güncelleme sırasında bir hata oluştu.'
+                            });
+                        }
+                    });
+                });
+
+                hideLoading();
+            } catch (error) {
+                console.error('Error:', error);
+                hideLoading();
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Hata',
+                    text: 'Veriler yüklenirken bir hata oluştu.'
+                });
+            }
+        });
+    </script>
+    <script src="js/datatable-helper.js"></script>
+</body>
+</html>

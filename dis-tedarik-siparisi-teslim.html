@@ -15,10 +15,13 @@
     <link href="css/orientation.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="js/loadHeader.js"></script>
     <script src="js/sidebar-user.js"></script>
     <script src="js/nav-menu.js"></script>
     <script src="js/orientation.js"></script>
+    <script src="js/sidebar-toggle.js"></script>
     
     <style>
         /* Loading Screen Styles */
@@ -83,6 +86,43 @@
         }
 
         .input-group .btn i {
+            font-size: 0.875rem;
+        }
+
+        .input-group .btn-quantity {
+            background-color: #000;
+            color: #fff;
+            border-color: #000;
+        }
+
+        .input-group .btn-quantity:hover {
+            background-color: #333;
+            border-color: #333;
+            color: #fff;
+        }
+
+        .unit-label {
+            font-size: 0.75rem;
+            color: #666;
+            margin-left: 4px;
+        }
+
+        .file-upload-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .file-upload-container label {
+            font-size: 0.875rem;
+            color: #666;
+            margin-bottom: 0;
+        }
+
+        .quantity-label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
             font-size: 0.875rem;
         }
 
@@ -181,6 +221,9 @@
                             <div class="col-md-6">
                                 <label class="form-label">Teslimat Belge No</label>
                                 <input type="text" class="form-control" id="deliveryDocNum" required>
+                                <div class="invalid-feedback">
+                                    Teslimat belge numarası zorunludur.
+                                </div>
                             </div>
                             <div class="col-md-6">
                                 <label class="form-label">Teslimat Tarihi</label>
@@ -200,23 +243,25 @@
                             <table id="deliveryItems" class="table table-hover">
                                 <thead>
                                     <tr>
+                                        <th>Sıra No</th>
                                         <th>Kalem Kodu</th>
                                         <th>Kalem Tanımı</th>
                                         <th>Sipariş Miktarı</th>
                                         <th>Teslimat Miktarı</th>
                                         <th>Eksik Miktarı</th>
                                         <th>Kusurlu Miktar</th>
-                                        <th>Ölçü Birimi</th>
                                         <th>Not</th>
-                                        <th>Görsel</th>
                                     </tr>
                                 </thead>
                                 <tbody></tbody>
                             </table>
                         </div>
                     </div>
-                    <div class="card-footer">
-                        
+                    <div class="card-footer d-flex justify-content-end align-items-center gap-3">
+                        <div id="defectiveWarning" class="text-danger fw-bold" style="display: none;">
+                            <i class="bi bi-exclamation-triangle-fill fs-5"></i> 
+                            <span class="ms-2">Defolu ürün girişi yapılan tüm kalemler için görsel yüklemeniz zorunludur!</span>
+                        </div>
                         <button type="submit" class="btn btn-success" id="submitBtn" onclick="submitDelivery()">
                             <i class="bi bi-check-lg"></i> Teslim Al ve Onayla
                         </button>
@@ -264,89 +309,104 @@
                     url: 'js/datatables-tr.json'
                 },
                 columns: [
+                    {
+                        data: 'LineNum',
+                        render: function(data) {
+                            return parseInt(data); // Kullanıcıya 1-tabanlı gösterim
+                        }
+                    },
                     { data: 'ItemCode' },
                     { data: 'ItemName' },
                     { 
                         data: 'Quantity',
-                        render: function(data) {
+                        render: function(data, type, row) {
+                            if (type === 'display') {
+                                return `${parseInt(data)} <span class="unit-label">${row.UomCode}</span>`;
+                            }
                             return parseInt(data);
                         }
                     },
                     { 
                         data: null,
                         render: function(data, type, row) {
-                            console.log("data",data);
-                            console.log("row",row);
-                            return `
-                                <div class="input-group quantity-control">
-                                    <button type="button" class="btn btn-dark decrease-qty" onclick="decrementValue(this, 'delivery-qty')">
-                                        <i class="bi bi-dash"></i>
-                                    </button>
-                                    <input type="number" class="form-control text-center delivery-qty" 
-                                        value="${data.Quantity}" min="0" max="${data.Quantity}" step="1"
-                                        data-item-code="${data.ItemCode}" readonly>
-                                    <input type="hidden" class="initial-delivery-qty" value="${data.Quantity}">
-                                    <input type="hidden" class="line-num" value="${data.LineNum}">
-                                    <button type="button" class="btn btn-dark increase-qty" onclick="incrementValue(this, 'delivery-qty')">
-                                        <i class="bi bi-plus"></i>
-                                    </button>
-                                </div>`;
-                        }
-                    },
-                    { 
-                        data: null,
-                        render: function(data, type, row) {
-                            return `
-                                <div class="input-group quantity-control">
-                                    <button type="button" class="btn btn-dark decrease-qty" onclick="decrementValue(this, 'missing-qty')">
-                                        <i class="bi bi-dash"></i>
-                                    </button>
-                                    <input type="number" class="form-control text-center missing-qty" 
-                                        value="0" min="0" max="${data.Quantity}" step="1"
-                                        data-item-code="${data.ItemCode}"
-                                        onchange="validateDeliveryQuantity($(this).closest('tr'))">
-                                    <button type="button" class="btn btn-dark increase-qty" onclick="incrementValue(this, 'missing-qty')">
-                                        <i class="bi bi-plus"></i>
-                                    </button>
-                                </div>`;
-                        }
-                    },
-                    { 
-                        data: null,
-                        render: function(data, type, row) {
-                            return `
-                                <div class="input-group quantity-control">
-                                    <button type="button" class="btn btn-dark decrease-qty" onclick="decrementValue(this, 'defective-qty')">
-                                        <i class="bi bi-dash"></i>
-                                    </button>
-                                    <input type="number" class="form-control text-center defective-qty" 
-                                        value="0" min="0" max="${data.Quantity}" step="1"
-                                        data-item-code="${data.ItemCode}"
-                                        onchange="validateDeliveryQuantity($(this).closest('tr'))">
-                                    <button type="button" class="btn btn-dark increase-qty" onclick="incrementValue(this, 'defective-qty')">
-                                        <i class="bi bi-plus"></i>
-                                    </button>
-                                </div>`;
-                        }
-                    },
-                    { data: 'UomCode' },
-                    {
-                        data: null,
-                        render: function(data) {
-                            return '<input type="text" class="form-control note-input" placeholder="Not ekle...">';
+                            if (type === 'display') {
+                                return `
+                                    <div class="quantity-label">
+                                        Teslimat <span class="unit-label">${row.UomCode}</span>
+                                    </div>
+                                    <div class="input-group quantity-control">
+                                        <button class="btn btn-outline-secondary decrease-qty btn-quantity" onclick="decrementDeliveryQty(this)">
+                                            <i class="bi bi-dash"></i>
+                                        </button>
+                                        <input type="number" class="form-control delivery-qty" 
+                                            value="${row.Quantity}" 
+                                            step="1" 
+                                            min="0"
+                                            onchange="handleDeliveryQtyChange(this)"
+                                            data-original-qty="${row.Quantity}">
+                                        <button class="btn btn-outline-secondary increase-qty btn-quantity" onclick="incrementDeliveryQty(this)">
+                                            <i class="bi bi-plus"></i>
+                                        </button>
+                                    </div>`;
+                            }
+                            return data;
                         }
                     },
                     {
+                        width: '150px',
+                        data: null,
+                        render: function(data, type, row) {
+                            return `
+                                <div class="quantity-label">
+                                    Eksik <span class="unit-label">${row.UomCode}</span>
+                                </div>
+                                <div class="input-group quantity-control">
+                                    <button type="button" class="btn btn-dark decrease-qty btn-quantity" onclick="decrementMissingQty(this)">
+                                        <i class="bi bi-dash"></i>
+                                    </button>
+                                    <input type="number" class="form-control missing-qty quantity-input" 
+                                           value="0" min="0"
+                                           max="${row.Quantity}"
+                                           onchange="handleMissingQtyChange(this)" 
+                                           oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                                    <button type="button" class="btn btn-dark increase-qty btn-quantity" onclick="incrementMissingQty(this)">
+                                        <i class="bi bi-plus"></i>
+                                    </button>
+                                </div>`;
+                        }
+                    },
+                    {
+                        width: '150px',
+                        data: null,
+                        render: function(data, type, row) {
+                            return `
+                                <div class="quantity-label">
+                                    Kusurlu <span class="unit-label">${row.UomCode}</span>
+                                </div>
+                                <div class="input-group quantity-control">
+                                    <button type="button" class="btn btn-dark decrease-qty btn-quantity" onclick="decrementDefectiveQty(this)">
+                                        <i class="bi bi-dash"></i>
+                                    </button>
+                                    <input type="number" class="form-control defective-qty quantity-input" 
+                                           value="0" min="0"
+                                           onchange="handleDefectiveQtyChange(this)" 
+                                           oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                                    <button type="button" class="btn btn-dark increase-qty btn-quantity" onclick="incrementDefectiveQty(this)">
+                                        <i class="bi bi-plus"></i>
+                                    </button>
+                                </div>`;
+                        }
+                    },
+                    {
                         data: null,
                         render: function(data) {
-                            return `
-                                <div class="input-group">
-                                    <input type="file" class="form-control" accept="image/*" capture="environment" onchange="handleImageUpload(this)" style="display: none;" id="imageInput_${data.LineNum}">
-                                    <button type="button" class="btn btn-outline-secondary" onclick="document.getElementById('imageInput_${data.LineNum}').click()">
-                                        <i class="bi bi-camera"></i> Fotoğraf Çek
-                                    </button>
-                                    <div id="imagePreview_${data.LineNum}" class="mt-2"></div>
-                                </div>`;
+                            return `<input type="text" class="form-control note-input" placeholder="Not ekle...">
+                            <div class="file-upload-container mt-2">
+                                <label>Görsel</label>
+                                <input type="file" class="form-control form-control-sm defective-image" accept="image/*"
+                                    id="imageInput_${data.LineNum}" onchange="handleImageUpload(this)" multiple>
+                                <div id="imagePreview_${data.LineNum}" class="mt-2"></div>
+                            </div>`;
                         }
                     }
                 ],
@@ -373,8 +433,14 @@
                 const data = await response.json();
                 
                 if (!data.value || data.value.length === 0) {
-                    alert('Sipariş detayları bulunamadı!');
-                    window.location.href = 'dis-tedarik-siparisleri.html';
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Hata',
+                        text: 'Sipariş detayları bulunamadı!',
+                        confirmButtonText: 'Tamam'
+                    }).then(() => {
+                        window.location.href = 'dis-tedarik-siparisleri.html';
+                    });
                     return;
                 }
                 const order = data.value[0];
@@ -385,6 +451,10 @@
                 $('#supplier').text(order.CardName);
                 $('#orderDate').text(formatDate(order.DocDate));
                 $('#status').html(getStatusBadge(order.DocStatus));
+                
+                // LineNum'a göre sırala
+                data.value.sort((a, b) => parseInt(a.LineNum) - parseInt(b.LineNum));
+                
                 // Update items table
                 $('#deliveryItems').DataTable().clear().rows.add(data.value).draw();
                 // Load existing delivery info if any
@@ -393,28 +463,84 @@
                 }
             } catch (error) {
                 console.error('Sipariş detayları yüklenirken hata:', error);
-                alert('Sipariş detayları yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.');
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Hata',
+                    text: 'Sipariş detayları yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.',
+                    confirmButtonText: 'Tamam'
+                });
             }
         }
         // Function to validate delivery
         function validateDelivery() {
             let isValid = true;
             let hasDefectiveWithoutImage = false;
+            let hasNegativeQuantity = false;
+            let hasExcessMissingQty = false;
+            const warningDiv = document.getElementById('defectiveWarning');
 
             // Tüm satırları kontrol et
             $('#deliveryItems tbody tr').each(function() {
+                const orderQty = parseFloat($(this).find('.delivery-qty').attr('data-original-qty')) || 0;
                 const defectiveQty = parseInt($(this).find('.defective-qty').val()) || 0;
-                const imageInput = $(this).find('input[type="file"]')[0];
+                const missingQty = parseInt($(this).find('.missing-qty').val()) || 0;
+                const deliveryQty = parseInt($(this).find('.delivery-qty').val()) || 0;
+                const imageInputs = $(this).find('.defective-image');
+                let hasImage = false;
+                
+                // Görsel yüklenmiş mi kontrol et
+                imageInputs.each(function() {
+                    if (this.files && this.files.length > 0) {
+                        hasImage = true;
+                    }
+                });
 
-                if (defectiveQty > 0 && !imageInput.files.length) {
+                // Defolu ürün için görsel kontrolü
+                if (defectiveQty > 0 && !hasImage) {
                     hasDefectiveWithoutImage = true;
+                    return false; // each döngüsünden çık
+                }
+                
+                // Negatif değer kontrolü
+                if (defectiveQty < 0 || missingQty < 0 || deliveryQty < 0) {
+                    hasNegativeQuantity = true;
+                    return false; // each döngüsünden çık
+                }
+                
+                // Eksik miktarın sipariş miktarını aşmaması kontrolü
+                if (missingQty > orderQty) {
+                    hasExcessMissingQty = true;
                     return false; // each döngüsünden çık
                 }
             });
 
             // Defolu ürün-görsel kontrolü
             if (hasDefectiveWithoutImage) {
-                alert('Defolu ürün girişi yapılan tüm kalemler için görsel yüklemeniz zorunludur!');
+                warningDiv.style.display = 'block';
+                isValid = false;
+            } else {
+                warningDiv.style.display = 'none';
+            }
+            
+            // Negatif değer kontrolü
+            if (hasNegativeQuantity) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Uyarı',
+                    text: 'Teslimat, eksik ve kusurlu miktarları 0\'dan küçük olamaz!',
+                    confirmButtonText: 'Tamam'
+                });
+                isValid = false;
+            }
+            
+            // Eksik miktar kontrolü
+            if (hasExcessMissingQty) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Uyarı',
+                    text: 'Eksik miktar sipariş miktarından büyük olamaz!',
+                    confirmButtonText: 'Tamam'
+                });
                 isValid = false;
             }
 
@@ -424,45 +550,58 @@
         }
 
         function updateDeliveryQuantity(row) {
-            const initialDeliveryQty = parseInt(row.find('.initial-delivery-qty').val()) || 0;
-            const missingQty = parseInt(row.find('.missing-qty').val()) || 0;
-            const defectiveQty = parseInt(row.find('.defective-qty').val()) || 0;
+            const orderQty = parseFloat(row.find('.delivery-qty').attr('data-original-qty')) || 0;
+            const missingQty = parseFloat(row.find('.missing-qty').val()) || 0;
+            const defectiveQty = parseFloat(row.find('.defective-qty').val()) || 0;
+            const deliveryQty = parseFloat(row.find('.delivery-qty').val());
             
-            // Calculate new delivery quantity
-            let newDeliveryQty = initialDeliveryQty - (missingQty + defectiveQty);
+            // Toplam miktar kontrolü
+            const totalQty = (isNaN(deliveryQty) ? 0 : deliveryQty) + missingQty + defectiveQty;
             
-            // Ensure delivery quantity doesn't go below 0
-            newDeliveryQty = Math.max(0, newDeliveryQty);
+            // if (totalQty > orderQty) {
+            //     Swal.fire({
+            //         icon: 'warning',
+            //         title: 'Uyarı',
+            //         text: 'Toplam miktar (Teslimat + Eksik + Kusurlu) sipariş miktarından fazla olamaz!',
+            //         confirmButtonText: 'Tamam'
+            //     });
+            // }
             
-            // Update delivery quantity input
-            row.find('.delivery-qty').val(newDeliveryQty);
-            
-            // Enable/disable submit button based on validation
             validateDelivery();
         }
 
-        function validateDeliveryQuantity(row) {
-            const initialDeliveryQty = parseInt(row.find('.initial-delivery-qty').val()) || 0;
-            const deliveryQty = parseInt(row.find('.delivery-qty').val()) || 0;
-            const missingQty = parseInt(row.find('.missing-qty').val()) || 0;
-            const defectiveQty = parseInt(row.find('.defective-qty').val()) || 0;
-
-            // Ensure the delivery quantity doesn't exceed the initial delivery quantity
-            if (deliveryQty > initialDeliveryQty) {
-                row.find('.delivery-qty').val(initialDeliveryQty);
-                alert('Teslimat miktarı başlangıç miktarını aşamaz!');
-                return;
-            }
-
-            // Calculate the remaining quantity that can be allocated to missing/defective
-            const remainingQty = initialDeliveryQty - deliveryQty;
+        function handleDeliveryQtyChange(input) {
+            const tr = $(input).closest('tr');
             
-            // If the current missing + defective quantities exceed the remaining quantity,
-            // reset them to 0
-            if (missingQty + defectiveQty > remainingQty) {
-                row.find('.missing-qty').val(0);
-                row.find('.defective-qty').val(0);
-                updateDeliveryQuantity(row);
+            // Negatif değer kontrolü
+            let val = parseFloat(input.value);
+            if (val < 0) {
+                val = 0;
+                input.value = 0;
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Uyarı',
+                    text: 'Teslimat miktarı 0\'dan küçük olamaz!',
+                    confirmButtonText: 'Tamam'
+                });
+            }
+            
+            updateDeliveryQuantity(tr);
+        }
+
+        function incrementDeliveryQty(button) {
+            const input = $(button).siblings('.delivery-qty')[0];
+            const currentValue = parseFloat(input.value) || 0;
+            input.value = currentValue + 1;
+            handleDeliveryQtyChange(input);
+        }
+
+        function decrementDeliveryQty(button) {
+            const input = $(button).siblings('.delivery-qty')[0];
+            const currentValue = parseFloat(input.value) || 0;
+            if (currentValue > 0) {
+                input.value = currentValue - 1;
+                handleDeliveryQtyChange(input);
             }
         }
 
@@ -477,7 +616,7 @@
             
             if (currentValue < maxValue) {
                 input.val(currentValue + 1);
-                if (className === 'defective-qty' || className === 'missing-qty') {
+                if (className === 'defective-quantity' || className === 'missing-quantity') {
                     updateDeliveryQuantity(row);
                 }
             }
@@ -490,7 +629,7 @@
             
             if (currentValue > 0) {
                 input.val(currentValue - 1);
-                if (className === 'defective-qty' || className === 'missing-qty') {
+                if (className === 'defective-quantity' || className === 'missing-quantity') {
                     updateDeliveryQuantity(row);
                 }
             }
@@ -558,25 +697,63 @@
         }
 
         async function submitDelivery() {
+            const deliveryDocNum = document.getElementById('deliveryDocNum').value.trim();
+                
+            if (!deliveryDocNum) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Teslimat Belge No Eksik',
+                    text: 'Teslimatı tamamlamak için teslimat belge numarası girmelisiniz.',
+                    confirmButtonText: 'Tamam',
+                    confirmButtonColor: '#3085d6'
+                });
+                document.getElementById('deliveryDocNum').classList.add('is-invalid');
+                return;
+            }
+
+            document.getElementById('deliveryDocNum').classList.remove('is-invalid');
+
+            // Show loading state
+            showLoading('Teslimat işleniyor...');
             if (!validateDelivery()) {
-                alert('Lütfen gerekli alanları kontrol edin ve defolu ürün girilen her satır için fotoğraf yükleyin.');
+                hideLoading();
+                // Hata nedenine göre mesaj göster
+                if (document.getElementById('defectiveWarning').style.display === 'block') {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Görsel Gerekli',
+                        text: 'Lütfen defolu ürün girilen her satır için fotoğraf yükleyin.',
+                        confirmButtonText: 'Tamam'
+                    });
+                }
                 return;
             }
 
             try {
-                showLoading('Teslimat Kaydediliyor...');
                 const sessionId = localStorage.getItem('sessionId');
                 const localStorageUserName = localStorage.getItem("userName");
                 const localStorageBranchCode = localStorage.getItem("branchCode");
                 const docNum = new URLSearchParams(window.location.search).get('docNum');
                 const guid = generateGUID();
-                const totalLines = $('#itemsTableBody tr').length;
 
                 // Process each item
-                for (const row of $('#deliveryItems tbody tr')) {
-                    const $row = $(row);
-                    const lineNum = $row.find('.line-num').val();
-                    // const imageInput = document.getElementById(`imageInput_${lineNum}`);
+                const table = $('#deliveryItems').DataTable();
+                const rowsData = table.rows().data();
+                
+                // Rows veri dizisini oluştur (spread operatörü kullanmadan)
+                const rowsArray = [];
+                for (let i = 0; i < rowsData.length; i++) {
+                    rowsArray.push(rowsData[i]);
+                }
+                
+                // Satırları LineNum'a göre sırala
+                const sortedRows = rowsArray.sort((a, b) => parseInt(a.LineNum) - parseInt(b.LineNum));
+
+                for (let i = 0; i < sortedRows.length; i++) {
+                    const row = sortedRows[i];
+                    const $tr = $(table.row(function(idx, data) {
+                        return data.LineNum === row.LineNum;
+                    }).node());
                     
                     const deliveryData = {
                         U_Type: "SUPPLY",
@@ -585,18 +762,18 @@
                         U_DocDate: new Date().toISOString().split('T')[0],
                         U_DocNum: parseInt(docNum),
                         U_NumAtCard: $('#deliveryDocNum').val(),
-                        U_ItemCode: $row.find('td:eq(0)').text(),
-                        U_ItemName: $row.find('td:eq(1)').text(),
-                        U_Quantity: parseInt($row.find('.initial-delivery-qty').val()),
-                        U_DeliveryQty: parseInt($row.find('.delivery-qty').val()) || 0,
-                        U_MissingQty: parseInt($row.find('.missing-qty').val()) || 0,
-                        U_DefectiveQty: parseInt($row.find('.defective-qty').val()) || 0,
-                        U_UomCode: $row.find('td:eq(6)').text(),
-                        U_Comments: $row.find('.note-input').val() || "",
-                        U_SessionID: totalLines,
+                        U_ItemCode: row.ItemCode,
+                        U_ItemName: row.ItemName,
+                        U_Quantity: parseInt(row.Quantity),
+                        U_MissingQty: parseInt($tr.find('.missing-qty').val()) || 0,
+                        U_DeliveryQty: parseInt($tr.find('.delivery-qty').val()) || 0,
+                        U_DefectiveQty: parseInt($tr.find('.defective-qty').val()) || 0,
+                        U_UomCode: row.UomCode,
+                        U_Comments: $tr.find('.note-input').val() || "",
+                        U_SessionID: sortedRows.length,
                         U_GUID: guid,
                         U_User: localStorageUserName,
-                        U_LineNum: lineNum
+                        U_LineNum: parseInt(row.LineNum)
                     };
 
                     console.log('Delivery data:', deliveryData);
@@ -607,13 +784,14 @@
                     formData.append('sessionId', sessionId);
                     
                     // Add image if exists
-                    // if (imageInput && imageInput.files.length > 0) {
-                    //     formData.append('image', imageInput.files[0]);
-                    // }
+                    const imageInput = $tr.find('.defective-image')[0];
+                    if (imageInput && imageInput.files.length > 0) {
+                        formData.append('image', imageInput.files[0]);
+                    }
 
                     const response = await fetch(`/api/supply-delivery/${docNum}`, {
-                    method: 'POST',
-                    body: formData
+                        method: 'POST',
+                        body: formData
                     });
 
                     if (!response.ok) {
@@ -622,11 +800,22 @@
                     }
                 }
 
-                alert('Teslimat başarıyla kaydedildi');
-                window.location.href = 'dis-tedarik-siparisleri.html';
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Başarılı',
+                    text: 'Teslimat başarıyla kaydedildi',
+                    confirmButtonText: 'Tamam'
+                }).then(() => {
+                    window.location.href = 'dis-tedarik-siparisleri.html';
+                });
             } catch (error) {
                 console.error('Error submitting delivery:', error);
-                alert('Teslimat kaydedilirken bir hata oluştu: ' + error.message);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Hata',
+                    text: 'Teslimat kaydedilirken bir hata oluştu: ' + error.message,
+                    confirmButtonText: 'Tamam'
+                });
             } finally {
                 hideLoading();
             }
@@ -637,15 +826,33 @@
             const file = input.files[0];
             if (file) {
                 if (file.size > 5 * 1024 * 1024) { // 5MB limit
-                    alert('Dosya boyutu 5MB\'ı geçemez!');
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Dosya Boyutu Aşıldı',
+                        text: 'Dosya boyutu 5MB\'ı geçemez!',
+                        confirmButtonText: 'Tamam'
+                    });
                     input.value = '';
                     return;
                 }
                 
                 try {
-                    // Show image preview
-                    const lineNum = input.id.split('_')[1];
-                    const previewDiv = document.getElementById('imagePreview_' + lineNum);
+                    // Get the data row from the table
+                    const tr = $(input).closest('tr');
+                    const rowIndex = $('#deliveryItems').DataTable().row(tr).index();
+                    const rowData = $('#deliveryItems').DataTable().row(rowIndex).data();
+                    const lineNum = rowData.LineNum;
+                    
+                    // Ensure the preview div exists
+                    let previewDiv = document.getElementById('imagePreview_' + lineNum);
+                    if (!previewDiv) {
+                        // Create the preview div if it doesn't exist
+                        previewDiv = document.createElement('div');
+                        previewDiv.id = 'imagePreview_' + lineNum;
+                        previewDiv.className = 'mt-2';
+                        $(input).after(previewDiv);
+                    }
+                    
                     const img = document.createElement('img');
                     img.src = URL.createObjectURL(file);
                     img.style.maxWidth = '100px';
@@ -671,13 +878,169 @@
                     validateDelivery();
                 } catch (error) {
                     console.error('Error handling image:', error);
-                    alert('Görsel yüklenirken bir hata oluştu!');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Hata',
+                        text: 'Görsel yüklenirken bir hata oluştu!',
+                        confirmButtonText: 'Tamam'
+                    });
                     input.value = '';
                 }
             }
         }
+
+        function handleQuantityChange(input, className) {
+            let value = parseInt(input.value) || 0;
+            const max = parseInt(input.max);
+            
+            // Ensure value is not negative
+            if (value < 0) value = 0;
+            // Ensure value does not exceed max
+            if (value > max) value = max;
+            
+            input.value = value;
+            
+            // Get the row data and update delivery quantity
+            const row = $(input).closest('tr');
+            updateDeliveryQuantity(row);
+        }
+
+        function incrementMissingQty(button) {
+            const input = button.parentElement.querySelector('.missing-qty');
+            const tr = $(button).closest('tr');
+            const orderQty = parseFloat(tr.find('.delivery-qty').attr('data-original-qty')) || 0;
+            const currentValue = parseFloat(input.value) || 0;
+            
+            // Sipariş miktarını aşmamasını kontrol et
+            if (currentValue < orderQty) {
+                input.value = currentValue + 1;
+                handleMissingQtyChange(input);
+            } else {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Uyarı',
+                    text: 'Eksik miktar sipariş miktarından büyük olamaz!',
+                    confirmButtonText: 'Tamam'
+                });
+            }
+        }
+
+        function decrementMissingQty(button) {
+            const input = button.parentElement.querySelector('.missing-qty');
+            const currentValue = parseFloat(input.value) || 0;
+            if (currentValue > 0) {
+                input.value = currentValue - 1;
+                handleMissingQtyChange(input);
+            }
+        }
+
+        function incrementDefectiveQty(button) {
+            const input = button.parentElement.querySelector('.defective-qty');
+            const currentValue = parseFloat(input.value) || 0;
+            input.value = currentValue + 1;
+            handleDefectiveQtyChange(input);
+        }
+
+        function decrementDefectiveQty(button) {
+            const input = button.parentElement.querySelector('.defective-qty');
+            const currentValue = parseFloat(input.value) || 0;
+            if (currentValue > 0) {
+                input.value = currentValue - 1;
+                handleDefectiveQtyChange(input);
+            }
+        }
+
+        function handleMissingQtyChange(input) {
+            const tr = $(input).closest('tr');
+            
+            // Negatif değer kontrolü
+            let val = parseFloat(input.value);
+            if (val < 0) {
+                val = 0;
+                input.value = 0;
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Uyarı',
+                    text: 'Eksik miktar 0\'dan küçük olamaz!',
+                    confirmButtonText: 'Tamam'
+                });
+            }
+            
+            const orderQty = parseFloat(tr.find('.delivery-qty').attr('data-original-qty')) || 0;
+            
+            // Eksik miktarın sipariş miktarından büyük olmamasını kontrol et
+            if (val > orderQty) {
+                val = orderQty;
+                input.value = orderQty;
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Uyarı',
+                    text: 'Eksik miktar sipariş miktarından büyük olamaz!',
+                    confirmButtonText: 'Tamam'
+                });
+            }
+            
+            const defectiveQty = parseFloat(tr.find('.defective-qty').val()) || 0;
+            const currentDeliveryQty = parseFloat(tr.find('.delivery-qty').val()) || 0;
+            const oldMissingValue = parseFloat(input.defaultValue) || 0;
+            let newMissingValue = parseFloat(input.value) || 0;
+            
+            // Teslimat miktarını güncelle
+            let newDeliveryQty = currentDeliveryQty - (newMissingValue - oldMissingValue);
+            
+            // Toplam miktar kontrolü (Teslimat + Eksik + Kusurlu >= Sipariş Miktarı)
+            const totalQty = newDeliveryQty + newMissingValue + defectiveQty;
+            if (totalQty < orderQty) {
+                newDeliveryQty = orderQty - (newMissingValue + defectiveQty);
+            }
+            
+            // Teslimat miktarını güncelle
+            tr.find('.delivery-qty').val(newDeliveryQty);
+            input.defaultValue = newMissingValue;
+            
+            validateDelivery();
+        }
+
+        function handleDefectiveQtyChange(input) {
+            const tr = $(input).closest('tr');
+            
+            // Negatif değer kontrolü
+            let val = parseFloat(input.value);
+            if (val < 0) {
+                val = 0;
+                input.value = 0;
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Uyarı',
+                    text: 'Kusurlu miktar 0\'dan küçük olamaz!',
+                    confirmButtonText: 'Tamam'
+                });
+            }
+            
+            const orderQty = parseFloat(tr.find('.delivery-qty').attr('data-original-qty')) || 0;
+            const missingQty = parseFloat(tr.find('.missing-qty').val()) || 0;
+            const currentDeliveryQty = parseFloat(tr.find('.delivery-qty').val()) || 0;
+            const oldDefectiveValue = parseFloat(input.defaultValue) || 0;
+            let newDefectiveValue = parseFloat(input.value) || 0;
+            
+            // Teslimat miktarını güncelle
+            let newDeliveryQty = currentDeliveryQty - (newDefectiveValue - oldDefectiveValue);
+            
+            // Toplam miktar kontrolü (Teslimat + Eksik + Kusurlu >= Sipariş Miktarı)
+            const totalQty = newDeliveryQty + missingQty + newDefectiveValue;
+            if (totalQty < orderQty) {
+                newDeliveryQty = orderQty - (missingQty + newDefectiveValue);
+            }
+            
+            // Teslimat miktarını güncelle
+            tr.find('.delivery-qty').val(newDeliveryQty);
+            input.defaultValue = newDefectiveValue;
+            
+            validateDelivery();
+        }
     </script>
     <script src="js/api.js"></script>
+    <script src="js/datatable-helper.js"></script>
 </body>
 
 </html>

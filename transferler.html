@@ -9,9 +9,12 @@
     <link rel="icon" type="image/png" href="img/favicon.png">
     <script src="js/loadHeader.js"></script>
     <script src="js/sidebar-user.js"></script>
+    <script src="js/sidebar-toggle.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
     <link href="css/style.css" rel="stylesheet">
     <link href="css/orientation.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
     <style>
         .input-group-text.required::after {
             content: "*";
@@ -34,898 +37,1323 @@
         .input-group .btn i {
             font-size: 0.875rem;
         }
+
+        /* Select2 custom styles */
+        .select2-container--bootstrap-5 .select2-selection {
+            min-height: 38px;
+        }
+        .select2-container--bootstrap-5 .select2-selection--multiple .select2-search__field {
+            min-height: 30px;
+        }
     </style>
 </head>
 
 <body>
-    <div class="d-flex">
-        <!-- Sidebar -->
-        <div class="sidebar">
-            <div class="logo-container p-4">
-                <h2 class="text-white">CREMMA</h2>
-            </div>
-            <div id="sidebar-nav">
-                <!-- Navigation menu will be loaded here -->
-            </div>
-            <div class="user-info position-absolute bottom-0 start-0 p-3 w-100">
-                <div class="d-flex align-items-center">
-                    <img src="img/avatar.jpg" alt="User" class="rounded-circle me-2" width="40">
-                    <div class="text-white">
-                        <small>Orkun - Caddebostan</small>
-                    </div>
-                </div>
-            </div>
+<div class="d-flex">
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div id="logo-container">
+
         </div>
 
-        <!-- Main Content -->
-        <div class="main-content">
-            <!-- Header -->
-            <header class="d-flex justify-content-between p-3 bg-white">
-                <div class="d-flex align-items-center">
-                    <button id="sidebarToggle" class="btn btn-link d-md-none">
-                        <i class="bi bi-list"></i>
-                    </button>
-                    <h5 class="mb-0">Transferler</h5>
-                </div>
-                <div class="d-flex align-items-center">
-                    <div class="btn-group me-2">
-                        <a href="transfer-olustur.html" class="btn btn-primary">
-                            <i class="bi bi-plus-lg me-1"></i>Yeni Transfer
-                        </a>
-                    </div>
-                    <button class="btn btn-outline-secondary" onclick="logout()">
-                        Çıkış Yap <i class="bi bi-box-arrow-right"></i>
-                    </button>
-                </div>
-            </header>
+        <div id="sidebar-nav">
+            <!-- Navigation menu will be loaded here -->
+        </div>
 
-            <!-- Content -->
-            <div class="container-fluid p-4">
-                <!-- Transfer Table -->
-                <div class="card">
-                    <div class="card-body">
-                        <table id="transferTable" class="table table-striped dt-responsive nowrap w-100">
-                            <thead>
-                                <tr>
-                                    <th>Transfer No</th>
-                                    <th>Kalem Kodu</th>
-                                    <th>Kalem Tanımı</th>
-                                    <th>Talep Tarihi</th>
-                                    <th>Transfer Tarihi</th>
-                                    <th>Miktar</th>
-                                    <th>Transfer Miktarı</th>
-                                    <th>Ölçü Birimi</th>
-                                    <th>Gönderen Şube</th>
-                                    <th>Alıcı Şube</th>
-                                    <th>Durum</th>
-                                    <th>İşlemler</th>
-                                </tr>
-                            </thead>
-                        </table>
+        <div id="sidebar-user">
+            <!-- User information will be loaded here -->
+        </div>
+
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <!-- Header -->
+        <header class="d-flex justify-content-between p-3 bg-white">
+            <div class="d-flex align-items-center">
+                <button id="sidebarToggle" class="btn btn-link d-md-none">
+                    <i class="bi bi-list"></i>
+                </button>
+                <h5 class="mb-0">Transferler</h5>
+            </div>
+            <div class="d-flex align-items-center">
+                <div class="btn-group me-2">
+                    <a href="transfer-olustur.html" class="btn btn-danger">
+                        <i class="bi bi-plus-lg me-1"></i>Yeni Transfer Oluştur
+                    </a>
+                </div>
+                <button class="btn btn-dark" onclick="logout()">
+                    Çıkış Yap <i class="bi bi-box-arrow-right"></i>
+                </button>
+            </div>
+        </header>
+
+        <!-- Content -->
+        <div class="container-fluid p-4">
+            <!-- Filters -->
+            <div class="card mb-4">
+                <div class="card-body">
+                    <div class="row g-3">
+                    	<div class="col-md-3">
+                    		<label class="form-label">Kalem Tanımı</label>
+                    		<select id="itemCodeFilter" class="form-select" multiple="multiple">
+                    			<option value="">Tümü</option>
+                    		</select>
+                    	</div>
+                        <div class="col-md-3">
+                            <label class="form-label">Transfer Durumu</label>
+                            <select id="statusFilter" class="form-select" multiple="multiple">
+                                <option value="">Tümü</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Gönderen Şube</label>
+                            <select id="fromWhsFilter" class="form-select" multiple="multiple">
+                                <option value="">Tümü</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Alıcı Şube</label>
+                            <select id="toWhsFilter" class="form-select" multiple="multiple">
+                                <option value="">Tümü</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Başlangıç Tarihi</label>
+                            <input id="startDate" type="date" class="form-control">
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Bitiş Tarihi</label>
+                            <input id="endDate" type="date" class="form-control">
+                        </div>
                     </div>
+                </div>
+            </div>
+
+            <!-- Transfer Table -->
+            <div class="card">
+                <div class="card-body">
+                    <table id="transferTable" class="table table-striped dt-responsive nowrap w-100">
+                        <thead>
+                        <tr>
+                            <th>Transfer No</th>
+                            <th>Kalem Kodu</th>
+                            <th>Kalem Tanımı</th>
+                            <th>Tarihler</th>
+                            <th>Miktar</th>
+                            <th>Gönderen Şube</th>
+                            <th>Alıcı Şube</th>
+                            <th>Durum / İşlem</th>
+                        </tr>
+                        </thead>
+                    </table>
                 </div>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Transfer Onay Modal -->
-    <div class="modal fade" id="transferOnayModal" tabindex="-1" aria-labelledby="transferOnayModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="transferOnayModalLabel">Transfer Onay</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <p><strong>Transfer No:</strong> <span id="modalTransferNo"></span></p>
-                            <p><strong>Stok Kodu:</strong> <span id="modalStokKodu"></span></p>
-                            <p><strong>Stok Adı:</strong> <span id="modalStokAdi"></span></p>
-                            <p><strong>Transfer Tarihi:</strong> <span id="modalTransferTarihi"></span></p>
-                            <input type="hidden" id="modalFromWhsCode">
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="modalMiktar" class="form-label"><strong>Transfer Miktarı:</strong></label>
-                                <div class="input-group">
-                                    <button class="btn btn-outline-secondary" type="button" id="decreaseQty">
-                                        <i class="bi bi-dash"></i>
-                                    </button>
-                                    <input type="number" class="form-control text-center quantity-input"
-                                        id="modalMiktar" min="1" step="1"
-                                        onkeydown="return event.keyCode !== 190 && event.keyCode !== 188">
-                                    <button class="btn btn-outline-secondary" type="button" id="increaseQty">
-                                        <i class="bi bi-plus"></i>
-                                    </button>
-                                    <span class="input-group-text" id="modalUomCode"></span>
-                                </div>
-                                <small class="text-muted">Talep Edilen: <span id="modalRequestedQty"></span></small>
+<!-- Transfer Onay Modal -->
+<div class="modal fade" id="transferOnayModal" tabindex="-1" aria-labelledby="transferOnayModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="transferOnayModalLabel">Transfer Onay</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <p><strong>Transfer No:</strong> <span id="modalTransferNo"></span></p>
+                        <p><strong>Stok Kodu:</strong> <span id="modalStokKodu"></span></p>
+                        <p><strong>Stok Adı:</strong> <span id="modalStokAdi"></span></p>
+                        <p><strong>Transfer Tarihi:</strong> <span id="modalTransferTarihi"></span></p>
+						<p><strong>Gönderen Depo:</strong> <span id="modalGonderenDepo"></span></p>
+						<p><strong>Alıcı Depo:</strong> <span id="modalAliciDepo"></span></p>
+                        <input type="hidden" id="modalFromWhsCode">
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="modalMiktar" class="form-label"><strong>Transfer Miktarı:</strong></label>
+                            <div class="input-group">
+                                <button class="btn btn-dark" type="button" id="decreaseQty">
+                                    <i class="bi bi-dash"></i>
+                                </button>
+                                <input type="number" class="form-control text-center quantity-input"
+                                       id="modalMiktar" min="1" step="1"
+                                       onkeydown="return event.keyCode !== 190 && event.keyCode !== 188">
+                                <button class="btn btn-dark" type="button" id="increaseQty">
+                                    <i class="bi bi-plus"></i>
+                                </button>
+                                <span class="input-group-text" id="modalUomCode"></span>
                             </div>
-                            <p><strong>Gönderen Depo:</strong> <span id="modalGonderenDepo"></span></p>
-                            <p><strong>Alıcı Depo:</strong> <span id="modalAliciDepo"></span></p>
-                            <p><strong>Durum:</strong> <span id="modalDurum" class="badge"></span></p>
+                            <small class="text-muted">Talep Edilen: <span id="modalRequestedQty"></span></small>
                         </div>
-                    </div>
-                    <div class="mb-3">
-                        <label for="modalAciklama" class="form-label"><strong>Açıklama:</strong></label>
-                        <textarea class="form-control" id="modalAciklama" rows="2"></textarea>
+                        <p><strong>Durum:</strong> <span id="modalDurum" class="badge"></span></p>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
-                    <button type="button" class="btn btn-primary" id="onaylaBtn">
+                <div class="mb-3">
+                    <label for="modalAciklama" class="form-label"><strong>Açıklama:</strong></label>
+                    <textarea class="form-control" id="modalAciklama" rows="2"></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-primary" id="onaylaBtn">
                         <span class="spinner-border spinner-border-sm d-none me-2" role="status"
-                            aria-hidden="true"></span>
-                        Onayla
-                    </button>
-                </div>
+                              aria-hidden="true"></span>
+                    Onayla
+                </button>
             </div>
         </div>
     </div>
+</div>
 
-
-    <!-- Transfer Red Modal -->
-    <div class="modal fade" id="transferRedModal" tabindex="-1" aria-labelledby="transferRedModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="transferRedModalLabel">Transfer Reddetme</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <p><strong>Transfer No:</strong> <span id="modalRedTransferNo"></span></p>
-                            <p><strong>Stok Kodu:</strong> <span id="modalRedStokKodu"></span></p>
-                            <p><strong>Stok Adı:</strong> <span id="modalRedStokAdi"></span></p>
-                            <p><strong>Transfer Tarihi:</strong> <span id="modalRedTransferTarihi"></span></p>
-                            <input type="hidden" id="modalRedFromWhsCode">
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label for="modalRedMiktar" class="form-label"><strong>Transfer
-                                        Miktarı:</strong></label>
-                                <div class="input-group">
-                                    <input type="number" class="form-control text-center quantity-input"
-                                        id="modalRedMiktar" readonly>
-                                    <span class="input-group-text" id="modalRedUomCode"></span>
-                                </div>
+<!-- Transfer Red Modal -->
+<div class="modal fade" id="transferRedModal" tabindex="-1" aria-labelledby="transferRedModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="transferRedModalLabel">Transfer Reddetme</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <p><strong>Transfer No:</strong> <span id="modalRedTransferNo"></span></p>
+                        <p><strong>Stok Kodu:</strong> <span id="modalRedStokKodu"></span></p>
+                        <p><strong>Stok Adı:</strong> <span id="modalRedStokAdi"></span></p>
+                        <p><strong>Transfer Tarihi:</strong> <span id="modalRedTransferTarihi"></span></p>
+                        <input type="hidden" id="modalRedFromWhsCode">
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <label for="modalRedMiktar" class="form-label"><strong>Transfer
+                                Miktarı:</strong></label>
+                            <div class="input-group">
+                                <input type="number" class="form-control text-center quantity-input"
+                                       id="modalRedMiktar" readonly>
+                                <span class="input-group-text" id="modalRedUomCode"></span>
                             </div>
-                            <p><strong>Gönderen Depo:</strong> <span id="modalRedGonderenDepo"></span></p>
-                            <p><strong>Alıcı Depo:</strong> <span id="modalRedAliciDepo"></span></p>
-                            <p><strong>Durum:</strong> <span id="modalRedDurum" class="badge"></span></p>
                         </div>
-                    </div>
-                    <div class="mb-3">
-                        <label for="modalRedAciklama" class="form-label"><strong>Red Nedeni:</strong></label>
-                        <textarea class="form-control" id="modalRedAciklama" rows="2"
-                            placeholder="Red nedenini giriniz..."></textarea>
+                        <p><strong>Gönderen Depo:</strong> <span id="modalRedGonderenDepo"></span></p>
+                        <p><strong>Alıcı Depo:</strong> <span id="modalRedAliciDepo"></span></p>
+                        <p><strong>Durum:</strong> <span id="modalRedDurum" class="badge"></span></p>
                     </div>
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
-                    <button type="button" class="btn btn-danger" id="reddetBtn">
+                <div class="mb-3">
+                    <label for="modalRedAciklama" class="form-label"><strong>Red Nedeni:</strong></label>
+                    <textarea class="form-control" id="modalRedAciklama" rows="2"
+                              placeholder="Red nedenini giriniz..."></textarea>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                <button type="button" class="btn btn-danger" id="reddetBtn">
                         <span class="spinner-border spinner-border-sm d-none me-2" role="status"
-                            aria-hidden="true"></span>
-                        Reddet
-                    </button>
-                </div>
+                              aria-hidden="true"></span>
+                    Reddet
+                </button>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Transfer Teslim Modal -->
-    <div class="modal fade" id="transferTeslimModal" tabindex="-1" aria-labelledby="transferTeslimModalLabel"
-        aria-hidden="true">
-        <div class="modal-dialog modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="transferTeslimModalLabel">Transfer Teslim Al</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+<!-- Transfer Teslim Modal -->
+<div class="modal fade" id="transferTeslimModal" tabindex="-1" aria-labelledby="transferTeslimModalLabel"
+     aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="transferTeslimModalLabel">Transfer Teslim Al</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Transfer Bilgileri -->
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <div class="form-floating mb-2">
+                            <input type="text" class="form-control" id="teslimTransferNo" readonly>
+                            <label>Transfer No</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating mb-2">
+                            <input type="text" class="form-control" id="teslimDocDate" readonly>
+                            <label>Sipariş Tarihi</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating mb-2">
+                            <input type="text" class="form-control" id="teslimItemCode" readonly>
+                            <label>Kalem Kodu</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating mb-2">
+                            <input type="text" class="form-control" id="teslimItemName" readonly>
+                            <label>Kalem Tanımı</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating mb-2">
+                            <input type="text" class="form-control" id="teslimQuantity" readonly>
+                            <label>Sipariş Miktarı</label>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="form-floating mb-2">
+                            <input type="text" class="form-control" id="teslimUomCode" readonly>
+                            <label>Ölçü Birimi</label>
+                        </div>
+                    </div>
                 </div>
-                <div class="modal-body">
-                    <div class="row mb-3">
-                        <!-- Transfer details section -->
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Transfer No</label>
-                                <input type="text" class="form-control" id="teslimTransferNo" readonly>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Kalem Kodu</label>
-                                <input type="text" class="form-control" id="teslimItemCode" readonly>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Kalem Tanımı</label>
-                                <input type="text" class="form-control" id="teslimItemName" readonly>
-                            </div>
-                        </div>
-                        <div class="col-md-6">
-                            <div class="mb-3">
-                                <label class="form-label">Sipariş Tarihi</label>
-                                <input type="text" class="form-control" id="teslimDocDate" readonly>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Sipariş Miktarı</label>
-                                <input type="text" class="form-control" id="teslimQuantity" readonly>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Ölçü Birimi</label>
-                                <input type="text" class="form-control" id="teslimUomCode" readonly>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Kaynak Depo</label>
-                                <input type="text" class="form-control" id="teslimFromWhsName" readonly>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Hedef Depo</label>
-                                <input type="text" class="form-control" id="teslimWhsName" readonly>
-                            </div>
-                            <div class="mb-3">
-                                <label class="form-label">Durum</label>
-                                <input type="text" class="form-control" id="teslimStatus" readonly>
-                            </div>
-                        </div>
-                    </div>
 
-                    <!-- Quantity inputs section -->
-                    <div class="row mb-3">
-                        <div class="col-md-4">
-                            <label class="form-label required">Teslimat Miktarı</label>
-                            <div class="input-group">
-                                <button class="btn btn-outline-secondary" type="button"
-                                    onclick="decrementValue(this, 'delivery')">
-                                    <i class="bi bi-dash"></i>
-                                </button>
-                                <input type="number" class="form-control quantity-input" id="teslimDeliveryQty"
-                                    value="0" min="0" step="1" onchange="validateDeliveryQuantity(this)">
-                                <button class="btn btn-outline-secondary" type="button"
-                                    onclick="incrementValue(this, 'delivery')">
-                                    <i class="bi bi-plus"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Eksik Miktar</label>
-                            <div class="input-group">
-                                <button class="btn btn-outline-secondary" type="button"
-                                    onclick="decrementValue(this, 'missing')">
-                                    <i class="bi bi-dash"></i>
-                                </button>
-                                <input type="number" class="form-control quantity-input" id="teslimMissingQty"
-                                    value="0" min="0" step="1" onchange="validateDeliveryQuantity(this)">
-                                <button class="btn btn-outline-secondary" type="button"
-                                    onclick="incrementValue(this, 'missing')">
-                                    <i class="bi bi-plus"></i>
-                                </button>
-                            </div>
-                        </div>
-                        <div class="col-md-4">
-                            <label class="form-label">Kusurlu Miktar</label>
-                            <div class="input-group">
-                                <button class="btn btn-outline-secondary" type="button"
-                                    onclick="decrementValue(this, 'defective')">
-                                    <i class="bi bi-dash"></i>
-                                </button>
-                                <input type="number" class="form-control quantity-input" id="teslimDefectiveQty"
-                                    value="0" min="0" step="1" onchange="validateDeliveryQuantity(this)">
-                                <button class="btn btn-outline-secondary" type="button"
-                                    onclick="incrementValue(this, 'defective')">
-                                    <i class="bi bi-plus"></i>
-                                </button>
-                            </div>
-                        </div>
-                    </div>
+                <hr class="my-2">
 
-                    <!-- Notes and image upload section -->
-                    <div class="mb-3">
-                        <label class="form-label">Not</label>
-                        <textarea class="form-control" id="teslimComments" rows="3"></textarea>
+                <!-- Miktar Girişleri -->
+                <div class="row g-2">
+                    <div class="col-md-12">
+                        <div class="input-group mb-2">
+                            <span class="input-group-text">Teslimat Belge No</span>
+                            <input type="text" class="form-control" id="deliveryDocNum">
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Görsel</label>
-                        <input type="file" class="form-control" id="teslimImage" accept="image/*">
+                    <div class="col-md-4">
+                        <div class="input-group mb-2">
+                            <span class="input-group-text">Teslimat</span>
+                            <input type="number" class="form-control" id="teslimDeliveryQty" readonly>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        Eksik Miktar
+                        <div class="input-group mb-2">
+                            <button class="btn btn-dark" type="button" onclick="decrementQuantity('missing')">
+                                <i class="bi bi-dash"></i>
+                            </button>
+                            <input type="number" class="form-control text-center" id="teslimMissingQty" value="0"
+                                   min="0" readonly>
+                            <button class="btn btn-dark" type="button" onclick="incrementQuantity('missing')">
+                                <i class="bi bi-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        Kusurlu Miktar
+                        <div class="input-group mb-2">
+                            <button class="btn btn-dark" type="button" onclick="decrementQuantity('defective')">
+                                <i class="bi bi-dash"></i>
+                            </button>
+                            <input type="number" class="form-control text-center" id="teslimDefectiveQty" value="0"
+                                   min="0" readonly>
+                            <button class="btn btn-dark" type="button" onclick="incrementQuantity('defective')">
+                                <i class="bi bi-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kalan Miktar Göstergesi -->
+                <div class="alert alert-info mt-2 mb-2 py-2">
+                    <small>
+                        Toplam Miktar: <strong><span id="totalQuantity">0</span></strong> |
+                        Kalan Miktar: <strong><span id="remainingQuantity">0</span></strong>
+                    </small>
+                </div>
+
+                <!-- Açıklama ve Görsel -->
+                <div class="row g-2">
+                    <div class="col-md-12">
+                        <div class="form-floating mb-2">
+                            <textarea class="form-control" id="teslimComments" style="height: 60px"></textarea>
+                            <label>Açıklama</label>
+                        </div>
+                    </div>
+                    <div class="col-md-12">
+                        <div class="input-group mb-2">
+                            <span class="input-group-text">Görsel</span>
+                            <input type="file" class="form-control" id="teslimImage" accept="image/*">
+                        </div>
                     </div>
                 </div>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
-                <button type="button" class="btn btn-primary" onclick="submitTeslim()">Teslim Al</button>
+                <button type="button" class="btn btn-primary" id="submitTeslimBtn" onclick="submitTeslim()">
+                    Teslim Al
+                </button>
             </div>
         </div>
     </div>
-
-    <!-- Scripts -->
-    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
-    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
-    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
-    <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
-    <script>
-        // Quantity Input Functions
-        function incrementValue(button, className) {
-            const input = $(button).siblings('input');
-            const currentValue = parseFloat(input.val()) || 0;
-            input.val(currentValue + 1);
-            validateDeliveryQuantity(input[0]);
-        }
-
-        function decrementValue(button, className) {
-            const input = $(button).siblings('input');
-            const currentValue = parseFloat(input.val()) || 0;
-            if (currentValue > 0) {
-                input.val(currentValue - 1);
-                validateDeliveryQuantity(input[0]);
-            }
-        }
-
-        function validateDeliveryQuantity(input) {
-            const totalQty = parseFloat($('#teslimQuantity').val()) || 0;
-            const deliveryQty = parseFloat($('#teslimDeliveryQty').val()) || 0;
-            const missingQty = parseFloat($('#teslimMissingQty').val()) || 0;
-            const defectiveQty = parseFloat($('#teslimDefectiveQty').val()) || 0;
-
-            const total = deliveryQty + missingQty + defectiveQty;
-
-            if (total > totalQty) {
-                alert('Toplam miktar sipariş miktarını aşamaz!');
-                $(input).val(0);
-                return false;
-            }
-
-            return true;
-        }
-
-        async function showTeslimModal(docNum) {
-            // First, show the modal
-            const modal = new bootstrap.Modal(document.getElementById('transferTeslimModal'));
-            modal.show();
-
-            try {
-                showLoading('Transfer bilgileri yükleniyor...');
-
-                const response = await fetch(`https://10.21.22.11:50000/b1s/v1/SQLQueries('OWTR_T_NEW')/List?value1=TRANSFER&value2=${docNum}`);
-                const data = await response.json();
-
-                if (data && data.value && data.value.length > 0) {
-                    const transfer = data.value[0];
-                    console.log('API Response:', transfer); // For debugging
-
-                    // Fill in the transfer details
-                    $('#teslimTransferNo').val(transfer.DocNum);
-                    $('#teslimItemCode').val(transfer.ItemCode);
-                    $('#teslimItemName').val(transfer.ItemName);
-                    $('#teslimDocDate').val(formatDate(transfer.DocDate));
-                    $('#teslimQuantity').val(transfer.Quantity);
-                    $('#teslimUomCode').val(transfer.UomCode);
-
-                    // Reset quantity inputs
-                    $('#teslimDeliveryQty').val(0);
-                    $('#teslimMissingQty').val(0);
-                    $('#teslimDefectiveQty').val(0);
-                    $('#teslimComments').val('');
-                    $('#teslimImage').val('');
-                } else {
-                    throw new Error('Transfer bilgisi bulunamadı');
-                }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Transfer bilgileri yüklenirken bir hata oluştu!');
-                modal.hide();
-            } finally {
-                hideLoading();
-            }
-        }
-
-        // Helper function to get status text
-        function getStatusText(status) {
-            const statusMap = {
-                '1': 'Onay Bekliyor',
-                '2': 'Hazırlanıyor',
-                '3': 'Sevk Edildi',
-                '4': 'Tamamlandı',
-                '5': 'İptal Edildi'
-            };
-            return statusMap[status] || status;
-        }
-
-        async function submitTeslim() {
-            if (!validateDeliveryQuantity()) {
-                return;
-            }
-
-            const docNum = $('#teslimTransferNo').val();
-            const deliveryQty = parseFloat($('#teslimDeliveryQty').val()) || 0;
-            const missingQty = parseFloat($('#teslimMissingQty').val()) || 0;
-            const defectiveQty = parseFloat($('#teslimDefectiveQty').val()) || 0;
-
-            if (deliveryQty === 0 && missingQty === 0 && defectiveQty === 0) {
-                alert('En az bir miktar girilmelidir!');
-                return;
-            }
-
-            try {
-                showLoading('Transfer teslim alınıyor...');
-                
-                const imageFile = document.getElementById('teslimImage').files[0];
-                let imageBase64 = '';
-                if (imageFile) {
-                    imageBase64 = await convertImageToBase64(imageFile);
-                }
-                const localStorageUserName = localStorage.getItem("userName");
-                console.log("localStorageUserName:", localStorageUserName);
-                
-                const postData = {
-                    "U_Type": "TRANSFER",
-                    "U_DocNum": parseInt(docNum),
-                    "U_ItemCode": $('#teslimItemCode').val(),
-                    "U_ItemName": $('#teslimItemName').val(),
-                    "U_DocDate": $('#teslimDocDate').val(),
-                    "U_Quantity": parseFloat($('#teslimQuantity').val()),
-                    "U_DeliveryQty": deliveryQty,
-                    "U_MissingQty": missingQty,
-                    "U_DefectiveQty": defectiveQty,
-                    "U_UomCode": $('#teslimUomCode').val(),
-                    "U_Comments": $('#teslimComments').val(),
-                    "U_Image": imageBase64,
-                    "U_SessionID": "1221",
-                    "U_GUID": generateGUID(),
-                    "U_User": localStorageUserName,
-                    "U_DocStatus": "C"
-                };
-
-                const response = await fetch('/api/transfer-delivery/' + docNum + '?sessionId=' + getSessionId(), {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(postData)
-                });
-
-                if (!response.ok) {
-                    throw new Error('Network response was not ok');
-                }
-
-                $('#transferTeslimModal').modal('hide');
-                $('#transferTable').DataTable().ajax.reload();
-                hideLoading();
-                alert('Transfer başarıyla teslim alındı!');
-            } catch (error) {
-                console.error('Error:', error);
-                hideLoading();
-                alert('Transfer teslim alınırken bir hata oluştu!');
-            }
-        }
-
-        async function convertImageToBase64(file) {
-            return new Promise((resolve, reject) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = () => resolve(reader.result.split(',')[1]);
-                reader.onerror = error => reject(error);
-            });
-        }
-
-        // Tarih formatlama fonksiyonu
-        function formatDate(date) {
-            if (!date) return '';
-            const d = new Date(date.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3'));
-            return d.toLocaleDateString('tr-TR');
-        }
-
-        // Transfer onaylama modalını göster
-        function showTransferModal(docNum) {
-            // Get transfer details from the DataTable
-            const table = $('#transferTable').DataTable();
-            const row = table.rows().data().filter(item => item.DocNum === docNum)[0];
-
-            if (row) {
-                // Populate modal fields
-                $('#modalTransferNo').text(row.DocNum);
-                $('#modalStokKodu').text(row.ItemCode);
-                $('#modalStokAdi').text(row.ItemName);
-                $('#modalTransferTarihi').text(formatDate(row.DocDate));
-
-                // Set up quantity input
-                const qtyInput = $('#modalMiktar');
-                qtyInput.val(Math.floor(row.Quantity)); // Ensure integer value
-                $('#modalRequestedQty').text(Math.floor(row.Quantity) + ' ' + row.UomCode);
-                $('#modalUomCode').text(row.UomCode);
-                $('#modalFromWhsCode').val(row.FromWhsCode);
-
-                // Set up quantity increment/decrement buttons
-                $('#decreaseQty').off('click').on('click', function () {
-                    const currentVal = parseInt(qtyInput.val()) || 0;
-                    if (currentVal > 1) {
-                        qtyInput.val(currentVal - 1);
-                    }
-                });
-
-                $('#increaseQty').off('click').on('click', function () {
-                    const currentVal = parseInt(qtyInput.val()) || 0;
-                    qtyInput.val(currentVal + 1);
-                });
-
-                // Ensure integer values on input
-                qtyInput.on('input', function () {
-                    let value = this.value.replace(/[^\d]/g, ''); // Remove non-digits
-                    if (value === '') value = '1';
-                    this.value = parseInt(value);
-                });
-
-                $('#modalGonderenDepo').text(row.FromWhsName);
-                $('#modalAliciDepo').text(row.WhsName);
-
-                // Set status with appropriate color
-                const statusBadge = $('#modalDurum');
-                statusBadge.text('Onay Bekliyor');
-                statusBadge.removeClass().addClass('badge bg-warning');
-
-                // Clear and set up description field
-                $('#modalAciklama').val('');
-
-                // Reset and set up onay button click handler
-                const onaylaBtn = $('#onaylaBtn');
-                const spinner = onaylaBtn.find('.spinner-border');
-
-                onaylaBtn.prop('disabled', false);
-                spinner.addClass('d-none');
-
-                onaylaBtn.off('click').on('click', async function () {
-                    try {
-                        // Validate quantity
-                        const transferQty = parseInt($('#modalMiktar').val());
-                        const requestedQty = Math.floor(row.Quantity);
-
-                        if (isNaN(transferQty) || transferQty <= 0) {
-                            alert('Lütfen geçerli bir miktar giriniz');
-                            return;
-                        }
-
-                        if (transferQty > requestedQty) {
-                            if (!confirm(
-                                    'Transfer miktarı talep edilen miktardan fazla. Devam etmek istiyor musunuz?'
-                                )) {
-                                return;
-                            }
-                        }
-
-                        // Disable button and show spinner
-                        onaylaBtn.prop('disabled', true);
-                        spinner.removeClass('d-none');
-
-                        const result = await approveTransfer(docNum, {
-                            ...row,
-                            Quantity: transferQty,
-                            Comments: $('#modalAciklama').val(),
-                            approved: true
-                        });
-
-                        // Close modal
-                        $('#transferOnayModal').modal('hide');
-
-                        // Refresh the table with a slight delay
-                        // setTimeout(() => {
-                        //     table.ajax.reload(null, false);
-                        // }, 500);
-
-                    } catch (error) {
-                        console.error('Transfer onaylama hatası:', error);
-                        //alert('Transfer onaylanırken bir hata oluştu: ' + (error.message || 'Bilinmeyen bir hata'));
-                    } finally {
-                        // Re-enable button and hide spinner
-                        onaylaBtn.prop('disabled', false);
-                        spinner.addClass('d-none');
-                    }
-                });
-
-                // Show modal
-                const modal = new bootstrap.Modal(document.getElementById('transferOnayModal'));
-                modal.show();
-            }
-        }
-
-
-        function showTransferRedModal(docNum) {
-            // Get transfer details from the DataTable
-            const table = $('#transferTable').DataTable();
-            const row = table.rows().data().filter(item => item.DocNum === docNum)[0];
-
-            if (row) {
-                // Populate modal fields
-                $('#modalRedTransferNo').text(row.DocNum);
-                $('#modalRedStokKodu').text(row.ItemCode);
-                $('#modalRedStokAdi').text(row.ItemName);
-                $('#modalRedTransferTarihi').text(formatDate(row.DocDate));
-
-                // Set up quantity input
-                $('#modalRedMiktar').val(Math.floor(row.Quantity));
-                $('#modalRedUomCode').text(row.UomCode);
-                $('#modalRedFromWhsCode').val(row.FromWhsCode);
-
-                $('#modalRedGonderenDepo').text(row.FromWhsName);
-                $('#modalRedAliciDepo').text(row.WhsName);
-
-                // Set status with appropriate color
-                const statusBadge = $('#modalRedDurum');
-                statusBadge.text('Red Bekliyor');
-                statusBadge.removeClass().addClass('badge bg-danger');
-
-                // Clear and set up description field
-                $('#modalRedAciklama').val('');
-
-                // Reset and set up reddet button click handler
-                const reddetBtn = $('#reddetBtn');
-                const spinner = reddetBtn.find('.spinner-border');
-
-                reddetBtn.prop('disabled', false);
-                spinner.addClass('d-none');
-
-                reddetBtn.off('click').on('click', async function () {
-                    try {
-                        const note = $('#modalRedAciklama').val();
-
-                        if (!note.trim()) {
-                            alert('Lütfen red nedenini giriniz');
-                            return;
-                        }
-
-                        // Disable button and show spinner
-                        reddetBtn.prop('disabled', true);
-                        spinner.removeClass('d-none');
-
-                        // Call reject function
-                        await approveTransfer(docNum, {
-                            ...row,
-                            Quantity: parseInt($('#modalRedMiktar').val()),
-                            Comments: note,
-                            approved: false
-                        });
-
-                        // Close modal
-                        $('#transferRedModal').modal('hide');
-
-                        // Refresh the table with a slight delay
-                        // setTimeout(() => {
-                        //     table.ajax.reload(null, false);
-                        // }, 500);
-
-                    } catch (error) {
-                        console.error('Transfer reddetme hatası:', error);
-                    } finally {
-                        // Re-enable button and hide spinner
-                        reddetBtn.prop('disabled', false);
-                        spinner.addClass('d-none');
-                    }
-                });
-
-                // Show modal
-                const modal = new bootstrap.Modal(document.getElementById('transferRedModal'));
-                modal.show();
-            }
-        }
-
-        async function approveTransfer(docNum, transferData) {
-            try {
-                const sessionId = api.getSessionId();
-
-                const response = await fetch(`/api/transfer/approve/${docNum}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        sessionId: sessionId,
-                        note: transferData.Comments,
-                        transferData: {
-                            ItemCode: transferData.ItemCode,
-                            ItemName: transferData.ItemName,
-                            DocDate: transferData.DocDate,
-                            Quantity: transferData.Quantity,
-                            UomCode: transferData.UomCode,
-                            FromWhsCode: transferData.FromWhsCode,
-                            FromWhsName: transferData.FromWhsName,
-                            approved: transferData.approved
-                        }
-                    })
-                });
-
-                console.log('Onay response:', response);
-                const data = await response.json();
-                console.log('Onay data:', data);
-
-                return data;
-            } catch (error) {
-                console.error('Transfer onaylama hatası:', error);
-                throw error;
-            }
-        }
-
-        $(document).ready(async function () {
-            // Initialize DataTable
-            const transferTable = $('#transferTable').DataTable({
-                responsive: true,
-                pageLength: 25,
-                lengthMenu: [[25, 50, 100], [25, 50, 100]],
-                language: {
-                    url: 'js/datatables-tr.json'
+</div>
+
+<!-- Scripts -->
+<script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+<script>
+	// Quantity Input Functions
+	function incrementValue(button, className) {
+		const input = $(button).siblings('input');
+		const currentValue = parseFloat(input.val()) || 0;
+		input.val(currentValue + 1);
+		validateDeliveryQuantity(input[0]);
+	}
+
+	function decrementValue(button, className) {
+		const input = $(button).siblings('input');
+		const currentValue = parseFloat(input.val()) || 0;
+		if (currentValue > 0) {
+			input.val(currentValue - 1);
+			validateDeliveryQuantity(input[0]);
+		}
+	}
+
+	function validateDeliveryQuantity(input) {
+		const totalQty = parseFloat($('#teslimQuantity').val()) || 0;
+		const deliveryQty = parseFloat($('#teslimDeliveryQty').val()) || 0;
+		const missingQty = parseFloat($('#teslimMissingQty').val()) || 0;
+		const defectiveQty = parseFloat($('#teslimDefectiveQty').val()) || 0;
+
+		const total = deliveryQty + missingQty + defectiveQty;
+
+		if (total > totalQty) {
+			Swal.fire({
+				icon: 'warning',
+				title: 'Uyarı',
+				text: 'Toplam miktar sipariş miktarını aşamaz!'
+			});
+			$(input).val(0);
+			return false;
+		}
+
+		return true;
+	}
+
+	const sessionId = localStorage.getItem('sessionId');
+
+	async function showTeslimModal(docNum) {
+		try {
+			const response = await fetch(
+				`/api/transfer/${docNum}?sessionId=${sessionId}`,
+				{
+					method: 'GET',
+					headers: {
+						'Content-Type': 'application/json'
+					}
+				}
+			);
+
+			const data = await response.json();
+			const transfer = data.value[0];
+			console.log('Transfer detayları:', transfer);
+
+			// Transfer detaylarını doldur
+			$('#teslimTransferNo').val(transfer.DocNum);
+			$('#teslimItemCode').val(transfer.ItemCode);
+			$('#teslimItemName').val(transfer.ItemName);
+			$('#teslimDocDate').val(formatDate(transfer.DocDate));
+			$('#teslimQuantity').val(transfer.Quantity);
+			$('#teslimUomCode').val(transfer.UomCode);
+
+			// Miktar alanlarını ayarla
+			const totalQty = parseFloat(transfer.Quantity);
+			$('#teslimDeliveryQty').val(totalQty);
+			$('#teslimMissingQty').val('0');
+			$('#teslimDefectiveQty').val('0');
+
+			// Diğer alanları sıfırla
+			$('#teslimComments').val('');
+			$('#teslimImage').val('');
+			$('#deliveryDocNum').val('');
+
+			// Toplam ve kalan miktarı göster
+			$('#totalQuantity').text(totalQty);
+			$('#remainingQuantity').text(totalQty);
+
+			// Modal data'sını güncelle
+			$('#transferTeslimModal').data('totalQuantity', totalQty);
+			$('#transferTeslimModal').data('transfer', transfer);
+
+			// Teslim Al butonunu aktif yap
+			$('#submitTeslimBtn').prop('disabled', false);
+
+			// Modalı göster
+			$('#transferTeslimModal').modal('show');
+
+		} catch (error) {
+			console.error('Error:', error);
+			Swal.fire({
+				icon: 'error',
+				title: 'Hata',
+				text: 'Transfer detayları alınırken bir hata oluştu!'
+			});
+		}
+	}
+
+	// Durum metni için yardımcı fonksiyon
+	function getStatusText(status) {
+		const statusMap = {
+			'O': 'Açık',
+			'C': 'Kapalı',
+			'W': 'Beklemede'
+		};
+		return statusMap[status] || status;
+	}
+
+	// Miktar kontrolü için yardımcı fonksiyon
+	function updateQuantities() {
+		const totalQuantity = parseFloat($('#transferTeslimModal').data('totalQuantity')) || 0;
+		const deliveryQty = parseFloat($('#teslimDeliveryQty').val()) || 0;
+		const missingQty = parseFloat($('#teslimMissingQty').val()) || 0;
+		const defectiveQty = parseFloat($('#teslimDefectiveQty').val()) || 0;
+
+		const total = deliveryQty + missingQty + defectiveQty;
+
+		if (total > totalQuantity) {
+			Swal.fire({
+				icon: 'warning',
+				title: 'Uyarı',
+				text: 'Girilen miktarların toplamı, transfer miktarını aşamaz!'
+			});
+
+			// Aşan miktarı sıfırla
+			const lastChanged = $(document.activeElement);
+			if (lastChanged.is('input[type="number"]')) {
+				lastChanged.val('0');
+			}
+			return false;
+		}
+
+		// Kalan miktarı güncelle
+		const remaining = totalQuantity - total;
+		$('#remainingQuantity').text(remaining);
+
+		// Teslim Al butonunu kontrol et
+		const submitButton = $('#submitTeslimBtn');
+		if (total === totalQuantity && total > 0) {
+			submitButton.prop('disabled', false);
+		} else {
+			submitButton.prop('disabled', true);
+		}
+
+		return true;
+	}
+
+	// Miktar inputları için event listener'lar
+	$('#teslimDeliveryQty, #teslimMissingQty, #teslimDefectiveQty').on('input', function () {
+		const value = parseFloat($(this).val()) || 0;
+		if (value < 0) {
+			$(this).val('0');
+		}
+		updateQuantities();
+	});
+
+	// Teslim alma işlemi için kontrol ve submit fonksiyonu
+	async function submitTeslim() {
+		try {
+			const transfer = $('#transferTeslimModal').data('transfer');
+			if (!transfer) {
+				throw new Error('Transfer bilgisi bulunamadı');
+			}
+
+			const deliveryQty = parseFloat($('#teslimDeliveryQty').val()) || 0;
+			const missingQty = parseFloat($('#teslimMissingQty').val()) || 0;
+			const defectiveQty = parseFloat($('#teslimDefectiveQty').val()) || 0;
+			const deliveryDocNum = $('#deliveryDocNum').val();
+
+			if (!deliveryDocNum) {
+				Swal.fire({
+					icon: 'warning',
+					title: 'Uyarı',
+					text: 'Lütfen teslimat belge numarası giriniz!'
+				});
+				return;
+			}
+
+			if (deliveryQty <= 0) {
+				Swal.fire({
+					icon: 'warning',
+					title: 'Uyarı',
+					text: 'Teslimat miktarı 0 olamaz!'
+				});
+				return;
+			}
+
+			showLoading();
+
+			// Resim varsa base64'e çevir
+			const imageFile = document.getElementById('teslimImage').files[0];
+			let imageBase64 = '';
+			if (imageFile) {
+				imageBase64 = await new Promise((resolve, reject) => {
+					const reader = new FileReader();
+					reader.onload = () => resolve(reader.result.split(',')[1]);
+					reader.onerror = reject;
+					reader.readAsDataURL(imageFile);
+				});
+			}
+
+
+            const localStorageUserName = localStorage.getItem("userName");
+            const whsCode = localStorage.getItem("branchCode");
+			const formData = new FormData();
+			const requestData = {
+                U_Type: "TRANSFER",
+                U_WhsCode: whsCode,
+                U_DocNum: parseInt(transfer.DocNum),
+                U_FromWhsCode: transfer.FromWhsCode,
+                U_FromWhsName: transfer.FromWhsName,
+                U_ItemCode: transfer.ItemCode,
+                U_ItemName: transfer.ItemName,
+                U_DocDate: transfer.DocDate,
+                U_Quantity: transfer.Quantity,
+                U_DeliveryQty: deliveryQty,
+                U_MissingQty: missingQty,
+                U_DefectiveQty: defectiveQty,
+                U_UomCode: transfer.UomCode,
+                U_DocStatus: transfer.DocStatus,
+                U_Comments: $('#teslimComments').val() || '',
+                U_Image: imageBase64,
+                U_SessionID: 1,
+                U_GUID: generateGUID(),
+                U_User: localStorage.getItem('userName') || ''
+			};
+
+            console.log('Transfer data:', requestData);
+            
+			if (imageFile) {
+				formData.append('image', imageFile);
+			}
+			formData.append('data', JSON.stringify(requestData));
+            
+
+			const response = await fetch(`/api/transfer/deliver/${transfer.DocNum}?sessionId=${sessionId}`, {
+			method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
                 },
-                columns: [
-                    { data: 'DocNum' },
-                    { data: 'ItemCode' },
-                    { data: 'ItemName' },
-                    {
-                        data: 'DocDate',
-                        render: function (data) {
-                            return formatDate(data);
-                        }
-                    },
-                    {
-                        data: 'DeliveryDate',
-                        render: function (data) {
-                            return formatDate(data);
-                        }
-                    },
-                    { data: 'Quantity' },
-                    { data: 'DeliveryQty' },
-                    { data: 'UomCode' },
-                    { data: 'FromWhsName' },  // Changed from FromWhsCode
-                    { data: 'WhsName' },      // Changed from ToWhsCode
-                    {
-                        data: 'DocStatus',    // Changed from Status
-                        render: function (data) {
-                            const statusMap = {
-                                '1': '<span class="badge bg-warning">Onay Bekliyor</span>',
-                                '2': '<span class="badge" style="background-color: #fd7e14;">Hazırlanıyor</span>',
-                                '3': '<span class="badge bg-primary">Sevk Edildi</span>',
-                                '4': '<span class="badge bg-success">Tamamlandı</span>',
-                                '5': '<span class="badge bg-danger">İptal Edildi</span>'
-                            };
-                            return statusMap[data] || data;
-                        }
-                    },
-                    {
-                        data: null,
-                        render: function (data, type, row) {
-                            let buttons = '';
+			    body: JSON.stringify(requestData)
+			});
 
-                            // Show Teslim Al button only for status 3 (Sevk Edildi)
-                            if (row.DocStatus === '3') {
-                                buttons += `<button class="btn btn-success btn-sm me-1" onclick="event.preventDefault(); showTeslimModal('${row.DocNum}')">
-                                    <i class="bi bi-box-seam"></i> Teslim Al
-                                </button>`;
-                            }
+            console.log('Response:', response);
 
-                            // Show Approve/Reject buttons only for status 1 (Onay Bekliyor)
-                            if (row.DocStatus === '1') {
-                                buttons += `<button class="btn btn-primary btn-sm me-1 approve-btn" data-doc-num="${row.DocNum}">
-                                    <i class="bi bi-check-lg"></i> Onayla
-                                </button>`;
+			const result = await response.json();
 
-                                buttons += `<button class="btn btn-danger btn-sm" onclick="showTransferRedModal('${row.DocNum}')">
-                                    <i class="bi bi-x-lg"></i> Reddet
-                                </button>`;
-                            }
+			// hideLoading();
 
-                            return buttons;
-                        }
-                    }
-                ],
-                order: [
-                    [0, 'desc']
-                ]
-            });
+			if (result.status === 'success') {
+				Swal.fire({
+					icon: 'success',
+					title: 'Başarılı',
+					text: 'Transfer teslim alma işlemi başarıyla tamamlandı!',
+					showConfirmButton: false,
+					timer: 1500
+				}).then(() => {
+					$('#transferTeslimModal').modal('hide');
+                    loadOrders();
+				});
+			} else {
+				throw new Error(result.message || 'Bir hata oluştu');
+			}
+		} catch (error) {
+			hideLoading();
+			console.error('Error:', error);
+			Swal.fire({
+				icon: 'error',
+				title: 'Hata',
+				text: 'Transfer teslim alma işlemi sırasında bir hata oluştu!'
+			});
+		}
+	}
 
-            // Event listeners for dynamic buttons
-            $(document).on('click', '.approve-btn', function () {
-                const docNum = $(this).data('doc-num');
-                showTransferModal(docNum);
-            });
+	// Loading fonksiyonları
+	function showLoading() {
+		Swal.fire({
+			title: 'İşlem yapılıyor...',
+			allowOutsideClick: false,
+			allowEscapeKey: false,
+			showConfirmButton: false,
+			didOpen: () => {
+				Swal.showLoading();
+			}
+		});
+	}
 
-            // Fetch and populate transfer data
-            try {
-                const whsCode = '1010';
-                const sessionId = api.getSessionId();
+	function hideLoading() {
+		Swal.close();
+	}
 
-                console.log('whsCode:', whsCode);
-                console.log('sessionId:', sessionId);
+	// Tarih formatlama fonksiyonu
+	function formatDate(date) {
+		if (!date) return '';
+		const d = new Date(date.replace(/(\d{4})(\d{2})(\d{2})/, '$1-$2-$3'));
+		return d.toLocaleDateString('tr-TR');
+	}
 
-                const response = await fetch(`/api/transfer-list/${whsCode}?sessionId=${sessionId}`);
+	// Transfer onaylama modalını göster
+	function showTransferModal(docNum) {
+		// Get transfer details from the DataTable
+		const table = $('#transferTable').DataTable();
+		const row = table.rows().data().filter(item => item.DocNum === docNum)[0];
 
-                if (!response.ok) {
-                    throw new Error('Veriler yüklenirken bir hata oluştu');
-                }
+		if (row) {
+			// Populate modal fields
+			$('#modalTransferNo').text(row.DocNum);
+			$('#modalStokKodu').text(row.ItemCode);
+			$('#modalStokAdi').text(row.ItemName);
+			$('#modalTransferTarihi').text(formatDate(row.DocDate));
 
-                const data = await response.json();
-                transferTable.clear().rows.add(data.value).draw();
+			// Set up quantity input
+			const qtyInput = $('#modalMiktar');
+			qtyInput.val(Math.floor(row.Quantity)); // Ensure integer value
+			$('#modalRequestedQty').text(Math.floor(row.Quantity) + ' ' + row.UomCode);
+			$('#modalUomCode').text(row.UomCode);
+			$('#modalFromWhsCode').val(row.FromWhsCode);
 
-            } catch (error) {
-                console.error('Veriler yüklenirken hata:', error);
-                alert('Veriler yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.');
-            }
-        });
+			console.log(row);
 
-        async function deliverTransfer(docNum) {
-            try {
-                const sessionId = api.getSessionId();
-                const note = prompt('Teslimat notu eklemek ister misiniz?', '');
+			// Set up quantity increment/decrement buttons
+			$('#decreaseQty').off('click').on('click', function () {
+				const currentVal = parseInt(qtyInput.val()) || 0;
+				if (currentVal > 1) {
+					qtyInput.val(currentVal - 1);
+				}
+			});
 
-                const response = await fetch(`/api/transfer/deliver/${docNum}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        sessionId: sessionId,
-                        note: note
-                    })
-                });
+			$('#increaseQty').off('click').on('click', function () {
+				const currentVal = parseInt(qtyInput.val()) || 0;
+				qtyInput.val(currentVal + 1);
+			});
 
-                console.log('Teslimat response:', response);
+			// Ensure integer values on input
+			qtyInput.on('input', function () {
+				let value = this.value.replace(/[^\d]/g, ''); // Remove non-digits
+				if (value === '') value = '1';
+				this.value = parseInt(value);
+			});
 
-                // if (!response.ok) {
-                //     throw new Error('Teslimat işlemi başarısız oldu');
-                // }
+			$('#modalGonderenDepo').text(row.FromWhsName);
+			$('#modalAliciDepo').text(row.WhsName);
 
-                window.location.href = `transfer-teslim.html?docNum=${docNum}`;
-            } catch (error) {
-                console.error('Teslimat hatası:', error);
-                // alert('Teslimat işlemi sırasında bir hata oluştu: ' + error.message);
-            }
-        }
+			// Set status with appropriate color
+			const statusBadge = $('#modalDurum');
+			statusBadge.text('Onay Bekliyor');
+			statusBadge.removeClass().addClass('badge bg-warning');
 
-        async function rejectTransfer(docNum) {
-            try {
-                const table = $('#transferTable').DataTable();
-                const row = table.rows().data().filter(item => item.DocNum === docNum)[0];
+			// Clear and set up description field
+			$('#modalAciklama').val('');
 
-                if (!row) {
-                    throw new Error('Transfer bulunamadı');
-                }
+			// Reset and set up onay button click handler
+			const onaylaBtn = $('#onaylaBtn');
+			const spinner = onaylaBtn.find('.spinner-border');
 
-                const sessionId = api.getSessionId();
-                const note = ''; // You can add a note field if needed
+			onaylaBtn.prop('disabled', false);
+			spinner.addClass('d-none');
 
-                const result = await fetch(`/api/transfer/approve/${docNum}`, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        sessionId: sessionId,
-                        note: note,
-                        transferData: {
-                            ItemCode: row.ItemCode,
-                            ItemName: row.ItemName,
-                            DocDate: row.DocDate,
-                            Quantity: row.Quantity,
-                            UomCode: row.UomCode,
-                            FromWhsCode: row.FromWhsCode,
-                            FromWhsName: row.FromWhsName,
-                            approved: false
-                        }
-                    })
-                });
+			onaylaBtn.off('click').on('click', async function () {
+				try {
+					// Validate quantity
+					const transferQty = parseInt($('#modalMiktar').val());
+					const requestedQty = Math.floor(row.Quantity);
 
-                console.log('Red response:', result);
+					if (isNaN(transferQty) || transferQty <= 0) {
+						Swal.fire({
+							icon: 'warning',
+							title: 'Uyarı',
+							text: 'Lütfen geçerli bir miktar giriniz'
+						});
+						return;
+					}
 
-                // Refresh the table with a slight delay
-                setTimeout(() => {
-                    table.ajax.reload(null, false);
-                }, 500);
+					if (transferQty > requestedQty) {
+						if (!confirm(
+							'Transfer miktarı talep edilen miktardan fazla. Devam etmek istiyor musunuz?'
+						)) {
+							return;
+						}
+					}
 
-            } catch (error) {
-                console.error('Transfer reddetme hatası:', error);
-                //alert('Transfer reddedilirken bir hata oluştu: ' + (error.message || 'Bilinmeyen bir hata'));
-            }
-        }
-    </script>
-    <script src="js/api.js"></script>
-    <script src="js/nav-menu.js"></script>
+					// Disable button and show spinner
+					onaylaBtn.prop('disabled', true);
+					spinner.removeClass('d-none');
+
+					const result = await approveTransfer(docNum, {
+						...row,
+						Quantity: transferQty,
+						Comments: $('#modalAciklama').val(),
+						approved: true
+					});
+
+					// Close modal
+					$('#transferOnayModal').modal('hide');
+
+					// Refresh the page
+					window.location.reload();
+
+				} catch (error) {
+					console.error('Transfer onaylama hatası:', error);
+				} finally {
+					// Re-enable button and hide spinner
+					onaylaBtn.prop('disabled', false);
+					spinner.addClass('d-none');
+				}
+			});
+
+			// Show modal
+			const modal = new bootstrap.Modal(document.getElementById('transferOnayModal'));
+			modal.show();
+		}
+	}
+
+	function showTransferRedModal(docNum) {
+		// Get transfer details from the DataTable
+		const table = $('#transferTable').DataTable();
+		const row = table.rows().data().filter(item => item.DocNum === docNum)[0];
+
+		if (row) {
+			// Populate modal fields
+			$('#modalRedTransferNo').text(row.DocNum);
+			$('#modalRedStokKodu').text(row.ItemCode);
+			$('#modalRedStokAdi').text(row.ItemName);
+			$('#modalRedTransferTarihi').text(formatDate(row.DocDate));
+
+			// Set up quantity input
+			$('#modalRedMiktar').val(Math.floor(row.Quantity));
+			$('#modalRedUomCode').text(row.UomCode);
+			$('#modalRedFromWhsCode').val(row.FromWhsCode);
+
+			$('#modalRedGonderenDepo').text(row.FromWhsName);
+			$('#modalRedAliciDepo').text(row.WhsName);
+
+			// Set status with appropriate color
+			const statusBadge = $('#modalRedDurum');
+			statusBadge.text('Red Bekliyor');
+			statusBadge.removeClass().addClass('badge bg-danger');
+
+			// Clear and set up description field
+			$('#modalRedAciklama').val('');
+
+			// Reset and set up reddet button click handler
+			const reddetBtn = $('#reddetBtn');
+			const spinner = reddetBtn.find('.spinner-border');
+
+			reddetBtn.prop('disabled', false);
+			spinner.addClass('d-none');
+
+			reddetBtn.off('click').on('click', async function () {
+				try {
+					const note = $('#modalRedAciklama').val();
+
+					if (!note.trim()) {
+						Swal.fire({
+							icon: 'warning',
+							title: 'Uyarı',
+							text: 'Lütfen red nedenini giriniz'
+						});
+						return;
+					}
+
+					// Disable button and show spinner
+					reddetBtn.prop('disabled', true);
+					spinner.removeClass('d-none');
+
+					// Call reject function
+					await approveTransfer(docNum, {
+						...row,
+						Quantity: parseInt($('#modalRedMiktar').val()),
+						Comments: note,
+						approved: false
+					});
+
+					// Close modal
+					$('#transferRedModal').modal('hide');
+
+					// Refresh the table with a slight delay
+					// setTimeout(() => {
+					//     table.ajax.reload(null, false);
+					// }, 500);
+
+				} catch (error) {
+					console.error('Transfer reddetme hatası:', error);
+				} finally {
+					// Re-enable button and hide spinner
+					reddetBtn.prop('disabled', false);
+					spinner.addClass('d-none');
+				}
+			});
+
+			// Show modal
+			const modal = new bootstrap.Modal(document.getElementById('transferRedModal'));
+			modal.show();
+		}
+	}
+
+	async function approveTransfer(docNum, transferData) {
+		try {
+			const sessionId = api.getSessionId();
+			const localStorageUserName = localStorage.getItem("userName");
+			const whsCode = localStorage.getItem("branchCode");
+
+		
+			const response = await fetch(`/api/transfer/approve/${docNum}`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					sessionId: sessionId,
+					note: transferData.Comments,
+					transferData: {
+						UserName: localStorageUserName,
+						WhsCode: whsCode,
+						ItemCode: transferData.ItemCode,
+						ItemName: transferData.ItemName,
+						DocDate: transferData.DocDate,
+						Quantity: transferData.Quantity,
+						UomCode: transferData.UomCode,
+						FromWhsCode: transferData.FromWhsCode,
+						FromWhsName: transferData.FromWhsName,
+						approved: transferData.approved
+					}
+				})
+			});
+
+			if (!response.ok) {
+				throw new Error('Transfer onaylanırken bir hata oluştu');
+			}
+
+			// Close the modal if it exists
+			const modal = bootstrap.Modal.getInstance(document.getElementById('transferOnayModal'));
+			if (modal) {
+				modal.hide();
+			}
+
+			// Show success message and refresh
+			await Swal.fire({
+				icon: 'success',
+				title: 'Başarılı',
+				text: transferData.approved ? 'Transfer başarıyla onaylandı.' :
+					'Transfer başarıyla iptal edildi.',
+				showConfirmButton: false,
+				timer: 1500
+			});
+
+			// Reload the entire page instead of just the table
+			window.location.reload();
+
+		} catch (error) {
+			console.error('Transfer onaylama hatası:', error);
+			Swal.fire({
+				icon: 'error',
+				title: 'Hata',
+				text: 'Transfer onaylanırken bir hata oluştu.'
+			});
+		}
+	}
+
+	$(document).ready(async function () {
+		// Initialize Select2
+		$('#statusFilter, #fromWhsFilter, #toWhsFilter, #itemCodeFilter').select2({
+			theme: 'bootstrap-5',
+			width: '100%',
+			placeholder: 'Seçiniz...',
+			allowClear: true,
+			closeOnSelect: false
+		});
+
+		// Initialize DataTable
+		const transferTable = $('#transferTable').DataTable({
+			responsive: true,
+			pageLength: 25,
+			lengthMenu: [
+				[25, 50, 100],
+				[25, 50, 100]
+			],
+			language: {
+				url: 'js/datatables-tr.json'
+			},
+			columns: [{
+				data: 'DocNum'
+			},
+				{
+					data: 'ItemCode'
+				},
+				{
+					data: 'ItemName'
+				},
+				{
+					data: null,
+					render: function(data) {
+						return `Talep: ${formatDate(data.DocDate)}<br>Teslimat: ${formatDate(data.DeliveryDate)}`;
+					}
+				},
+				{
+					data: 'Quantity',
+					render: function(data, type, row) {
+						return `${data} ${row.UomCode}`;
+					}
+				},
+				{
+					data: 'FromWhsName' ,
+				
+				},
+				{
+					data: 'WhsName'
+				},
+				{
+					data: 'DocStatus',
+					render: function (data, type, row) {
+						const statusMap = {
+							'1': '<span class="badge bg-warning">Onay Bekliyor</span> <span style="display: none;">'+row.DocStatus+'</span>',
+							'2': '<span class="badge" style="background-color: #fd7e14;">Transfer <br /> Onayı Bekliyor</span> <span style="display: none;">'+row.DocStatus+'</span>',
+							'3': '<span class="badge bg-primary">Sevk Edildi</span>' + '<span style="display: none;">'+row.DocStatus+'</span>',
+							'4': '<span class="badge bg-success">Tamamlandı</span>' + '<span style="display: none;">'+row.DocStatus+'</span>',
+							'5': '<span class="badge bg-danger">Transfer <br /> İptal Edildi</span> <span style="display: none;">'+row.DocStatus+'</span>',
+							'6': '<span class="badge" style=" background-color: #333333;">Teslim <br />Alınmayı Bekliyor</span>' + '<span style="display: none;">'+row.DocStatus+'</span>',
+						};
+
+						let html = statusMap[data] || data;
+
+						// Add action buttons based on status
+						if (row.DocStatus === '3') {
+							html += `
+                                    <br />
+                                    <button class="btn btn-success btn-sm mt-2" onclick="event.preventDefault(); showTeslimModal('${row.DocNum}')">
+                                        <i class="bi bi-box-seam"></i> Teslim Al
+                                    </button>`;
+						} else if (row.DocStatus === '1') {
+							html += `
+							<div> 
+								<button class="btn btn-success mt-2 btn-sm approve-btn" data-doc-num="${row.DocNum}">
+									<i class="bi bi-check-lg"></i>
+								</button>
+								<button class="btn btn-danger mt-2 btn-sm  onclick=" rejectTransfer('${row.DocNum}')">
+									<i class="bi bi-x-lg"></i>
+								</button>
+							</div>
+									`;
+						}
+
+						return html;
+					}
+				}
+			],
+			order: [
+				[0, 'desc']
+			]
+		});
+
+		// Event listeners for dynamic buttons
+		$(document).on('click', '.approve-btn', function () {
+			const docNum = $(this).data('doc-num');
+			showTransferModal(docNum);
+		});
+
+		// Custom filter function for multiple selections
+		function customFilter(column, selections) {
+			if (!selections || selections.length === 0) return '';
+			return '(' + selections.map(function(s) { return $.fn.dataTable.util.escapeRegex(s); }).join('|') + ')';
+		}
+
+		// Add event listeners for filters with multiple selection support
+		$('#statusFilter').on('change', function () {
+			const selections = $(this).val() || [];
+			const searchRegex = selections.length > 0 ? customFilter(8, selections) : '';
+			transferTable.column(8).search(searchRegex, true, true).draw();
+		});
+
+		$('#fromWhsFilter').on('change', function () {
+			const selections = $(this).val() || [];
+			const searchRegex = selections.length > 0 ? customFilter(5, selections) : '';
+			transferTable.column(5).search(searchRegex, true, true).draw();
+		});
+
+		$('#toWhsFilter').on('change', function () {
+			const selections = $(this).val() || [];
+			const searchRegex = selections.length > 0 ? customFilter(6, selections) : '';
+			transferTable.column(6).search(searchRegex, true, true).draw();
+		});
+
+		$('#itemCodeFilter').on('change', function () {
+			const selections = $(this).val() || [];
+			const searchRegex = selections.length > 0 ? customFilter(2, selections) : '';
+			transferTable.column(2).search(searchRegex, true, true).draw();
+		});
+
+		// Function to update status filter options
+		function updateStatusFilterOptions(transfers) {
+			const statusFilter = $('#statusFilter');
+			const statusMap = {
+				'1': 'Onay Bekliyor',
+				'2': 'Transfer Onayı Bekliyor',
+				'3': 'Sevk Edildi',
+				'4': 'Tamamlandı',
+				'5': 'Transfer İptal Edildi',
+				'6': 'Teslim Alınmayı Bekliyor'
+			};
+
+			statusFilter.empty().append('<option value="">Tümü</option>');
+			const uniqueStatuses = [...new Set(transfers.map(transfer => transfer.DocStatus))];
+			uniqueStatuses.forEach(status => {
+				const statusText = statusMap[status] || status;
+				statusFilter.append(new Option(statusText, status));
+			});
+		}
+
+		function updateBranchFilterOptions(transfers) {
+			const fromWhsFilter = $('#fromWhsFilter');
+			const toWhsFilter = $('#toWhsFilter');
+			const itemCodeFilter = $('#itemCodeFilter');
+
+			// Get unique sender branches
+			const uniqueFromWhs = [...new Set(transfers.map(transfer => transfer.FromWhsName))];
+			fromWhsFilter.empty().append('<option value="">Tümü</option>');
+			uniqueFromWhs.forEach(whs => {
+				if (whs) {
+					fromWhsFilter.append(new Option(whs, whs));
+				}
+			});
+
+			// Get unique receiver branches
+			const uniqueToWhs = [...new Set(transfers.map(transfer => transfer.WhsName))];
+			toWhsFilter.empty().append('<option value="">Tümü</option>');
+			uniqueToWhs.forEach(whs => {
+				if (whs) {
+					toWhsFilter.append(new Option(whs, whs));
+				}
+			});
+
+			// Get unique items and sort by name
+			const uniqueItems = {};
+			transfers.forEach(transfer => {
+				if (transfer.ItemName && !uniqueItems[transfer.ItemName]) {
+					uniqueItems[transfer.ItemName] = transfer.ItemName;
+				}
+			});
+
+			// Sort items alphabetically
+			const sortedItems = Object.keys(uniqueItems).sort((a, b) => 
+				a.localeCompare(b, 'tr', { sensitivity: 'base' })
+			);
+
+			// Populate item filter
+			itemCodeFilter.empty().append('<option value="">Tümü</option>');
+			sortedItems.forEach(itemName => {
+				itemCodeFilter.append(new Option(itemName, itemName));
+			});
+
+			// Trigger change to refresh Select2
+			fromWhsFilter.trigger('change');
+			toWhsFilter.trigger('change');
+			itemCodeFilter.trigger('change');
+		}
+
+		// Update filter options when data is loaded
+		try {
+			const whsCode = localStorage.getItem("branchCode");
+			const sessionId = api.getSessionId();
+			const response = await fetch(`/api/transfer-list/${whsCode}?sessionId=${sessionId}`);
+			
+			if (!response.ok) {
+				throw new Error('Veriler yüklenirken bir hata oluştu');
+			}
+
+			const data = await response.json();
+			transferTable.clear().rows.add(data.value).draw();
+			updateStatusFilterOptions(data.value);
+			updateBranchFilterOptions(data.value);
+
+		} catch (error) {
+			console.error('Veriler yüklenirken hata:', error);
+			Swal.fire({
+				icon: 'error',
+				title: 'Hata',
+				text: 'Veriler yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.'
+			});
+		}
+	});
+
+	async function deliverTransfer(docNum) {
+		try {
+			const sessionId = api.getSessionId();
+			const note = prompt('Teslimat notu eklemek ister misiniz?', '');
+
+			const response = await fetch(`/api/transfer/deliver/${doxcNum}`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					sessionId: sessionId,
+					note: note
+				})
+			});
+
+			console.log('Teslimat response:', response);
+
+			// if (!response.ok) {
+			//     throw new Error('Teslimat işlemi başarısız oldu');
+			// }
+
+			window.location.href = `transfer-teslim.html?docNum=${docNum}`;
+		} catch (error) {
+			console.error('Teslimat hatası:', error);
+			Swal.fire({
+				icon: 'error',
+				title: 'Hata',
+				text: 'Teslimat işlemi sırasında bir hata oluştu.'
+			});
+		}
+	}
+
+
+	async function rejectTransfer(docNum) {
+		try {
+			// Show confirmation dialog
+			const result = await Swal.fire({
+				title: 'Transferi İptal Et',
+				text: 'Bu transferi iptal etmek istediğinizden emin misiniz?',
+				icon: 'warning',
+				showCancelButton: true,
+				confirmButtonColor: '#d33',
+				cancelButtonColor: '#3085d6',
+				confirmButtonText: 'Evet, İptal Et',
+				cancelButtonText: 'Vazgeç'
+			});
+
+			if (!result.isConfirmed) {
+				return;
+			}
+
+			// Get the table instance
+			const table = $('#transferTable').DataTable();
+
+			// Get the row data
+			const row = table.rows().data().filter(item => item.DocNum === docNum)[0];
+
+			if (!row) {
+				throw new Error('Transfer bulunamadı');
+			}
+
+			const sessionId = api.getSessionId();
+			const localStorageUserName = localStorage.getItem("userName");
+			const whsCode = localStorage.getItem("branchCode");
+
+			const response = await fetch(`/api/transfer/approve/${docNum}`, {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					sessionId: sessionId,
+					note: 'Transfer iptal edildi',
+					transferData: {
+						UserName: localStorageUserName,
+						WhsCode: whsCode,
+						ItemCode: row.ItemCode,
+						ItemName: row.ItemName,
+						DocDate: row.DocDate,
+						Quantity: row.Quantity,
+						UomCode: row.UomCode,
+						FromWhsCode: row.FromWhsCode,
+						FromWhsName: row.FromWhsName,
+						approved: false,
+						DocStatus: '5'
+					}
+				})
+			});
+
+			if (!response.ok) {
+				throw new Error('Transfer iptal edilirken bir hata oluştu');
+			}
+
+			// Show success message
+			await Swal.fire({
+				icon: 'success',
+				title: 'Başarılı',
+				text: 'Transfer başarıyla iptal edildi.',
+				showConfirmButton: false,
+				timer: 1500
+			});
+
+			// Refresh the page
+			window.location.reload();
+
+		} catch (error) {
+			console.error('Transfer iptal hatası:', error);
+			Swal.fire({
+				icon: 'error',
+				title: 'Hata',
+				text: 'Transfer iptal edilirken bir hata oluştu.'
+			});
+		}
+	}
+
+	function generateGUID() {
+		return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+			var r = Math.random() * 16 | 0,
+				v = c == 'x' ? r : (r & 0x3 | 0x8);
+			return v.toString(16);
+		});
+	}
+
+	function incrementQuantity(type) {
+		const totalQty = parseFloat($('#transferTeslimModal').data('totalQuantity'));
+		const missingQty = parseFloat($('#teslimMissingQty').val()) || 0;
+		const defectiveQty = parseFloat($('#teslimDefectiveQty').val()) || 0;
+
+		if (type === 'missing') {
+			if (missingQty + defectiveQty < totalQty) {
+				$('#teslimMissingQty').val(missingQty + 1);
+				updateDeliveryQuantity();
+			}
+		} else if (type === 'defective') {
+			if (missingQty + defectiveQty < totalQty) {
+				$('#teslimDefectiveQty').val(defectiveQty + 1);
+				updateDeliveryQuantity();
+			}
+		}
+	}
+
+	function decrementQuantity(type) {
+		if (type === 'missing') {
+			const missingQty = parseFloat($('#teslimMissingQty').val()) || 0;
+			if (missingQty > 0) {
+				$('#teslimMissingQty').val(missingQty - 1);
+				updateDeliveryQuantity();
+			}
+		} else if (type === 'defective') {
+			const defectiveQty = parseFloat($('#teslimDefectiveQty').val()) || 0;
+			if (defectiveQty > 0) {
+				$('#teslimDefectiveQty').val(defectiveQty - 1);
+				updateDeliveryQuantity();
+			}
+		}
+	}
+
+	function updateDeliveryQuantity() {
+		const totalQty = parseFloat($('#transferTeslimModal').data('totalQuantity'));
+		const missingQty = parseFloat($('#teslimMissingQty').val()) || 0;
+		const defectiveQty = parseFloat($('#teslimDefectiveQty').val()) || 0;
+
+		const deliveryQty = totalQty - (missingQty + defectiveQty);
+		$('#teslimDeliveryQty').val(deliveryQty);
+
+		// Kalan miktarı güncelle
+		$('#remainingQuantity').text(deliveryQty);
+	}
+</script>
+<script src="js/api.js"></script>
+<script src="js/nav-menu.js"></script>
+    <script src="js/datatable-helper.js"></script>
 </body>
 
 </html>
