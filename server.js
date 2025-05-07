@@ -8,6 +8,81 @@ const fs = require('fs');
 
 const app = express();
 
+// Request logger system
+const requestLogs = [];
+const MAX_LOGS = 1000; // Keep only the last 1000 logs in memory
+
+// Helper function to add a new log
+function addRequestLog(req, res, startTime) {
+    // Get authentication info from session if available
+    const sessionId = req.headers['x-session-id'] || req.query.sessionId;
+    let userName = 'Anonymous';
+    
+    // Try to get user info from various sources
+    if (req.body && req.body.User) {
+        userName = req.body.User;
+    } else if (req.body && req.body.U_User) {
+        userName = req.body.U_User;
+    } else if (req.query && req.query.user) {
+        userName = req.query.user;
+    }
+    
+    // Create log entry
+    const logEntry = {
+        timestamp: new Date(),
+        method: req.method,
+        endpoint: req.originalUrl || req.url,
+        ip: req.ip || req.connection.remoteAddress,
+        user: userName,
+        sessionId: sessionId ? sessionId.substring(0, 8) + '...' : 'none', // Truncate for security
+        userAgent: req.headers['user-agent'],
+        status: res.statusCode,
+        responseTime: Date.now() - startTime,
+        details: ''
+    };
+    
+    // Add request body for non-GET methods (excluding sensitive data)
+    if (req.method !== 'GET' && req.body) {
+        // Make a safe copy of the body, excluding sensitive data
+        const safeBody = { ...req.body };
+        // Remove sensitive fields
+        if (safeBody.password) safeBody.password = '********';
+        if (safeBody.sessionId) safeBody.sessionId = '********';
+        if (safeBody.U_SessionID) safeBody.U_SessionID = '********';
+        
+        // Stringify the body but limit size
+        try {
+            const bodyStr = JSON.stringify(safeBody);
+            logEntry.details = bodyStr.length > 500 ? bodyStr.substring(0, 500) + '...' : bodyStr;
+        } catch (e) {
+            logEntry.details = 'Error serializing request body';
+        }
+    }
+    
+    // Add log to the beginning of the array (newest first)
+    requestLogs.unshift(logEntry);
+    
+    // Trim logs if exceeding maximum size
+    if (requestLogs.length > MAX_LOGS) {
+        requestLogs.length = MAX_LOGS;
+    }
+}
+
+// Middleware to log all requests
+app.use((req, res, next) => {
+    const startTime = Date.now();
+    
+    // Log request after response is sent
+    res.on('finish', () => {
+        // Skip logging for static assets
+        if (!req.path.match(/\.(js|css|jpg|png|ico|svg|woff|ttf)$/)) {
+            addRequestLog(req, res, startTime);
+        }
+    });
+    
+    next();
+});
+
 // SAP B1 API istekleri için retry mekanizması
 async function retryAxiosRequest(apiCall, maxRetries = 2, delay = 1000) {
     let lastError = null;
@@ -67,6 +142,25 @@ async function retryAxiosRequest(apiCall, maxRetries = 2, delay = 1000) {
     console.error(`${maxRetries + 1} deneme sonrası başarısız oldu.`);
     throw lastError;
 }
+
+// Protected endpoint to serve logs
+app.get('/api/logs', (req, res) => {
+    // Simple check for authorization (in production, you'd use a proper auth middleware)
+    const auth = req.headers.authorization;
+    
+    // Very basic auth check - in production, use a proper authentication system
+    if (!auth) {
+        return res.status(401).json({ error: 'Authorization required' });
+    }
+    
+    try {
+        // Return logs (newest first)
+        res.json(requestLogs);
+    } catch (error) {
+        console.error('Error serving logs:', error);
+        res.status(500).json({ error: 'Failed to retrieve logs' });
+    }
+});
 
 // Route to serve application version information
 app.get('/package.json', (req, res) => {
@@ -3266,4 +3360,32 @@ app.post('/api/transfer/reject/:docNum', async (req, res) => {
             error: error.response?.data || error.message
         });
     }
+});
+
+// Near the top where constants are defined, add this:
+// Constants for logs page authentication
+const LOGS_ACCESS_TOKEN = "Cremma2023!"; // This should match the client-side password
+
+// Add this route before the catch-all route at the end of the file
+// Protected route to serve logs.html
+app.get('/logs.html', (req, res, next) => {
+    // Simply serve the file - authentication is handled client-side
+    // In a production environment, you would implement proper server-side authentication
+    res.sendFile(path.join(__dirname, 'logs.html'));
+});
+
+// Add this endpoint for the logs page to use
+app.get('/api/logs', (req, res) => {
+    // Check for auth header or token in query
+    const token = req.headers['x-access-token'] || req.query.token;
+    
+    if (token !== LOGS_ACCESS_TOKEN) {
+        return res.status(401).json({ 
+            error: 'Unauthorized access',
+            message: 'Proper authentication is required to access logs'
+        });
+    }
+    
+    // Return logs (newest first)
+    res.json(requestLogs);
 });
