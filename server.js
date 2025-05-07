@@ -8,6 +8,66 @@ const fs = require('fs');
 
 const app = express();
 
+// SAP B1 API istekleri için retry mekanizması
+async function retryAxiosRequest(apiCall, maxRetries = 2, delay = 1000) {
+    let lastError = null;
+    
+    for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+            // API çağrısını yap
+            const response = await apiCall();
+            return response; // Başarılı olursa döndür
+        } catch (error) {
+            lastError = error;
+            console.error(`API isteği başarısız (deneme ${attempt + 1}/${maxRetries + 1}):`, error.message);
+            
+            // Hata detayını logla
+            if (error.response) {
+                console.error('Hata yanıtı detayları:', {
+                    status: error.response.status,
+                    statusText: error.response.statusText,
+                    data: error.response.data
+                });
+            }
+            
+            // String kontrolü ekleyerek includes kullanımı
+            const hasSessionError = () => {
+                if (error.response && error.response.status === 401) return true;
+                if (error.response?.data?.error?.code === 301) return true; // Session zaman aşımı
+                
+                const errorMsg = error.response?.data?.error?.message;
+                if (errorMsg && typeof errorMsg === 'string' && errorMsg.toLowerCase().includes('session')) {
+                    return true;
+                }
+                return false;
+            };
+            
+            // Hata analizi - session süresi dolduysa yeniden login olmamız lazım
+            if (hasSessionError()) {
+                console.warn('Oturum süresi dolmuş olabilir, daha fazla deneme yapılmayacak');
+                throw new Error('Oturum süresi dolmuş. Lütfen yeniden giriş yapın.');
+            }
+            
+            // Sunucu hatası (5xx) veya bağlantı hatası ise yeniden dene
+            if (error.response?.status >= 500 || error.code === 'ECONNABORTED' || error.code === 'ETIMEDOUT') {
+                if (attempt < maxRetries) {
+                    console.log(`${delay}ms sonra yeniden deneniyor...`);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    // Her denemede bekleme süresini artır (exponential backoff)
+                    delay = delay * 2;
+                }
+            } else {
+                // Diğer hatalar için hemen başarısız olarak sonlandır
+                throw error;
+            }
+        }
+    }
+    
+    // Tüm denemeler başarısız oldu
+    console.error(`${maxRetries + 1} deneme sonrası başarısız oldu.`);
+    throw lastError;
+}
+
 // Add versioning middleware for static assets
 app.use((req, res, next) => {
     const fileExtension = path.extname(req.url).toLowerCase();
@@ -292,7 +352,16 @@ app.get("/uretim-siparisleri-list", async (req, res) => {
   const sessionId = req.query.sessionId;
   const whsCode = req.query.whsCode;
 
-  console.log("test", sessionId);
+  // Cache kontrolü için header ekle
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+  res.setHeader('Pragma', 'no-cache');
+  res.setHeader('Expires', '0');
+  res.setHeader('Surrogate-Control', 'no-store');
+
+  console.log("Üretim siparişleri listesi istendi:", new Date().toISOString());
+  console.log("Session ID:", sessionId);
+  console.log("WhsCode:", whsCode);
+  
   try {
     const response = await axiosInstance.get(
       "https://10.21.22.11:50000/b1s/v1/SQLQueries('OWTQ_NEW')/List",
@@ -300,13 +369,19 @@ app.get("/uretim-siparisleri-list", async (req, res) => {
         params: {
           value1: "'PROD'",
           value2: "'"+whsCode+"'",
+          // Cache-busting random parameter
+          _: Date.now()
         },
         headers: {
           Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
           "Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
+          // SAP B1 API'ye de cache kontrolü için header ekle
+          "Cache-Control": "no-cache, no-store"
         },
       }
     );
+    
+    console.log("Veri başarıyla alındı, satır sayısı:", response.data?.value?.length || 0);
     res.json(response.data);
   } catch (error) {
     console.error("Error:", error);
@@ -321,6 +396,13 @@ app.post("/api/production-orders", async (req, res) => {
     const guid = generateGUID();
     const orderItems = orderData.length;
 
+    // Cache kontrolü için header ekle
+    res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+    res.setHeader('Surrogate-Control', 'no-store');
+
+    console.log("Üretim siparişi oluşturma isteği:", new Date().toISOString());
     console.log("Received order data:", orderData);
 
     if (!Array.isArray(orderData) || orderData.length === 0) {
@@ -328,44 +410,99 @@ app.post("/api/production-orders", async (req, res) => {
     }
 
     try {
-        const results = await Promise.all(orderData.map(async (order) => {
-            const data = {
+        // Tek bir istek için tüm siparişleri birleştir
+        const bulkOrderData = {
+            U_Type: "PROD",
+            U_SessionID: orderItems,
+            U_GUID: guid,
+            U_Comments: "Toplu Üretim Siparişi",
+            OrderItems: orderData.map(order => ({
                 U_Type: order.U_Type,
                 U_WhsCode: order.U_WhsCode,
                 U_ItemCode: order.U_ItemCode,
                 U_ItemName: order.U_ItemName,
                 U_Quantity: order.U_Quantity,
                 U_UomCode: order.U_UomCode,
-                U_SessionID: orderItems,
-                U_GUID: guid,
                 U_User: order.U_User,
                 U_FromWhsCode: null,
-                U_FromWhsName: null,
-                U_Comments: "Üretim Siparişi"
-            };
+                U_FromWhsName: null
+            }))
+        };
 
-            console.log("Sending data:", data);
+        console.log("Sending bulk order data:", JSON.stringify(bulkOrderData, null, 2));
 
+        // Önce birleştirilmiş yeni endpoint'i deneyelim
+        try {
             const response = await axiosInstance.post(
-                "https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_OWTQ",
-                data,
+                "https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_OWTQ_BULK",
+                bulkOrderData,
                 {
                     headers: {
                         'Cookie': `B1SESSION=${sessionId}`,
-                        'Content-Type': 'application/json'
+                        'Content-Type': 'application/json',
+                        'Cache-Control': 'no-cache, no-store'
                     }
                 }
             );
             
-            console.log('Response for item:', order.U_ItemCode, response.data);
-            return response.data;
-        }));
+            console.log('Bulk API Response:', response.data);
+            return res.json({
+                success: true,
+                method: "bulk",
+                data: response.data
+            });
+        } catch (bulkError) {
+            // Bulk API yoksa veya hata verirse, eski yönteme geri dönelim
+            console.warn("Bulk API hatası, her ürün için ayrı istek gönderiliyor:", bulkError.message);
+            
+            // Eski yöntem: Her bir sipariş için ayrı istek
+            const results = await Promise.all(orderData.map(async (order) => {
+                const data = {
+                    U_Type: order.U_Type,
+                    U_WhsCode: order.U_WhsCode,
+                    U_ItemCode: order.U_ItemCode,
+                    U_ItemName: order.U_ItemName,
+                    U_Quantity: order.U_Quantity,
+                    U_UomCode: order.U_UomCode,
+                    U_SessionID: orderItems,
+                    U_GUID: guid,
+                    U_User: order.U_User,
+                    U_FromWhsCode: null,
+                    U_FromWhsName: null,
+                    U_Comments: "Üretim Siparişi"
+                };
 
-        console.log('All results:', results);
-        res.json(results);
+                console.log("Sending individual data:", data);
+
+                const response = await axiosInstance.post(
+                    "https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_OWTQ",
+                    data,
+                    {
+                        headers: {
+                            'Cookie': `B1SESSION=${sessionId}`,
+                            'Content-Type': 'application/json',
+                            'Cache-Control': 'no-cache, no-store'
+                        }
+                    }
+                );
+                
+                console.log('Response for item:', order.U_ItemCode, response.data);
+                return response.data;
+            }));
+
+            console.log('All individual results:', results);
+            return res.json({
+                success: true,
+                method: "individual",
+                data: results
+            });
+        }
     } catch (error) {
         console.error('Error creating orders:', error);
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ 
+            success: false,
+            error: error.message 
+        });
     }
 });
 
@@ -2161,6 +2298,7 @@ app.post('/api/tickets', multer({
             U_Image: req.file ? req.file.path : null,
             U_SessionID: req.body.U_SessionID,
             U_GUID: req.body.U_GUID,
+            U_DocStatus: 1,
         };
 
         console.log('Creating ticket with data:', ticketData);
@@ -2242,6 +2380,8 @@ app.post('/api/tickets/:docNum/reply', upload.single('image'), async (req, res) 
     try {
         const sessionId = req.query.sessionId;
         const docNum = req.params.docNum;
+        const currentUser = req.body.UserName;
+        const whsCode = req.body.whsCode;
 
         console.log('Received request body:', req.body);
         console.log('Received file:', req.file);        
@@ -2270,7 +2410,9 @@ app.post('/api/tickets/:docNum/reply', upload.single('image'), async (req, res) 
                         year: 'numeric',
                         hour: '2-digit',
                         minute: '2-digit'
-                    })
+                    }),
+                    U_User: currentUser,
+                    U_WhsCode: whsCode
                 }   
             ]
         };
@@ -2370,6 +2512,41 @@ app.post('/api/tickets/:docNum/status', async (req, res) => {
     }
 });
 
+// count-new-list
+app.get('/api/count-new-list', async (req, res) => {
+    try {
+        const sessionId = req.query.sessionId;
+        const whsCode = req.query.whsCode;
+
+        if (!sessionId || !whsCode) {
+            return res.status(400).json({
+                success: false,
+                error: 'Eksik sessionId veya şube kodu!'
+            });
+        }
+        // SAP B1 COUNT_NEW_LIST sorgusu
+        const response = await axiosInstance.get(
+            `https://10.21.22.11:50000/b1s/v1/SQLQueries('COUNT_NEW')/List?value1= '${whsCode}'`,
+            {
+                headers: {
+                    'Cookie': `B1SESSION=${sessionId}`,
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+
+        console.log('Count new list:', response.data);
+
+        res.json(response.data);
+    } catch (error) {
+        console.error('Error getting count new list:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Stok sayımı için kullanılabilir ürünler alınamadı',
+            details: error.response?.data || error.message
+        });
+    }
+});
 
 
 // Get count list
@@ -2378,22 +2555,276 @@ app.get('/api/count-list', async (req, res) => {
         const sessionId = req.query.sessionId;
         const whsCode = req.query.whsCode;
 
-        console.log('Using sessionId:', sessionId);
-        console.log('Using whsCode:', whsCode);
+        if (!sessionId || !whsCode) {
+            return res.status(400).json({
+                success: false,
+                error: 'Eksik sessionId veya şube kodu!'
+            });
+        }
+  
 
+        // SAP B1 COUNT_LIST sorgusu
+        const response = await axiosInstance.get(
+            `https://10.21.22.11:50000/b1s/v1/SQLQueries('COUNT_LIST')/List?value1= '${whsCode}'`,
+            {
+                headers: {
+                    'Cookie': `B1SESSION=${sessionId}`,
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+        let data = response.data.value || [];
+        console.log('Count list:', data);
+        // Tabloda kullanılacak tüm alanları döndür
+        // data = data.map(row => ({
+        //     WhsCode: row.WhsCode,
+        //     DocNum: row.DocNum,
+        //     RefDate: row.RefDate,
+        //     DocDate: row.DocDate,
+        //     DocStatus: row.DocStatus,
+        //     ItemCode: row.ItemCode,
+        //     ItemName: row.ItemName,
+        //     ItemGroup: row.ItemGroup,
+        //     OnHand: row.OnHand,
+        //     Quantity: row.Quantity,
+        //     UomCode: row.UomCode
+        // }));
+        res.json(data);
+    } catch (error) {
+        console.error('Error getting count list:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Stok sayım listesi alınamadı',
+            details: error.response?.data || error.message
+        });
+    }
+});
+
+// Çoklu veya tekli sayım kaydı
+app.post('/api/count', async (req, res) => {
+    try {
+        const sessionId = req.query.sessionId;
         if (!sessionId) {
             return res.status(400).json({
                 success: false,
-                error: 'Missing session ID'
+                error: 'Eksik session ID!'
+            });
+        }
+        
+        // Tekli veya çoklu veri olabilir
+        let counts = req.body;
+        if (!Array.isArray(counts)) counts = [counts];
+        
+        if (!counts.length) {
+            return res.status(400).json({
+                success: false,
+                error: 'Gönderilecek sayım verisi yok!'
+            });
+        }
+        
+        console.log('Gelen sayım verisi:', counts.length, 'kalem');
+        
+        // Veri formatını SAP B1 için uygun formata dönüştür
+        // SAP B1, verileri AS_B2B_COUNT_DETAILCollection altında bekliyor
+        // Her 25 öğeyi bir batch olarak gönder
+        const BATCH_SIZE = 25;
+        let results = [];
+        let batchCount = 0;
+        
+        // Kalem sayımlarını batches halinde grupla
+        for (let i = 0; i < counts.length; i += BATCH_SIZE) {
+            batchCount++;
+            const batchItems = counts.slice(i, i + BATCH_SIZE);
+            console.log(`Batch ${batchCount}: İşlenen ${batchItems.length} öğe`);
+            
+            try {
+                // Batch için payloadı hazırla
+                const currentBatch = batchItems.map(item => {
+                    // Validasyon
+                    if (!item.U_WhsCode || !item.U_ItemCode || !item.U_Quantity || !item.U_UomCode) {
+                        throw new Error(`Eksik veri: ${JSON.stringify(item)}`);
+                    }
+                    
+                    return {
+                        U_ItemCode: item.U_ItemCode,
+                        U_ItemName: item.U_ItemName || "",
+                        U_Quantity: parseFloat(item.U_Quantity),
+                        U_UomCode: item.U_UomCode
+                    };
+                });
+                
+                // Payloadı oluştur
+                const payload = {
+                    U_WhsCode: batchItems[0].U_WhsCode,
+                    U_RefDate: batchItems[0].U_RefDate || new Date().toISOString().split('T')[0],
+                    U_DocDate: new Date().toISOString().replace(/\.\d+Z$/, 'Z'), // 2025-05-06T00:00:00Z formatında
+                    U_DocStatus: "1", // Doküman durumu 1 olarak gönderiliyor
+                    U_SessionID: batchItems[0].U_SessionID || sessionId,
+                    U_GUID: batchItems[0].U_GUID || `${Date.now()}_${Math.floor(Math.random() * 100000)}`,
+                    U_User: batchItems[0].U_User || "System",
+                    AS_B2B_COUNT_DETAILCollection: currentBatch
+                };
+                
+                console.log(`API isteği gönderiliyor (Batch ${batchCount})`);
+                console.log('Payload:', JSON.stringify(payload, null, 2));
+                
+                // API çağrısı
+                const response = await retryAxiosRequest(async () => {
+                    return axiosInstance.post(
+                        'https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_COUNT',
+                        payload,
+                        {
+                            headers: {
+                                'Cookie': `B1SESSION=${sessionId}`,
+                                'Content-Type': 'application/json'
+                            },
+                            timeout: 30000, // 30 saniye timeout
+                            validateStatus: function (status) {
+                                // 200 dışındaki başarı kodlarını da kabul et
+                                return status < 500;
+                            }
+                        }
+                    );
+                }, 3, 2000);
+                
+                // Başarılı yanıt
+                console.log(`Batch ${batchCount} başarıyla gönderildi:`, response.status);
+                if (response.data) {
+                    console.log('Yanıt verisi:', JSON.stringify(response.data, null, 2));
+                }
+                
+                // Başarılı sonuçları kaydet
+                batchItems.forEach(item => {
+                    results.push({
+                        success: true,
+                        itemCode: item.U_ItemCode,
+                        batch: batchCount,
+                        data: response.data
+                    });
+                });
+                
+            } catch (error) {
+                console.error(`Batch ${batchCount} işlenirken hata:`, error);
+                if (error.response) {
+                    console.error('Hata yanıtı:', error.response.status, JSON.stringify(error.response.data, null, 2));
+                }
+                
+                // Session hatası kontrolü için yardımcı fonksiyon
+                const hasSessionError = () => {
+                    if (error.response && error.response.status === 401) return true;
+                    if (error.response?.data?.error?.code === 301) return true;
+                    
+                    const errorMsg = error.response?.data?.error?.message;
+                    if (errorMsg && typeof errorMsg === 'string' && errorMsg.toLowerCase().includes('session')) {
+                        return true;
+                    }
+                    
+                    if (error.message && typeof error.message === 'string' && 
+                        error.message.includes('Oturum süresi dolmuş')) {
+                        return true;
+                    }
+                    
+                    return false;
+                };
+                
+                // Oturum hatası
+                if (hasSessionError()) {
+                    console.warn('Oturum hatası tespit edildi, istemci yönlendiriliyor');
+                    return res.status(401).json({
+                        success: false,
+                        error: 'Oturum süresi dolmuş, lütfen yeniden giriş yapın',
+                        sessionExpired: true
+                    });
+                }
+                
+                // Başarısız sonuçları kaydet
+                batchItems.forEach(item => {
+                    results.push({
+                        success: false,
+                        itemCode: item.U_ItemCode,
+                        batch: batchCount,
+                        error: error.message
+                    });
+                });
+            }
+        }
+        
+        // Başarı durumunu kontrol et
+        const failedItems = results.filter(r => !r.success);
+        const successCount = results.length - failedItems.length;
+        
+        // Sonuçları döndür
+        res.json({
+            success: true,
+            totalCount: counts.length,
+            successCount: successCount,
+            failCount: failedItems.length,
+            results: results
+        });
+    } catch (error) {
+        console.error('Stok sayımı oluşturma hatası:', error);
+        
+        // Session hatası kontrolü
+        const hasSessionError = () => {
+            if (error.response && error.response.status === 401) return true;
+            if (error.response?.data?.error?.code === 301) return true;
+            
+            const errorMsg = error.response?.data?.error?.message;
+            if (errorMsg && typeof errorMsg === 'string' && errorMsg.toLowerCase().includes('session')) {
+                return true;
+            }
+            
+            if (error.message && typeof error.message === 'string' && 
+                error.message.includes('Oturum süresi dolmuş')) {
+                return true;
+            }
+            
+            return false;
+        };
+        
+        // Oturum hatası
+        if (hasSessionError()) {
+            return res.status(401).json({
+                success: false,
+                error: 'Oturum süresi dolmuş, lütfen yeniden giriş yapın',
+                sessionExpired: true
+            });
+        }
+        
+        res.status(500).json({
+            success: false,
+            error: 'Stok sayımı oluşturulurken hata oluştu',
+            details: error.response?.data || error.message
+        });
+    }
+});
+
+// Toplu sayım işlemi için alias endpoint (geri uyumluluk için)
+app.post('/api/count-new', async (req, res) => {
+    // Tüm istekleri /api/count endpoint'ine yönlendir
+    req.url = '/api/count' + (req.url.includes('?') ? req.url.substring(req.url.indexOf('?')) : '');
+    app.handle(req, res);
+});
+
+// Stok sayım detayını getir
+app.get('/api/count-detail/:docNum', async (req, res) => {
+    try {
+        const sessionId = req.query.sessionId;
+        const docNum = req.params.docNum;
+
+        if (!sessionId || !docNum) {
+            return res.status(400).json({
+                success: false,
+                error: 'Eksik parametre!'
             });
         }
 
-        // Get count list from SAP B1
+        // SAP B1'den detay çek
         const response = await axiosInstance.get(
-            `https://10.21.22.11:50000/b1s/v1/SQLQueries('Count_list')/List`,
+            `https://10.21.22.11:50000/b1s/v1/SQLQueries('COUNT_UPDATE')/List`,
             {
                 params: {
-                    value1: whsCode
+                    value1: `'${docNum}'`
                 },
                 headers: {
                     'Cookie': `B1SESSION=${sessionId}`,
@@ -2402,78 +2833,326 @@ app.get('/api/count-list', async (req, res) => {
             }
         );
 
-        console.log('Count list response:', response);
-        console.log('Count list response data:', response.data);
-
-        res.json(response.data);
+        console.log('Count detail:', response);
+        let data = response.data.value || [];
+        // Sadece ilgili alanları döndür
+        data = data.map(row => ({
+            WhsCode: row.WhsCode,
+            DocNum: row.DocNum,
+            RefDate: row.RefDate,
+            DocDate: row.DocDate,
+            DocStatus: row.DocStatus,
+            ItemCode: row.ItemCode,
+            ItemName: row.ItemName,
+            ItemGroup: row.ItemGroup,
+            Quantity: row.Quantity,
+            UomCode: row.UomCode
+        }));
+        res.json(data);
     } catch (error) {
-        console.error('Error getting count list:', error);
+        console.error('Error getting count detail:', error);
         res.status(500).json({
             success: false,
-            error: 'Failed to get count list',
+            error: 'Stok sayım detayı alınamadı',
             details: error.response?.data || error.message
         });
     }
 });
 
-// Create new count
-app.post('/api/count', async (req, res) => {
+// Stok sayım güncelle
+app.post('/api/count-update', async (req, res) => {
+    console.log('---------- /api/count-update başladı ----------');
+    console.log('Request headers:', JSON.stringify(req.headers));
+    console.log('Request query:', JSON.stringify(req.query));
+    
     try {
-        const sessionId = req.query.sessionId;
+        // Session kontrolü - headers veya query'den sessionId'yi doğrudan al
+        const sessionId = req.headers['x-session-id'] || req.query.sessionId;
+        console.log('Session ID:', sessionId);
         
         if (!sessionId) {
-            return res.status(400).json({
-                success: false,
-                error: 'Missing session ID'
+            console.log('Hata: Session ID yok');
+            return res.status(401).json({ 
+                success: false, 
+                error: 'Unauthorized', 
+                message: 'Oturum bilgisi eksik. Lütfen giriş yapın.' 
             });
         }
-
-        const countData = {
-            U_WhsCode: req.body.U_WhsCode,
-            U_ItemCode: req.body.U_ItemCode,
-            U_ItemName: req.body.U_ItemName,
-            U_Quantity: req.body.U_Quantity,
-            U_UomCode: req.body.U_UomCode,
-            U_DocDate: req.body.U_DocDate,
-            U_SessionID: req.body.U_SessionID,
-            U_GUID: req.body.U_GUID,
-            U_User: req.body.U_User
-        };
-
-        console.log('Creating new count with data:', countData);
-
-        // Create count in SAP B1
-        const response = await axiosInstance.post(
-            'https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_Count',
-            countData,
-            {
+        
+        const updateData = req.body;
+        console.log('Request body (özet):', {
+            DocNum: updateData?.DocNum,
+            WhsCode: updateData?.WhsCode,
+            RefDate: updateData?.RefDate,
+            ItemCount: updateData?.AS_B2B_COUNT_DETAILCollection?.length || 0
+        });
+        
+        // İçeriğin detaylı gösterimi
+        if (updateData?.AS_B2B_COUNT_DETAILCollection?.length > 0) {
+            console.log('---------- KALEM DETAYLARI ----------');
+            updateData.AS_B2B_COUNT_DETAILCollection.forEach((item, index) => {
+                console.log(`Kalem ${index + 1}:`, {
+                    ItemCode: item.U_ItemCode || item.ItemCode,
+                    ItemName: item.U_ItemName || item.ItemName,
+                    Quantity: item.U_Quantity || item.Quantity,
+                    UomCode: item.U_UomCode || item.UomCode
+                });
+            });
+            
+            console.log('İlk 5 kalem tam içerik:');
+            const sampleItems = updateData.AS_B2B_COUNT_DETAILCollection.slice(0, 5);
+            console.log(JSON.stringify(sampleItems, null, 2));
+            console.log('---------- KALEM DETAYLARI SONU ----------');
+        }
+        
+        // Temel validasyon - zorunlu alanları kontrol et
+        if (!updateData || !updateData.DocNum) {
+            console.log('Hata: DocNum gerekli');
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Geçersiz istek formatı. DocNum gerekli.' 
+            });
+        }
+        
+        if (!updateData.WhsCode) {
+            console.log('Hata: WhsCode gerekli');
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Geçersiz istek formatı. WhsCode gerekli.' 
+            });
+        }
+        
+        // AS_B2B_COUNT_DETAILCollection kontrolü
+        if (!updateData.AS_B2B_COUNT_DETAILCollection || !Array.isArray(updateData.AS_B2B_COUNT_DETAILCollection)) {
+            console.log('Hata: Kalem koleksiyonu geçersiz');
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Geçersiz istek formatı. AS_B2B_COUNT_DETAILCollection array olmalı.' 
+            });
+        }
+        
+        // Koleksiyondaki öğelerin geçerliliğini kontrol et
+        const invalidItems = updateData.AS_B2B_COUNT_DETAILCollection.filter(item => 
+            (!item.ItemCode && !item.U_ItemCode) || 
+            (!item.ItemName && !item.U_ItemName) ||
+            (item.Quantity === undefined && item.U_Quantity === undefined));
+            
+        if (invalidItems.length > 0) {
+            console.log('Hata: Geçersiz kalemler:', invalidItems);
+            return res.status(400).json({ 
+                success: false, 
+                error: 'Geçersiz istek formatı. Bazı kalemlerde zorunlu alanlar eksik (ItemCode/U_ItemCode, ItemName/U_ItemName, Quantity/U_Quantity).',
+                invalidItemCount: invalidItems.length
+            });
+        }
+        
+        // SAP B1 servisi için URL ve veri
+        const serviceUrl = `https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_COUNT(${updateData.DocNum})`;
+        console.log('SAP API URL:', serviceUrl);
+        
+        console.log(`Stok sayımı güncelleniyor - DocNum: ${updateData.DocNum}, Items: ${updateData.AS_B2B_COUNT_DETAILCollection.length || 0}`);
+        
+        try {
+            console.log('SAP isteği gönderiliyor...');
+            
+            // Format the request data according to the expected structure
+            const formattedData = {
+                DocNum: updateData.DocNum,
+                Series: -1,
+                DocEntry: updateData.DocNum,
+                U_WhsCode: updateData.WhsCode,
+                U_DocDate: updateData.DocDate || new Date().toISOString().split('T')[0],
+                U_SessionID: sessionId,
+                U_GUID: updateData.GUID || updateData.U_GUID || updateData.U_UpdateGUID || generateGUID(),
+                U_User: updateData.User || updateData.U_User || userName || 'System',
+                U_DocStatus: updateData.DocStatus || updateData.U_DocStatus || '1', // Varsayılan olarak '1' (açık/aktif)
+                U_RefDate: updateData.RefDate || updateData.U_RefDate || new Date().toISOString().split('T')[0],
+                AS_B2B_COUNT_DETAILCollection: updateData.AS_B2B_COUNT_DETAILCollection.map(item => ({
+                    U_ItemCode: item.U_ItemCode || item.ItemCode,
+                    U_ItemName: item.U_ItemName || item.ItemName,
+                    U_Quantity: parseFloat(item.U_Quantity !== undefined ? item.U_Quantity : item.Quantity) || 0.0,
+                    U_UomCode: item.U_UomCode || item.UomCode
+                }))
+            };
+            
+            // Request detaylarını logla
+            console.log('Gönderilen API Yapısı:', {
+                method: 'PUT',
+                url: serviceUrl,
                 headers: {
-                    'Cookie': `B1SESSION=${sessionId}`,
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'Cookie': `B1SESSION=${sessionId.substring(0, 5)}...` // Güvenlik için tam cookie değerini gösterme
+                },
+                dataStructure: {
+                    DocNum: formattedData.DocNum,
+                    WhsCode: formattedData.U_WhsCode,
+                    RefDate: formattedData.U_RefDate,
+                    DocDate: formattedData.U_DocDate,
+                    collectionLength: formattedData.AS_B2B_COUNT_DETAILCollection?.length || 0
+                }
+            });
+            
+            // Formatlanmış verinin ilk 1000 karakterini logla
+            const jsonData = JSON.stringify(formattedData, null, 2);
+            console.log('Formatlanmış veri (ilk 1000 karakter):');
+            console.log(jsonData.length > 1000 ? jsonData.substring(0, 1000) + '...' : jsonData);
+            
+            const response = await axiosInstance.put(
+                serviceUrl,
+                formattedData,
+                {
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Cookie': `B1SESSION=${sessionId}`
+                    }
+                }
+            );
+            
+            console.log('SAP B1 güncelleme başarılı:', response.status);
+            console.log('SAP yanıt başlıkları:', JSON.stringify(response.headers));
+            
+            // Detaylı yanıt verisi
+            if (typeof response.data === 'object') {
+                try {
+                    console.log('---------- API YANIT DETAYI ----------');
+                    console.log('Yanıt Özeti:', {
+                        statusCode: response.status,
+                        contentType: response.headers['content-type'],
+                        dataType: typeof response.data,
+                        isArray: Array.isArray(response.data),
+                        responseSize: JSON.stringify(response.data).length + ' bytes'
+                    });
+                    
+                    // API yanıtının ilk 500 karakteri
+                    const jsonData = JSON.stringify(response.data, null, 2);
+                    console.log('Yanıt Verisi (ilk 500 karakter):');
+                    console.log(jsonData.length > 500 ? jsonData.substring(0, 500) + '...' : jsonData);
+                    console.log('---------- API YANIT DETAYI SONU ----------');
+                } catch (error) {
+                    console.log('Yanıt detayı görüntülenirken hata oluştu:', error.message);
+                }
+            } else {
+                console.log('SAP yanıt verisi:', response.data);
+            }
+            
+            // Başarılı sonuç
+            console.log('---------- /api/count-update başarıyla tamamlandı ----------');
+            return res.json({
+                success: true,
+                data: response.data
+            });
+        } catch (sapError) {
+            console.error('SAP B1 güncelleme hatası:', sapError.message);
+            console.error('Yanıt durumu:', sapError.response?.status);
+            console.error('Yanıt başlıkları:', JSON.stringify(sapError.response?.headers || {}));
+            
+            try {
+                console.log('---------- HATA DETAYLARI ----------');
+                // Detaylı hata bilgisi
+                if (sapError.response?.data) {
+                    if (typeof sapError.response.data === 'object') {
+                        console.error('Hata yanıt yapısı:', JSON.stringify(sapError.response.data, null, 2));
+                        
+                        if (sapError.response.data.error && sapError.response.data.error.message) {
+                            console.error('SAP Hata Mesajı:', sapError.response.data.error.message.value || sapError.response.data.error.message);
+                            console.error('SAP Hata Kodu:', sapError.response.data.error.code);
+                        }
+                        
+                        // Detaylı alan hataları varsa göster
+                        if (sapError.response.data.error?.innererror?.errordetails) {
+                            console.error('---------- ALAN HATALARI ----------');
+                            sapError.response.data.error.innererror.errordetails.forEach(detail => {
+                                console.error(`Alan: ${detail.target}, Mesaj: ${detail.message}`);
+                            });
+                        }
+                    } else {
+                        console.error('Hata yanıt içeriği:', sapError.response.data);
+                    }
+                }
+                
+                // Gönderim verilerinde sorun olabilecek alanları kontrol et
+                console.log('Gönderim verisi kontrolü:');
+                const possibleIssues = [];
+                
+                // Formatlanmış veri kontrolleri
+                if (!formattedData.DocNum) possibleIssues.push('DocNum eksik veya geçersiz');
+                if (!formattedData.U_WhsCode) possibleIssues.push('U_WhsCode eksik veya geçersiz');
+                if (!formattedData.U_RefDate) possibleIssues.push('U_RefDate eksik veya geçersiz');
+                if (!formattedData.U_DocDate) possibleIssues.push('U_DocDate eksik veya geçersiz');
+                if (!formattedData.U_SessionID) possibleIssues.push('U_SessionID eksik veya geçersiz');
+                if (!formattedData.U_GUID) possibleIssues.push('U_GUID eksik veya geçersiz');
+                if (!formattedData.U_User) possibleIssues.push('U_User eksik veya geçersiz');
+                if (!formattedData.U_DocStatus) possibleIssues.push('U_DocStatus eksik veya geçersiz');
+                
+                // Kalem koleksiyonu kontrolleri
+                const hasEmptyFields = formattedData.AS_B2B_COUNT_DETAILCollection?.some(item => 
+                    !item.U_ItemCode || 
+                    !item.U_ItemName ||
+                    item.U_Quantity === undefined);
+                
+                if (hasEmptyFields) possibleIssues.push('Bazı kalemlerde zorunlu alanlar eksik (U_ItemCode, U_ItemName, U_Quantity)');
+                
+                // Yapısal kontroller - gereken alanlar uygun formatta mı?
+                if (formattedData.U_DocStatus && !['1', '2', '3', 'C', 'O'].includes(formattedData.U_DocStatus)) {
+                    possibleIssues.push(`Geçersiz U_DocStatus değeri: ${formattedData.U_DocStatus}`);
+                }
+                
+                // Field adlandırma yapısı kontrolü - SAP'a giden veride tüm alanların U_ prefix'li olması lazım
+                console.log('Formatlanmış yapı analizi: Tüm alanlar U_ prefix içeriyor mu?', 
+                    formattedData.AS_B2B_COUNT_DETAILCollection?.every(item => 
+                        Object.keys(item).every(key => key.startsWith('U_')))
+                );
+                
+                if (possibleIssues.length > 0) {
+                    console.error('Olası veri sorunları:', possibleIssues);
+                } else {
+                    console.log('Veri yapısında belirgin bir sorun bulunamadı.');
+                }
+                console.log('---------- HATA DETAYLARI SONU ----------');
+            } catch (logError) {
+                console.error('Hata detayları görüntülenirken bir sorun oluştu:', logError.message);
+            }
+            
+            // SAP hata mesajını formatla
+            let errorMessage = 'Stok sayımı güncellenirken bir hata oluştu.';
+            
+            if (sapError.response && sapError.response.data) {
+                if (sapError.response.data.error && sapError.response.data.error.message) {
+                    errorMessage = sapError.response.data.error.message.value || sapError.response.data.error.message;
+                } else if (typeof sapError.response.data === 'string') {
+                    errorMessage = sapError.response.data.substring(0, 100);
                 }
             }
-        );
-
-        console.log('Count created successfully:', response.data);
-
-        res.json({
-            success: true,
-            data: response.data
-        });
+            
+            // Oturum hatası kontrolü
+            if (sapError.response && (sapError.response.status === 401 || sapError.response.status === 403)) {
+                console.log('Oturum hatası tespit edildi, client yönlendiriliyor');
+                return res.status(401).json({
+                    success: false,
+                    error: 'Oturum süresi dolmuş. Lütfen tekrar giriş yapın.',
+                    sessionExpired: true
+                });
+            }
+            
+            // Diğer SAP hataları
+            console.log(`SAP hatası: ${errorMessage}`);
+            console.log('---------- /api/count-update hata ile sonlandı ----------');
+            return res.status(sapError.response?.status || 500).json({
+                success: false,
+                error: errorMessage
+            });
+        }
     } catch (error) {
-        console.error('Error creating count:', error);
+        console.error('Count Update API genel hatası:', error.message);
+        console.error(error.stack);
+        console.log('---------- /api/count-update hata ile sonlandı ----------');
         res.status(500).json({
             success: false,
-            error: 'Failed to create count',
-            details: error.response?.data || error.message
+            error: 'Sunucu hatası. Lütfen daha sonra tekrar deneyin.'
         });
     }
 });
 
-
-
-
-// Serve uploaded files
 app.use('/uploads', express.static('uploads'));
 
 // Handle all other routes
@@ -2481,8 +3160,90 @@ app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'login.html'));
 });
 
-// Start server
-const PORT = 80;
+// Port bilgisini command line arguments veya çevresel değişkenlerden al
+const PORT = process.argv.includes('--port') 
+    ? parseInt(process.argv[process.argv.indexOf('--port') + 1]) 
+    : process.env.PORT || 3000;
+
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
+});
+
+// Transfer reddetme
+app.post('/api/transfer/reject/:docNum', async (req, res) => {
+    const { docNum } = req.params;
+    const { sessionId, note, transferData } = req.body;
+
+    console.log('----------- TRANSFER REDDETME İSTEĞİ BAŞLADI -----------');
+    console.log(`Transfer No: ${docNum}`);
+    console.log(`Session ID: ${sessionId}`);
+    console.log(`İptal Nedeni: ${note || "Belirtilmemiş"}`);
+    console.log('Transfer Verileri:', JSON.stringify(transferData, null, 2));
+
+    try {
+        const requestData = {
+            U_Type: "TRANSFER",
+            U_DocNum: parseInt(docNum),
+            U_WhsCode: transferData.WhsCode,
+            U_ItemCode: transferData.ItemCode,
+            U_ItemName: transferData.ItemName,
+            U_DocDate: transferData.DocDate,
+            U_Quantity: parseFloat(transferData.Quantity),
+            U_UomCode: transferData.UomCode,
+            U_FromWhsCode: transferData.FromWhsCode,
+            U_FromWhsName: transferData.FromWhsName,
+            U_DocStatus: "5", // 5 = Reddedildi/İptal edildi
+            U_Comments: note || "Transfer iptal edildi (Neden belirtilmedi)",
+            U_SessionID: 1,
+            U_GUID: generateGUID(),
+            U_User: transferData.UserName
+        };
+
+        console.log('SAP B1 API İsteği Gönderiliyor:');
+        console.log('Endpoint: https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_OWTR');
+        console.log('Request Body:', JSON.stringify(requestData, null, 2));
+
+        const response = await axiosInstance.post(
+            "https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_OWTR",
+            requestData,
+            {
+                headers: {
+                    Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+                    "Content-Type": "application/json"
+                }
+            }
+        );
+
+        console.log('SAP B1 API Yanıtı:');
+        console.log('HTTP Status: ' + response.status);
+        console.log('Response Headers:', JSON.stringify(response.headers, null, 2));
+        console.log('Response Body:', JSON.stringify(response.data, null, 2));
+        console.log('----------- TRANSFER REDDETME İSTEĞİ TAMAMLANDI -----------');
+
+        res.json({
+            status: 'success',
+            message: 'Transfer başarıyla reddedildi',
+            data: response.data
+        });
+    } catch (error) {
+        console.error('----------- TRANSFER REDDETME HATASI -----------');
+        console.error('Hata Mesajı:', error.message);
+        
+        if (error.response) {
+            console.error('HTTP Status: ' + error.response.status);
+            console.error('Response Headers:', JSON.stringify(error.response.headers, null, 2));
+            console.error('Response Body:', JSON.stringify(error.response.data, null, 2));
+        } else if (error.request) {
+            console.error('İstek gönderildi fakat yanıt alınamadı', error.request);
+        } else {
+            console.error('İstek oluşturulurken hata', error.config);
+        }
+        console.error('----------- TRANSFER REDDETME HATASI SONU -----------');
+        
+        res.status(500).json({
+            status: 'error',
+            message: 'Transfer reddetme işlemi başarısız oldu',
+            error: error.response?.data || error.message
+        });
+    }
 });
