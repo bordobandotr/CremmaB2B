@@ -1,4 +1,5 @@
 <script src="../js/avatarGenerator.js"></script>
+<script src="../js/version-display.js"></script>
 <script>
     // Wait for both DOM and avatarGenerator.js to be ready
     function initializeUser() {
@@ -46,15 +47,23 @@
     }
 </script>
 
-<div class="user-info position-absolute bottom-0  start-0 p-3 w-100" style="border-top: 0px;">
-    <div class="d-flex align-items-center">
-        <button id="darkModeToggle" class="dark-mode-toggle" title="Toggle Dark Mode">
-            <i class="bi bi-moon-fill mode-dark"></i>
-            <i class="bi bi-sun-fill mode-light"></i>
-        </button>
-        <img id="userAvatar" alt="User Avatar" class="user-avatar">
-        <div class="text-white user-info-text">
-            <small><span id="userName">-</span> - <span id="branchName">-</span></small>
+<div class="user-info position-absolute bottom-0 start-0 p-3 w-100" style="border-top: 0px;">
+    <div class="d-flex flex-column">
+        <!-- Dark mode toggle and user info -->
+        <div class="d-flex align-items-center mb-1">
+            <button id="darkModeToggle" class="dark-mode-toggle" title="Toggle Dark Mode">
+                <i class="bi bi-moon-fill mode-dark"></i>
+                <i class="bi bi-sun-fill mode-light"></i>
+            </button>
+            <img id="userAvatar" alt="User Avatar" class="user-avatar">
+            <div class="text-white user-info-text">
+                <small><span id="userName">-</span> - <span id="branchName">-</span></small>
+            </div>
+        </div>
+        
+        <!-- Version number row -->
+        <div class="d-flex justify-content-end align-items-center version-container">
+            <span id="app-version" class="version-display">v1.0.0</span>
         </div>
     </div>
 </div>
@@ -66,5 +75,33 @@
         border-radius: 50%;
         margin-right: 1rem;
         background-color: #ffffff20;
+    }
+    
+    .version-display {
+        font-size: 0.7rem;
+        color: rgba(255, 255, 255, 0.6);
+        font-family: monospace;
+        padding: 2px 5px;
+        border-radius: 4px;
+        background-color: rgba(0, 0, 0, 0.2);
+    }
+    
+    .sidebar.collapsed .version-display {
+        font-size: 0.6rem;
+        padding: 1px 3px;
+    }
+    
+    .version-container {
+        margin-top: 2px;
+    }
+    
+    /* Make sure version is visible in collapsed mode */
+    .sidebar.collapsed .user-info-text {
+        display: none;
+    }
+    
+    .sidebar.collapsed .version-container {
+        justify-content: center;
+        margin-top: 5px;
     }
 </style>

@@ -68,6 +68,26 @@ async function retryAxiosRequest(apiCall, maxRetries = 2, delay = 1000) {
     throw lastError;
 }
 
+// Route to serve application version information
+app.get('/package.json', (req, res) => {
+    try {
+        // Read the package.json file
+        const packageJson = require('./package.json');
+        
+        // Only return necessary information for security
+        const versionInfo = {
+            name: packageJson.name,
+            version: packageJson.version,
+            description: packageJson.description
+        };
+        
+        res.json(versionInfo);
+    } catch (error) {
+        console.error('Error serving version information:', error);
+        res.status(500).json({ error: 'Could not retrieve version information' });
+    }
+});
+
 // Add versioning middleware for static assets
 app.use((req, res, next) => {
     const fileExtension = path.extname(req.url).toLowerCase();

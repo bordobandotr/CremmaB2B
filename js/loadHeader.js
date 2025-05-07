@@ -17,27 +17,35 @@ document.addEventListener('DOMContentLoaded', async function() {
     const headContent = await fetch('./components/header.html')
         .then(response => response.text());
     
-    // Insert the header content after the existing head elements
-    const head = document.head;
-    const existingMeta = head.querySelector('meta[charset]');
+    document.head.insertAdjacentHTML('beforeend', headContent);
     
-    if (existingMeta) {
-        existingMeta.insertAdjacentHTML('afterend', headContent);
-    } else {
-        head.insertAdjacentHTML('afterbegin', headContent);
+    // Load sidebar components
+    const navMenu = document.getElementById('sidebar-nav');
+    if (navMenu) {
+        const navMenuContent = await fetch('./components/nav-menu.html')
+            .then(response => response.text());
+        navMenu.insertAdjacentHTML('afterbegin', navMenuContent);
     }
-
-    const logoContent = await fetch('./components/logo_container.html')
-        .then(response => response.text());
     
-    // Insert the header content after the existing head elements
+    const sidebarUser = document.getElementById('sidebar-user');
+    if (sidebarUser) {
+        const sidebarUserContent = await fetch('./components/sidebar_user.html')
+            .then(response => response.text());
+        sidebarUser.insertAdjacentHTML('afterbegin', sidebarUserContent);
+    }
+    
     const logo = document.getElementById('logo-container');
     if (logo) {
+        const logoContent = await fetch('./components/logo_container.html')
+            .then(response => response.text());
         logo.insertAdjacentHTML('afterbegin', logoContent);
     }
     
     // Load dark mode script
     loadJS('js/dark-mode.js');
+    
+    // Load version display script
+    loadJS('js/version-display.js');
 });
 
 // Add versioning function to prevent cache issues
