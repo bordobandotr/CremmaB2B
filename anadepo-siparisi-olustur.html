@@ -814,17 +814,19 @@
                         hideLoading();
                         bootstrap.Modal.getInstance(document.getElementById('orderSummaryModal')).hide();
                         
-                        // Show success message
+                        // Show success message and redirect to orders page
                         Swal.fire({
-    icon: 'success',
-    title: 'Başarılı!',
-    text: 'Sipariş başarıyla oluşturuldu!',
-    confirmButtonText: 'Tamam'
-});
+                            icon: 'success',
+                            title: 'Başarılı!',
+                            text: 'Sipariş başarıyla oluşturuldu!',
+                            confirmButtonText: 'Tamam'
+                        }).then(() => {
+                            window.location.href = 'anadepo-siparisleri.html';
+                        });
                         
                         // Clear quantities and reload orders
                         selectedQuantities.clear();
-                        await loadOrders();
+                        // await loadOrders(); // Not needed since we're redirecting
                         
                     } catch (error) {
                         hideLoading();
