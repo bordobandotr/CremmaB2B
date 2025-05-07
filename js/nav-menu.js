@@ -1,9 +1,9 @@
 document.addEventListener('DOMContentLoaded', async function() {
-    const navContent = await fetch('./components/nav-menu.html')
-        .then(response => response.text());
-    
     const nav = document.getElementById('sidebar-nav');
-    if (nav) {
+    if (nav && nav.innerHTML.trim() === '') {
+        const navContent = await fetch('./components/nav-menu.html')
+            .then(response => response.text());
+        
         nav.innerHTML = navContent;
         
         // Get current page URL

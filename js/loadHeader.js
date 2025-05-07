@@ -32,6 +32,9 @@ document.addEventListener('DOMContentLoaded', async function() {
         const sidebarUserContent = await fetch('./components/sidebar_user.html')
             .then(response => response.text());
         sidebarUser.insertAdjacentHTML('afterbegin', sidebarUserContent);
+        
+        // Load sidebar user script
+        loadJS('js/sidebar_user.js');
     }
     
     const logo = document.getElementById('logo-container');
@@ -66,6 +69,17 @@ function loadCSS(href) {
 
 // Function to dynamically load JS with versioning
 function loadJS(src, async = false, defer = false) {
+    // Skip loading sidebar-user.js if sidebar_user.js is already loaded or being loaded
+    if (src === 'js/sidebar-user.js' && window.sidebarUserJsLoaded) {
+        console.log('Skipping sidebar-user.js as sidebar_user.js is already loaded');
+        return;
+    }
+    
+    // Set flag if loading sidebar_user.js
+    if (src === 'js/sidebar_user.js') {
+        window.sidebarUserJsLoaded = true;
+    }
+    
     const script = document.createElement('script');
     script.src = getVersionedUrl(src);
     script.async = async;

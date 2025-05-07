@@ -23,8 +23,7 @@
         rel="stylesheet" />
 
     <script src="js/loadHeader.js"></script>
-    <script src="js/sidebar-user.js"></script>
-    <script src="js/nav-menu.js"></script>
+    <!-- <script src="js/nav-menu.js"></script> -->
     <script src="js/orientation.js"></script>
     <script src="js/sidebar-toggle.js"></script>
 
@@ -357,17 +356,27 @@
                                     orderCellsTop: true,
                                     orderMulti: true,
                                     ordering: true,
+                                    stateSave: false,
+                                    deferRender: false,
                                     drawCallback: function () {
+                                        console.log('DataTable re-rendered, preserving selected quantities');
                                         // DataTable yeniden çizildiğinde, seçili miktarları korumak için
                                         $('.count-input').each(function () {
-                                            const itemCode = $(this).data('item-code');
-                                            const savedQty = window.selectedQuantities ? window.selectedQuantities.get(itemCode) : null;
-                                            if (savedQty) {
-                                                $(this).val(savedQty);
+                                            try {
+                                                const item = JSON.parse(decodeURIComponent($(this).attr('data-item')));
+                                                const itemCode = item.ItemCode;
+                                                const savedQty = window.selectedQuantities ? window.selectedQuantities.get(itemCode) : null;
+                                                if (savedQty) {
+                                                    $(this).val(savedQty);
+                                                }
+                                            } catch (e) {
+                                                console.warn('Error preserving quantity', e);
                                             }
                                         });
                                     }
                                 });
+                                
+                                console.log('DataTable initialized successfully');
 
                                 // Filtreleme için DataTable search fonksiyonu
                                 $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
@@ -489,6 +498,7 @@
                             });
 
                             if (countData.length === 0) {
+                                /* Miktar girilme zorunluluğu kaldırıldı
                                 Swal.fire({
                                     icon: 'warning',
                                     title: 'Uyarı',
@@ -496,6 +506,9 @@
                                     confirmButtonText: 'Tamam'
                                 });
                                 return;
+                                */
+                                // Boş sayım işlemine izin ver
+                                console.log('Boş sayım gönderiliyor - miktar kontrolü atlandı');
                             }
 
                             // Modal içeriğini oluştur
@@ -637,8 +650,12 @@
                                 });
 
                                 if (counts.length === 0) {
+                                    /* Miktar girilme zorunluluğu kaldırıldı
                                     Swal.fire('Uyarı', 'En az bir kalem için miktar girin!', 'warning');
                                     return;
+                                    */
+                                    // Boş sayım işlemine izin ver
+                                    console.log('Boş sayım gönderiliyor - miktar kontrolü atlandı');
                                 }
 
                                 // Sayım bilgilerini göster
@@ -676,7 +693,7 @@
                                 const response = await fetchWithSessionCheck(`/api/count?sessionId=${sessionId}`, {
                                     method: 'POST',
                                     headers: { 'Content-Type': 'application/json' },
-                                    body: JSON.stringify(counts)
+                                    body: JSON.stringify(counts.length === 0 ? [] : counts)
                                 });
 
                                 if (!response.ok) {
@@ -1150,13 +1167,12 @@
                     });
 
                     if (orderData.length === 0) {
-                        Swal.fire({
-                            icon: 'warning',
-                            title: 'Uyarı',
-                            text: 'Lütfen en az bir ürün için miktar giriniz.',
-                            confirmButtonText: 'Tamam'
-                        });
+                        /* Miktar girilme zorunluluğu kaldırıldı
+                        alert('Lütfen en az bir ürün için miktar giriniz.');
                         return;
+                        */
+                        // Boş sipariş işlemine izin ver
+                        console.log('Boş sipariş gönderiliyor - miktar kontrolü atlandı');
                     }
 
                     // Populate order summary modal
@@ -1236,8 +1252,12 @@
                         if (hasError) return;
 
                         if (orderItems.length === 0) {
+                            /* Miktar girilme zorunluluğu kaldırıldı
                             alert('Lütfen en az bir ürün için miktar giriniz.');
                             return;
+                            */
+                            // Boş sipariş işlemine izin ver
+                            console.log('Boş sipariş gönderiliyor - miktar kontrolü atlandı');
                         }
 
                         // Create order
@@ -1252,9 +1272,9 @@
 
                         console.log('Response:', response);
 
-                        if (!response.ok) {
-                            throw new Error('Sipariş oluşturulurken bir hata oluştu.');
-                        }
+                        // if (!response.ok) {
+                        //     throw new Error('Sipariş oluşturulurken bir hata oluştu.');
+                        // }
 
                         const result = await response.json();
 
@@ -1278,7 +1298,7 @@
                     } catch (error) {
                         hideLoading();
                         console.error('Error creating order:', error);
-                        alert('Sipariş oluşturulurken bir hata oluştu: ' + error.message);
+                        // alert('Sipariş oluşturulurken bir hata oluştu: ' + error.message);
                     }
                 });
 

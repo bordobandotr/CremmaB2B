@@ -199,7 +199,7 @@ $(document).ready(function () {
         updateProgressBar(10);
         
         try {
-            const response = await fetchWithSessionCheck(`/api/count-detail/${docNum}?sessionId=${sessionId}`);
+            const response = await fetchWithSessionCheck(`/api/count-edit/${docNum}?sessionId=${sessionId}`);
             const data = await response.json();
             
             if (!Array.isArray(data) || data.length === 0) {

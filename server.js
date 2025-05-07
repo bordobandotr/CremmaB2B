@@ -2649,9 +2649,8 @@ app.get('/api/count-new-list', async (req, res) => {
             }
         );
 
-        console.log('Count new list:', response.data);
-
-        res.json(response.data);
+        // Her zaman value ile dön
+        res.json({ value: response.data.value || response.data || [] });
     } catch (error) {
         console.error('Error getting count new list:', error);
         res.status(500).json({
@@ -2661,7 +2660,6 @@ app.get('/api/count-new-list', async (req, res) => {
         });
     }
 });
-
 
 // Get count list
 app.get('/api/count-list', async (req, res) => {
@@ -2676,7 +2674,6 @@ app.get('/api/count-list', async (req, res) => {
             });
         }
   
-
         // SAP B1 COUNT_LIST sorgusu
         const response = await axiosInstance.get(
             `https://10.21.22.11:50000/b1s/v1/SQLQueries('COUNT_LIST')/List?value1= '${whsCode}'`,
@@ -2687,23 +2684,8 @@ app.get('/api/count-list', async (req, res) => {
                 }
             }
         );
-        let data = response.data.value || [];
-        console.log('Count list:', data);
-        // Tabloda kullanılacak tüm alanları döndür
-        // data = data.map(row => ({
-        //     WhsCode: row.WhsCode,
-        //     DocNum: row.DocNum,
-        //     RefDate: row.RefDate,
-        //     DocDate: row.DocDate,
-        //     DocStatus: row.DocStatus,
-        //     ItemCode: row.ItemCode,
-        //     ItemName: row.ItemName,
-        //     ItemGroup: row.ItemGroup,
-        //     OnHand: row.OnHand,
-        //     Quantity: row.Quantity,
-        //     UomCode: row.UomCode
-        // }));
-        res.json(data);
+        let data = response.data.value || response.data || [];
+        res.json({ value: data });
     } catch (error) {
         console.error('Error getting count list:', error);
         res.status(500).json({
@@ -2920,8 +2902,62 @@ app.post('/api/count-new', async (req, res) => {
     app.handle(req, res);
 });
 
-// Stok sayım detayını getir
+// Stok sayım detayını getir (sadece görüntülemek için)
 app.get('/api/count-detail/:docNum', async (req, res) => {
+    try {
+        const sessionId = req.query.sessionId;
+        const docNum = req.params.docNum;
+
+        if (!sessionId || !docNum) {
+            return res.status(400).json({
+                success: false,
+                error: 'Eksik parametre!'
+            });
+        }
+
+        // SAP B1'den detay çek
+        const response = await axiosInstance.get(
+            `https://10.21.22.11:50000/b1s/v1/SQLQueries('COUNT_DETAIL')/List`,
+            {
+                params: {
+                    value1: `'${docNum}'`
+                },
+                headers: {
+                    'Cookie': `B1SESSION=${sessionId}`,
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+
+        console.log('Count detail:', response);
+        let data = response.data.value || [];
+        // Sadece görüntüleme için gerekli alanları döndür
+        data = data.map(row => ({
+            WhsCode: row.WhsCode,
+            DocNum: row.DocNum,
+            RefDate: row.RefDate,
+            DocDate: row.DocDate,
+            DocStatus: row.DocStatus,
+            ItemCode: row.ItemCode,
+            ItemName: row.ItemName,
+            ItemGroup: row.ItemGroup,
+            Quantity: row.Quantity,
+            UomCode: row.UomCode,
+            Comments: row.Comments
+        }));
+        res.json(data);
+    } catch (error) {
+        console.error('Error getting count detail:', error);
+        res.status(500).json({
+            success: false,
+            error: 'Stok sayım detayı alınamadı',
+            details: error.response?.data || error.message
+        });
+    }
+});
+
+// Stok sayım düzenleme verisini getir (düzenleme için ek alanlarla)
+app.get('/api/count-edit/:docNum', async (req, res) => {
     try {
         const sessionId = req.query.sessionId;
         const docNum = req.params.docNum;
@@ -2947,12 +2983,15 @@ app.get('/api/count-detail/:docNum', async (req, res) => {
             }
         );
 
-        console.log('Count detail:', response);
+        console.log('Count edit data:', response);
         let data = response.data.value || [];
-        // Sadece ilgili alanları döndür
+        // Düzenleme için gerekli tüm alanları döndür (DocEntry ve LineNum dahil)
         data = data.map(row => ({
             WhsCode: row.WhsCode,
             DocNum: row.DocNum,
+            DocEntry: row.DocEntry,
+            LineId: row.LineId,
+            LineNum: row.LineNum,
             RefDate: row.RefDate,
             DocDate: row.DocDate,
             DocStatus: row.DocStatus,
@@ -2960,14 +2999,20 @@ app.get('/api/count-detail/:docNum', async (req, res) => {
             ItemName: row.ItemName,
             ItemGroup: row.ItemGroup,
             Quantity: row.Quantity,
-            UomCode: row.UomCode
+            UomCode: row.UomCode,
+            Comments: row.Comments,
+            UpdateDate: row.UpdateDate,
+            CreateDate: row.CreateDate,
+            U_SessionID: row.U_SessionID,
+            U_GUID: row.U_GUID,
+            U_User: row.U_User
         }));
         res.json(data);
     } catch (error) {
-        console.error('Error getting count detail:', error);
+        console.error('Error getting count edit data:', error);
         res.status(500).json({
             success: false,
-            error: 'Stok sayım detayı alınamadı',
+            error: 'Stok sayım düzenleme verisi alınamadı',
             details: error.response?.data || error.message
         });
     }

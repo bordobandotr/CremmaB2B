@@ -10,27 +10,105 @@ function disableDataTableCaching() {
     // Check if DataTable plugin exists
     if (window.$ && $.fn.DataTable) {
         // Set global default
-        $.extend($.fn.dataTable.defaults, {
+        $.extend($.fn.DataTable.defaults, {
             // Disable all client-side caching
             bStateSave: false,
             // Always reload data on page reload
-            bDeferRender: false,
-            // Force fresh AJAX requests
-            ajax: {
-                cache: false
-            }
+            bDeferRender: false
+            // No global ajax setting - let tables define their own ajax property
         });
         
         // Monkey patch the original $.fn.DataTable.ajax.reload function
         const originalReload = $.fn.DataTable.Api.prototype.ajax.reload;
         $.fn.DataTable.Api.prototype.ajax.reload = function(callback, resetPaging) {
-            // Add cache-busting parameter to force fresh data
-            this.ajax.url(this.ajax.url().split('?')[0] + '?_=' + new Date().getTime());
-            // Call the original reload function with the provided callback and resetPaging option
-            return originalReload.call(this, callback, resetPaging);
+            // Only proceed if ajax property exists
+            if (this.ajax && typeof this.ajax.url === 'function') {
+                try {
+                    // Add cache-busting parameter to force fresh data
+                    const originalUrl = this.ajax.url();
+                    const cacheBuster = new Date().getTime();
+                    const url = originalUrl.split('?')[0] + '?_=' + cacheBuster;
+                    this.ajax.url(url);
+                    
+                    // Call the original reload function with the provided callback and resetPaging option
+                    return originalReload.call(this, callback, resetPaging);
+                } catch (e) {
+                    console.warn('Error in ajax.reload:', e);
+                    return this;
+                }
+            } else {
+                console.warn('ajax.reload called on a DataTable without ajax configuration or with invalid configuration.');
+                // For non-AJAX tables, refresh the table's layout
+                this.columns.adjust().draw(false);
+                return this;
+            }
         };
         
+        // Implement automatic refresh on page focus/visibility change
+        setupAutoReloadOnFocus();
+        
         console.log('DataTable caching disabled successfully');
+    }
+}
+
+/**
+ * Setup automatic DataTable reloading when the page becomes visible again
+ */
+function setupAutoReloadOnFocus() {
+    let wasHidden = false;
+    
+    // Listen for visibility change
+    document.addEventListener('visibilitychange', function() {
+        if (document.hidden) {
+            wasHidden = true;
+        } else if (wasHidden) {
+            // Page becomes visible again
+            reloadAllDataTables();
+            wasHidden = false;
+        }
+    });
+    
+    // Listen for window focus
+    window.addEventListener('focus', function() {
+        reloadAllDataTables();
+    });
+}
+
+/**
+ * Reload all DataTables on the page
+ */
+function reloadAllDataTables() {
+    if (window.$ && $.fn.DataTable) {
+        try {
+            // Give a slight delay before reload
+            setTimeout(() => {
+                // Get all DataTable instances
+                const tables = $.fn.dataTable.tables({ api: true });
+                
+                // Loop through each table and reload if it has AJAX configuration
+                tables.each(function(dt) {
+                    try {
+                        // Check if table has AJAX config
+                        if (dt.ajax && typeof dt.ajax.url === 'function') {
+                            // Reload AJAX tables
+                            dt.ajax.reload(null, false);
+                        } else {
+                            // For static tables, just redraw
+                            dt.draw(false);
+                        }
+                    } catch (e) {
+                        console.warn('Error reloading table:', e);
+                    }
+                });
+                
+                console.log('All DataTables refreshed on page focus');
+                
+                // Force redraw
+                forceRedrawDataTables();
+            }, 300);
+        } catch (error) {
+            console.warn('Error reloading DataTables:', error);
+        }
     }
 }
 
@@ -48,14 +126,21 @@ function patchAllDataTablesForNoCache() {
             // Default options to disable caching
             const noCacheOptions = {
                 bStateSave: false,
-                bDeferRender: false,
-                ajax: {
-                    cache: false
-                }
+                bDeferRender: false
             };
+            
+            // Only add ajax cache settings if the table defines ajax
+            if (options && options.ajax) {
+                noCacheOptions.ajax = { cache: false };
+            }
             
             // Merge with user options (user options take precedence)
             const mergedOptions = $.extend({}, noCacheOptions, options);
+            
+            // If there's an ajax option, ensure it has cache: false
+            if (mergedOptions.ajax && typeof mergedOptions.ajax === 'object') {
+                mergedOptions.ajax.cache = false;
+            }
             
             // Call the original initialization function with merged options
             const instance = originalDataTable.apply(this, [mergedOptions]);
@@ -83,10 +168,6 @@ function patchAllDataTablesForNoCache() {
         console.log('All new DataTable instances patched for no-cache behavior');
     }
 }
-
-/**
- * Add this at the beginning of the file, after the first comment block
- */
 
 /**
  * Adds a refresh button to the page that will reload with the refreshOnToggle parameter
@@ -136,62 +217,23 @@ function addDataTableRefreshButton() {
 }
 
 /**
- * Force redraw all DataTables on the page
+ * Force redraw of all DataTables to fix layout issues
  */
 function forceRedrawDataTables() {
-    if (window.$ && $.fn.DataTable) {
-        try {
-            // Give tables a moment to adjust to new size
-            setTimeout(() => {
-                // Try different methods to redraw tables
-                try {
-                    $.fn.dataTable.tables({ visible: true, api: true }).responsive.recalc();
-                } catch (e) {
-                    console.warn('Error recalculating responsive tables:', e);
-                }
-                
-                try {
-                    $.fn.dataTable.tables({ visible: true, api: true }).columns.adjust().draw();
-                } catch (e) {
-                    console.warn('Error adjusting columns:', e);
-                }
-                
-                // Alternative approach for specific tables
-                const commonTableIds = [
-                    'ordersTable', 
-                    'deliveryItems', 
-                    'stockTable', 
-                    'itemsTable', 
-                    'sayimListesiTable',
-                    'orderItems',
-                    'orderTable'
-                ];
-                
-                commonTableIds.forEach(tableId => {
-                    const table = $('#' + tableId);
-                    if (table.length && $.fn.DataTable.isDataTable(table)) {
-                        try {
-                            table.DataTable().columns.adjust().responsive.recalc().draw();
-                        } catch (e) {
-                            console.warn(`Error adjusting table #${tableId}:`, e);
-                        }
-                    }
+    setTimeout(() => {
+        if (window.$ && $.fn.DataTable) {
+            try {
+                // Get all DataTable instances
+                $.fn.dataTable.tables({ api: true }).each(function() {
+                    // Redraw and adjust columns for each table
+                    $(this.table().node()).DataTable().columns.adjust().responsive.recalc();
+                    console.log('DataTable adjusted and recalculated');
                 });
-
-                // Find all dataTables individually
-                $('table.dataTable').each(function() {
-                    try {
-                        const tableInstance = $(this).DataTable();
-                        tableInstance.columns.adjust().responsive.recalc().draw();
-                    } catch (e) {
-                        console.warn('Error adjusting individual table:', e);
-                    }
-                });
-            }, 300);
-        } catch (e) {
-            console.warn('Error forcing DataTable redraw:', e);
+            } catch (error) {
+                console.warn('Error redrawing DataTables:', error);
+            }
         }
-    }
+    }, 200);
 }
 
 // Add CSS to fix DataTable width issues
@@ -620,6 +662,12 @@ function reinitializeAllDataTables() {
     disableDTWarnings();
 })();
 
+// Add global refresh function that users can call explicitly
+window.refreshAllDataTables = function() {
+    reloadAllDataTables();
+    return false; // Prevent default behavior if called from a link
+};
+
 // Initialize everything when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
     // Add CSS fixes
@@ -633,7 +681,8 @@ document.addEventListener('DOMContentLoaded', function() {
     window.DT_Helper = {
         init: initializeOrResetDataTable,
         reinitAll: reinitializeAllDataTables,
-        redraw: forceRedrawDataTables
+        redraw: forceRedrawDataTables,
+        reload: reloadAllDataTables
     };
     
     // Wait a moment for jQuery and DataTables to be ready
@@ -668,6 +717,34 @@ document.addEventListener('DOMContentLoaded', function() {
                 forceRedrawDataTables();
             }
         }
+        
+        // Add refresh button to all DataTable containers
+        if (window.$ && $.fn.DataTable) {
+            $('.dataTables_wrapper').each(function() {
+                const wrapper = $(this);
+                if (!wrapper.find('.dt-refresh-btn').length) {
+                    const refreshBtn = $('<button>')
+                        .addClass('btn btn-sm btn-outline-secondary dt-refresh-btn')
+                        .html('<i class="bi bi-arrow-clockwise"></i>')
+                        .attr('title', 'Verileri Yenile')
+                        .css({
+                            'position': 'absolute',
+                            'top': '5px',
+                            'right': '5px',
+                            'z-index': '100'
+                        })
+                        .on('click', function(e) {
+                            e.preventDefault();
+                            const table = $(this).closest('.dataTables_wrapper').find('table.dataTable');
+                            if (table.length && $.fn.DataTable.isDataTable(table)) {
+                                table.DataTable().ajax.reload(null, false);
+                            }
+                        });
+                    
+                    wrapper.css('position', 'relative').append(refreshBtn);
+                }
+            });
+        }
     }, 500);
 });
 
@@ -688,6 +765,7 @@ $.extend(window.dataTableHelper, {
     disableCaching: disableDataTableCaching,
     patchForNoCache: patchAllDataTablesForNoCache,
     refreshWithFreshData: refreshDataTableWithFreshData,
+    reloadAll: reloadAllDataTables,
     // ... existing properties ...
 });
 

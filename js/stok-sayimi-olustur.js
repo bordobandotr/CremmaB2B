@@ -122,6 +122,7 @@ $(document).ready(function () {
             }
         });
         
+        /* Miktar girilme zorunluluğu kaldırıldı
         if (sayimlar.length === 0) {
             hideLoading();
             Swal.fire({
@@ -132,6 +133,7 @@ $(document).ready(function () {
             });
             return;
         }
+        */
         
         // Sayım verilerini göster
         showLoading(`${sayimlar.length} ürün için sayım gönderiliyor...`);

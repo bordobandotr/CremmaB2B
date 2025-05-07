@@ -77,26 +77,6 @@ $(document).ready(function () {
         $('.loading-screen').hide();
     }
 
-    // Tablo verilerini HTML'e dönüştür
-    function createTableRows(data) {
-        let html = '';
-        
-        data.forEach(row => {
-            html += `
-                <tr data-status="${row.DocStatus}">
-                    <td>${row.WhsCode}</td>
-                    <td>${row.DocNum}</td>
-                    <td>${formatDate(row.RefDate)}</td>
-                    <td>${formatDate(row.DocDate)}</td>
-                    <td>${durumBadge(row.DocStatus)}</td>
-                    <td>${islemBtn(row.DocNum, row.DocStatus, row)}</td>
-                </tr>
-            `;
-        });
-        
-        return html;
-    }
-    
     // DataTable'ı başlat
     function initDataTable() {
         // Önceki instance varsa yok et
@@ -104,7 +84,11 @@ $(document).ready(function () {
             countTable.destroy();
         }
         
-        // DataTable'ı yeniden oluştur
+        showLoading();
+        
+        console.log('Initializing table with sessionId:', sessionId, 'whsCode:', whsCode);
+        
+        // DataTable'ı AJAX destekli olarak yeniden oluştur
         countTable = $('#sayimListesiTable').DataTable({
             responsive: true,
             destroy: true,
@@ -112,23 +96,105 @@ $(document).ready(function () {
                 url: 'i18n/tr.json'
             },
             autoWidth: true,
+            processing: true,
+            serverSide: false, // Tüm veriyi tek seferde çek
+            ajax: {
+                url: '/api/count-list',
+                type: 'GET',
+                data: function(d) {
+                    d.sessionId = sessionId;
+                    d.whsCode = whsCode;
+                    return d;
+                },
+                dataSrc: function(json) {
+                    hideLoading();
+                    console.log('API response:', json);
+                    
+                    // API'den gelen veriyi DataTable'a uygun formata dönüştür
+                    // Farklı API yanıt formatlarını destekle
+                    let data = [];
+                    
+                    // JSON yapısının farklı formatlarını kontrol et
+                    if (json.value && Array.isArray(json.value)) {
+                        data = json.value;
+                    } else if (json.data && Array.isArray(json.data)) {
+                        data = json.data;
+                    } else if (Array.isArray(json)) {
+                        data = json;
+                    } else {
+                        console.warn('Unexpected API response format:', json);
+                        return [];
+                    }
+                    
+                    console.log('Processed data:', data);
+                    
+                    // Veri yoksa boş dizi döndür
+                    if (!Array.isArray(data) || data.length === 0) {
+                        console.log('No data available');
+                        return [];
+                    }
+                    
+                    try {
+                        // Her bir veri satırını işle ve yeni formatta dizi döndür
+                        return data.map(function(item) {
+                            return [
+                                item.WhsCode || '',
+                                item.DocNum || '',
+                                formatDate(item.RefDate || ''),
+                                formatDate(item.DocDate || ''),
+                                durumBadge(item.DocStatus),
+                                islemBtn(item.DocNum, item.DocStatus, item),
+                                item.DocStatus  // Gizli sütun - filtreleme için
+                            ];
+                        });
+                    } catch (error) {
+                        console.error('Error processing data:', error);
+                        return [];
+                    }
+                },
+                cache: false,
+                error: function(xhr, error, thrown) {
+                    console.error('AJAX error:', xhr, error, thrown);
+                    hideLoading();
+                    $('#sayimListesiTable tbody').html('<tr><td colspan="6">Veri alınamadı.</td></tr>');
+                }
+            },
             columnDefs: [
                 { width: '12%', targets: 0 },  // Şube
                 { width: '10%', targets: 1 },  // Sayım No
                 { width: '15%', targets: 2 },  // Başlangıç Tarihi
                 { width: '15%', targets: 3 },  // Giriş Tarihi
                 { width: '13%', targets: 4 },  // Durum
-                { width: '35%', targets: 5 }   // İşlemler
+                { width: '35%', targets: 5 },  // İşlemler
+                { 
+                    // Gizli sütun - filtreleme için DocStatus değerini sakla
+                    targets: 6,
+                    visible: false,
+                    searchable: true
+                }
             ],
+            stateSave: false,
+            deferRender: false,
             order: [[1, 'desc']], // Sayım No'ya göre büyükten küçüğe sırala
+            createdRow: function(row, data, dataIndex) {
+                // Satıra durum kodu ekle
+                $(row).attr('data-status', data[6]);
+            },
             initComplete: function() {
                 // DataTable oluşturulduktan sonra genişliği ayarla
                 $(window).trigger('resize');
+                
+                // Filtreleri uygula
+                setTimeout(function() {
+                    applyFilters();
+                }, 100);
+                
+                console.log('DataTable initialization complete');
+            },
+            drawCallback: function() {
+                console.log('DataTable draw complete');
             }
         });
-        
-        // Tablonun yeniden çizilmesi
-        countTable.draw();
     }
 
     // Sayfa yüklendiğinde veya resize olduğunda DataTable genişliğini ayarla
@@ -146,31 +212,6 @@ $(document).ready(function () {
             }
         }
     });
-
-    // Veri çekme fonksiyonu
-    function loadCountListData() {
-        showLoading();
-        $.ajax({
-            url: '/api/count-list',
-            method: 'GET',
-            data: {
-                sessionId: sessionId,
-                whsCode: whsCode
-            },
-            success: function (res) {
-                updateTableWithData(res);
-            },
-            error: function (xhr) {
-                hideLoading();
-                $('#sayimListesiTable tbody').html('<tr><td colspan="6">Veri alınamadı.</td></tr>');
-            }
-        });
-    }
-    
-    // İptal ve kopyalama butonları için olay dinleyicileri
-    function setupButtonListeners() {
-        // Artık butonlar olmadığı için boş fonksiyon
-    }
     
     // Filtreleri uygulama
     function applyFilters() {
@@ -192,8 +233,7 @@ $(document).ready(function () {
             
             // Durum filtresi
             if (statusFilter && statusFilter !== '') {
-                const row = countTable.row(dataIndex).node();
-                const rowStatus = $(row).attr('data-status');
+                const rowStatus = data[6]; // Gizli sütundaki durum değeri
                 passStatusFilter = rowStatus === statusFilter;
             }
             
@@ -250,14 +290,22 @@ $(document).ready(function () {
         applyFilters();
     });
 
-    // İlk veri yükleme
-    loadCountListData();
+    // Yenileme butonu ekle
+    $('#refreshBtn').on('click', function(e) {
+        e.preventDefault();
+        showLoading();
+        if (countTable) {
+            countTable.ajax.reload(function() {
+                hideLoading();
+                console.log('Data reloaded successfully');
+            }, false);
+        } else {
+            hideLoading();
+        }
+    });
 
-    // Sayfa başka bir sayfadan dönüş yapıldığında veya shouldRefresh değeri true ise otomatik yenile
-    if (shouldRefresh === 'true' || document.referrer.includes('stok-sayimi-olustur') || 
-        document.referrer.includes('stok-sayimi-duzenle')) {
-        // Sayfa zaten yükleniyor, ek bir işlem yapmaya gerek yok
-    }
+    // DataTable'ı başlat - artık veri AJAX ile yüklenecek
+    initDataTable();
     
     // Stil ekleme - satır renklerini durum koduna göre hafifçe değiştir
     $('<style>')
@@ -268,28 +316,4 @@ $(document).ready(function () {
             tr[data-status="3"] { background-color: rgba(220, 53, 69, 0.05); }
         `)
         .appendTo('head');
-
-    // API'den veri alındığında tablo içeriğini güncelle
-    function updateTableWithData(res) {
-        hideLoading();
-        
-        let data = res.value || res.data || res;
-        if (Array.isArray(data)) {
-            let rows = createTableRows(data);
-            $('#sayimListesiTable tbody').html(rows);
-            
-            // İşlem butonları için event listener
-            setupButtonListeners();
-        } else {
-            $('#sayimListesiTable tbody').html('<tr><td colspan="6">Kayıt bulunamadı.</td></tr>');
-        }
-        
-        // DataTable'ı başlat
-        initDataTable();
-        
-        // Filtreleri uygula
-        setTimeout(function() {
-            applyFilters();
-        }, 100);
-    }
 });
