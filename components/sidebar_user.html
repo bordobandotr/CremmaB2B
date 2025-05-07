@@ -46,8 +46,12 @@
     }
 </script>
 
-<div class="user-info position-absolute bottom-0 start-0 p-3 w-100">
+<div class="user-info position-absolute bottom-0  start-0 p-3 w-100" style="border-top: 0px;">
     <div class="d-flex align-items-center">
+        <button id="darkModeToggle" class="dark-mode-toggle" title="Toggle Dark Mode">
+            <i class="bi bi-moon-fill mode-dark"></i>
+            <i class="bi bi-sun-fill mode-light"></i>
+        </button>
         <img id="userAvatar" alt="User Avatar" class="user-avatar">
         <div class="text-white user-info-text">
             <small><span id="userName">-</span> - <span id="branchName">-</span></small>

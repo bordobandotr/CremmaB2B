@@ -1,4 +1,19 @@
 document.addEventListener('DOMContentLoaded', async function() {
+    // Add early dark mode initialization to prevent flash of light mode
+    const darkModeStyle = document.createElement('style');
+    darkModeStyle.textContent = `
+        .dark-mode-init {
+            background-color: #121212;
+            color: #E0E0E0;
+        }
+    `;
+    document.head.appendChild(darkModeStyle);
+
+    // Check dark mode preference and apply before page content loads
+    if (localStorage.getItem('darkMode') === 'true') {
+        document.body.classList.add('dark-mode');
+    }
+
     const headContent = await fetch('./components/header.html')
         .then(response => response.text());
     
@@ -21,7 +36,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         logo.insertAdjacentHTML('afterbegin', logoContent);
     }
     
-
+    // Load dark mode script
+    loadJS('js/dark-mode.js');
 });
 
 // Add versioning function to prevent cache issues
