@@ -448,13 +448,18 @@
                 // Function to load orders
                 async function loadOrders() {
                     try {
-                        const response = await fetch('/uretim-siparisleri-list?sessionId=' + sessionId + '&whsCode=' + whsCode, {
+                        // Cache-busting parameter ekle
+                        const timestamp = new Date().getTime();
+                        const response = await fetch(`/uretim-siparisleri-list?sessionId=${sessionId}&whsCode=${whsCode}&_=${timestamp}`, {
                             method: 'GET',
                             credentials: 'include',
                             headers: {
                                 'Accept': '*/*',
                                 'Content-Type': 'application/json',
-                                'Cookie': `B1SESSION=${sessionId}`
+                                'Cookie': `B1SESSION=${sessionId}`,
+                                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                                'Pragma': 'no-cache',
+                                'Expires': '0'
                             }
                         });
 
@@ -635,6 +640,48 @@
                     }
                 }
 
+                // Yükleniyor ekranı ve sayfa görünürlüğü izleme mekanizması
+                function setupPageVisibilityRefresh() {
+                    // Sayfa gizliyken bir flag oluştur
+                    let wasHidden = false;
+                    
+                    // Page Visibility API ile sayfanın görünürlüğünü izle
+                    document.addEventListener('visibilitychange', function() {
+                        if (document.hidden) {
+                            // Sayfa arka plana alındı
+                            wasHidden = true;
+                        } else if (wasHidden) {
+                            // Sayfa tekrar görünür oldu ve önceden gizliydi
+                            console.log('Sayfa tekrar görünür oldu, veri yenileniyor...');
+                            loadOrders().finally(() => {
+                                hideLoading();
+                            });
+                            wasHidden = false;
+                        }
+                    });
+                    
+                    // Tablo yenileme butonu ekle
+                    const refreshBtn = $('<button>')
+                        .addClass('btn btn-outline-secondary position-fixed')
+                        .css({
+                            'bottom': '20px',
+                            'right': '20px',
+                            'z-index': '1000'
+                        })
+                        .html('<i class="bi bi-arrow-clockwise"></i> Yenile')
+                        .on('click', function() {
+                            showLoading('Veriler Yenileniyor...');
+                            loadOrders().finally(() => {
+                                hideLoading();
+                            });
+                        });
+                    
+                    $('body').append(refreshBtn);
+                }
+                
+                // Sayfa yüklendikten sonra görünürlük izlemeyi başlat
+                setupPageVisibilityRefresh();
+
                 // Initial load
                 await loadOrders();
 
@@ -791,11 +838,15 @@
                             return;
                         }
 
-                        // Create order
-                        const response = await fetch('/api/production-orders?sessionId=' + sessionId,{
+                        // Create order - cache bypass
+                        const timestamp = new Date().getTime();
+                        const response = await fetch(`/api/production-orders?sessionId=${sessionId}&_=${timestamp}`, {
                             method: 'POST',
                             headers: {
                                 'Content-Type': 'application/json',
+                                'Cache-Control': 'no-cache, no-store, must-revalidate',
+                                'Pragma': 'no-cache',
+                                'Expires': '0'
                             },
                             body: JSON.stringify(orderItems)
                         });
@@ -807,18 +858,32 @@
                         }
 
                         const result = await response.json();
+                        console.log('API yanıtı:', result);
+                        
+                        // API yanıtını kontrol et
+                        if (!result.success) {
+                            throw new Error('Sipariş oluşturma API hatası: ' + (result.error || 'Bilinmeyen hata'));
+                        }
+                        
+                        // Toplu mı yoksa tekil mi işlendiğini loglayalım
+                        console.log(`Siparişler ${result.method === 'bulk' ? 'toplu' : 'tekil'} olarak işlendi`);
                         
                         // Hide loading and modal
                         hideLoading();
                         bootstrap.Modal.getInstance(document.getElementById('orderSummaryModal')).hide();
                         
-                        // Show success message
+                        // Show success message and redirect to orders page
                         Swal.fire({
-    icon: 'success',
-    title: 'Başarılı!',
-    text: 'Sipariş başarıyla oluşturuldu!',
-    confirmButtonText: 'Tamam'
-});
+                            icon: 'success',
+                            title: 'Başarılı!',
+                            text: 'Sipariş başarıyla oluşturuldu!',
+                            confirmButtonText: 'Tamam'
+                        }).then(() => {
+                            // Cache'i önlemek için küçük bir gecikme ekleyerek yönlendirme yapalım
+                            setTimeout(() => {
+                                window.location.href = `uretim-siparisleri.html?_=${new Date().getTime()}`;
+                            }, 300);
+                        });
                         
                         // Clear quantities and reload orders
                         selectedQuantities.clear();

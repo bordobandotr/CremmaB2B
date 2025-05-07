@@ -347,10 +347,13 @@
                 const urlParams = new URLSearchParams(window.location.search);
                 const docNum = urlParams.get('docNum') || urlParams.get('id');
                 const sessionId = localStorage.getItem('sessionId');
-
+                const currentUser = localStorage.getItem('userName');
+                const whsCode = localStorage.getItem('branchCode');
                 console.log("urlParams", urlParams);
                 console.log("docNum", docNum);
                 console.log("sessionId", sessionId);
+                console.log("currentUser", currentUser);
+                console.log("whsCode", whsCode);
 
                 if (!docNum) {
                     throw new Error('Ticket ID bulunamadı');
@@ -503,12 +506,13 @@
                 const docNum = urlParams.get('docNum') || urlParams.get('id');
                 const sessionId = localStorage.getItem('sessionId');
                 const currentUser = localStorage.getItem('userName');
+                const whsCode = localStorage.getItem('branchCode');
 
                 const formData = new FormData();
                 formData.append('docNum', docNum);
                 formData.append('FreeTextD', $('#replyText').val());
                 formData.append('UserName', currentUser);
-
+                formData.append('whsCode', whsCode);
                 const replyImage = document.getElementById('replyImage').files[0];
                 if (replyImage) {
                     formData.append('image', replyImage);

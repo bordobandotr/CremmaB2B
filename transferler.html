@@ -569,15 +569,6 @@
 			const defectiveQty = parseFloat($('#teslimDefectiveQty').val()) || 0;
 			const deliveryDocNum = $('#deliveryDocNum').val();
 
-			if (!deliveryDocNum) {
-				Swal.fire({
-					icon: 'warning',
-					title: 'Uyarı',
-					text: 'Lütfen teslimat belge numarası giriniz!'
-				});
-				return;
-			}
-
 			if (deliveryQty <= 0) {
 				Swal.fire({
 					icon: 'warning',
@@ -969,8 +960,72 @@
 			closeOnSelect: false
 		});
 
+		// Sayfa görünür olduğunda tabloyu her zaman yenileme mekanizması
+		function setupPageVisibilityRefresh() {
+			// Sayfa gizliyken bir flag oluştur
+			let wasHidden = false;
+
+			// Page Visibility API ile sayfanın görünürlüğünü izle
+			document.addEventListener('visibilitychange', function() {
+				if (document.hidden) {
+					// Sayfa arka plana alındı
+					wasHidden = true;
+				} else if (wasHidden) {
+					// Sayfa tekrar görünür oldu ve önceden gizliydi
+					console.log('Sayfa tekrar görünür oldu, verileri yeniliyorum...');
+					refreshTransferData();
+					wasHidden = false;
+				}
+			});
+
+			// Sayfaya geri dönüldüğünde de yenileme yap (bazı tarayıcılar için)
+			window.addEventListener('focus', function() {
+				console.log('Sayfa odaklandı, verileri yeniliyorum...');
+				refreshTransferData();
+			});
+		}
+
+		// Verileri sunucudan çekerek tabloyu güncelleyen fonksiyon
+		async function refreshTransferData() {
+			try {
+				const whsCode = localStorage.getItem("branchCode");
+				const sessionId = api.getSessionId();
+				
+				// Cache'i önlemek için timestamp ekle
+				const timestamp = new Date().getTime();
+				const response = await fetch(`/api/transfer-list/${whsCode}?sessionId=${sessionId}&_=${timestamp}`);
+				
+				if (!response.ok) {
+					throw new Error('Veriler yüklenirken bir hata oluştu');
+				}
+
+				const data = await response.json();
+				
+				// Önceki filtre durumlarını kaydet
+				const statusFilter = $('#statusFilter').val();
+				const fromWhsFilter = $('#fromWhsFilter').val();
+				const toWhsFilter = $('#toWhsFilter').val();
+				const itemCodeFilter = $('#itemCodeFilter').val();
+				
+				// Verileri güncelle
+				window.transferTable.clear().rows.add(data.value).draw();
+				updateStatusFilterOptions(data.value);
+				updateBranchFilterOptions(data.value);
+				
+				// Filtreleri geri yükle
+				if (statusFilter) $('#statusFilter').val(statusFilter).trigger('change');
+				if (fromWhsFilter) $('#fromWhsFilter').val(fromWhsFilter).trigger('change');
+				if (toWhsFilter) $('#toWhsFilter').val(toWhsFilter).trigger('change');
+				if (itemCodeFilter) $('#itemCodeFilter').val(itemCodeFilter).trigger('change');
+				
+				console.log('Transfer verileri başarıyla yenilendi');
+			} catch (error) {
+				console.error('Veriler yenilenirken hata:', error);
+			}
+		}
+
 		// Initialize DataTable
-		const transferTable = $('#transferTable').DataTable({
+		window.transferTable = $('#transferTable').DataTable({
 			responsive: true,
 			pageLength: 25,
 			lengthMenu: [
@@ -1017,7 +1072,7 @@
 							'3': '<span class="badge bg-primary">Sevk Edildi</span>' + '<span style="display: none;">'+row.DocStatus+'</span>',
 							'4': '<span class="badge bg-success">Tamamlandı</span>' + '<span style="display: none;">'+row.DocStatus+'</span>',
 							'5': '<span class="badge bg-danger">Transfer <br /> İptal Edildi</span> <span style="display: none;">'+row.DocStatus+'</span>',
-							'6': '<span class="badge" style=" background-color: #333333;">Teslim <br />Alınmayı Bekliyor</span>' + '<span style="display: none;">'+row.DocStatus+'</span>',
+							'6': '<span class="badge" style=" background-color: #333333;">Teslim <br />Alınmayı Bekliyor</span> <span style="display: none;">'+row.DocStatus+'</span>',
 						};
 
 						let html = statusMap[data] || data;
@@ -1035,7 +1090,7 @@
 								<button class="btn btn-success mt-2 btn-sm approve-btn" data-doc-num="${row.DocNum}">
 									<i class="bi bi-check-lg"></i>
 								</button>
-								<button class="btn btn-danger mt-2 btn-sm  onclick=" rejectTransfer('${row.DocNum}')">
+								<button class="btn btn-danger mt-2 btn-sm reject-btn" data-doc-num="${row.DocNum}">
 									<i class="bi bi-x-lg"></i>
 								</button>
 							</div>
@@ -1057,6 +1112,11 @@
 			showTransferModal(docNum);
 		});
 
+		$(document).on('click', '.reject-btn', function () {
+			const docNum = $(this).data('doc-num');
+			rejectTransfer(docNum);
+		});
+
 		// Custom filter function for multiple selections
 		function customFilter(column, selections) {
 			if (!selections || selections.length === 0) return '';
@@ -1067,25 +1127,25 @@
 		$('#statusFilter').on('change', function () {
 			const selections = $(this).val() || [];
 			const searchRegex = selections.length > 0 ? customFilter(8, selections) : '';
-			transferTable.column(8).search(searchRegex, true, true).draw();
+			window.transferTable.column(8).search(searchRegex, true, true).draw();
 		});
 
 		$('#fromWhsFilter').on('change', function () {
 			const selections = $(this).val() || [];
 			const searchRegex = selections.length > 0 ? customFilter(5, selections) : '';
-			transferTable.column(5).search(searchRegex, true, true).draw();
+			window.transferTable.column(5).search(searchRegex, true, true).draw();
 		});
 
 		$('#toWhsFilter').on('change', function () {
 			const selections = $(this).val() || [];
 			const searchRegex = selections.length > 0 ? customFilter(6, selections) : '';
-			transferTable.column(6).search(searchRegex, true, true).draw();
+			window.transferTable.column(6).search(searchRegex, true, true).draw();
 		});
 
 		$('#itemCodeFilter').on('change', function () {
 			const selections = $(this).val() || [];
 			const searchRegex = selections.length > 0 ? customFilter(2, selections) : '';
-			transferTable.column(2).search(searchRegex, true, true).draw();
+			window.transferTable.column(2).search(searchRegex, true, true).draw();
 		});
 
 		// Function to update status filter options
@@ -1156,7 +1216,10 @@
 			itemCodeFilter.trigger('change');
 		}
 
-		// Update filter options when data is loaded
+		// Yenileme mekanizmasını etkinleştir
+		setupPageVisibilityRefresh();
+
+		// İlk veri yüklemesi
 		try {
 			const whsCode = localStorage.getItem("branchCode");
 			const sessionId = api.getSessionId();
@@ -1167,7 +1230,7 @@
 			}
 
 			const data = await response.json();
-			transferTable.clear().rows.add(data.value).draw();
+			window.transferTable.clear().rows.add(data.value).draw();
 			updateStatusFilterOptions(data.value);
 			updateBranchFilterOptions(data.value);
 
@@ -1179,6 +1242,26 @@
 				text: 'Veriler yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.'
 			});
 		}
+
+		// Sayfa ilk açılışında DataTable önbelleğini devre dışı bırak
+		if (window.dataTableHelper && window.dataTableHelper.disableCaching) {
+			window.dataTableHelper.disableCaching();
+		}
+
+		// Yenileme butonu ekle
+		const refreshButton = $('<button>').addClass('btn btn-sm btn-outline-secondary')
+			.html('<i class="bi bi-arrow-clockwise"></i> Verileri Yenile')
+			.css({
+				'position': 'absolute',
+				'top': '10px',
+				'right': '10px',
+				'z-index': '1000'
+			})
+			.on('click', function() {
+				refreshTransferData();
+			});
+		
+		$('.card:first-of-type').append(refreshButton);
 	});
 
 	async function deliverTransfer(docNum) {
@@ -1217,7 +1300,7 @@
 
 	async function rejectTransfer(docNum) {
 		try {
-			// Show confirmation dialog
+			// Onay diyaloğu göster
 			const result = await Swal.fire({
 				title: 'Transferi İptal Et',
 				text: 'Bu transferi iptal etmek istediğinizden emin misiniz?',
@@ -1233,28 +1316,63 @@
 				return;
 			}
 
-			// Get the table instance
+			// Tablo verilerini al
 			const table = $('#transferTable').DataTable();
-
-			// Get the row data
 			const row = table.rows().data().filter(item => item.DocNum === docNum)[0];
 
 			if (!row) {
 				throw new Error('Transfer bulunamadı');
 			}
 
+			// İptal nedeni sor
+			const { value: rejectReason, isDismissed } = await Swal.fire({
+				title: 'İptal Nedeni',
+				input: 'textarea',
+				inputLabel: 'İptal nedeninizi belirtin (isteğe bağlı)',
+				inputPlaceholder: 'İptal nedeninizi buraya yazın...',
+				inputAttributes: {
+					'aria-label': 'İptal nedeninizi buraya yazın'
+				},
+				showCancelButton: true,
+				cancelButtonText: 'Vazgeç',
+				confirmButtonText: 'İptal Et',
+				allowOutsideClick: false,
+				inputValidator: (value) => {
+					// Açıklama artık zorunlu değil
+					return false;
+				}
+			});
+
+			// Kullanıcı "Vazgeç" tuşuna bastıysa işlemi durdur
+			if (isDismissed && isDismissed === 'cancel') {
+				return;
+			}
+
+			// Yükleniyor ekranını göster
+			Swal.fire({
+				title: 'İşlem yapılıyor...',
+				text: 'Transfer iptal ediliyor',
+				allowOutsideClick: false,
+				didOpen: () => {
+					Swal.showLoading();
+				}
+			});
+
 			const sessionId = api.getSessionId();
 			const localStorageUserName = localStorage.getItem("userName");
 			const whsCode = localStorage.getItem("branchCode");
 
-			const response = await fetch(`/api/transfer/approve/${docNum}`, {
+			console.log("Transfer iptal isteği gönderiliyor:", docNum);
+			
+			// Yeni endpoint'i kullan
+			const response = await fetch(`/api/transfer/reject/${docNum}`, {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'
 				},
 				body: JSON.stringify({
 					sessionId: sessionId,
-					note: 'Transfer iptal edildi',
+					note: rejectReason || "Transfer iptal edildi", // Eğer neden girilmediyse varsayılan metin
 					transferData: {
 						UserName: localStorageUserName,
 						WhsCode: whsCode,
@@ -1264,9 +1382,7 @@
 						Quantity: row.Quantity,
 						UomCode: row.UomCode,
 						FromWhsCode: row.FromWhsCode,
-						FromWhsName: row.FromWhsName,
-						approved: false,
-						DocStatus: '5'
+						FromWhsName: row.FromWhsName
 					}
 				})
 			});
@@ -1275,7 +1391,10 @@
 				throw new Error('Transfer iptal edilirken bir hata oluştu');
 			}
 
-			// Show success message
+			const responseData = await response.json();
+			console.log("Transfer iptal yanıtı:", responseData);
+
+			// Başarılı mesajı göster
 			await Swal.fire({
 				icon: 'success',
 				title: 'Başarılı',
@@ -1284,7 +1403,7 @@
 				timer: 1500
 			});
 
-			// Refresh the page
+			// Sayfayı yenile
 			window.location.reload();
 
 		} catch (error) {
@@ -1349,6 +1468,11 @@
 
 		// Kalan miktarı güncelle
 		$('#remainingQuantity').text(deliveryQty);
+	}
+
+	function logout() {
+		localStorage.clear();
+		window.location.href = '/login.html';
 	}
 </script>
 <script src="js/api.js"></script>

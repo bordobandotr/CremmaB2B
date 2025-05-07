@@ -851,11 +851,8 @@
                             text: 'Transfer başarıyla oluşturuldu!',
                             confirmButtonText: 'Tamam'
                         }).then(() => {
-                            bootstrap.Modal.getInstance('#transferSummaryModal').hide();
-                            // Reset quantities and reload table
-                            $('.transfer-qty').val(0);
-                            $('.transfer-note').val('');
-                            loadTransfers();
+                            // Redirect to transferler.html instead of reloading the current page
+                            window.location.href = 'transferler.html';
                         });
 
                     } catch (error) {
