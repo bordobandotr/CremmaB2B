@@ -1,9 +1,10 @@
 <!DOCTYPE html>
 <html lang="tr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CREMMA - Stok Sayımı Oluştur</title>
+    <title>CREMMA - Ana Depo Siparişi Oluştur</title>
     <link rel="icon" type="image/png" href="img/favicon.png">
     <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -26,6 +27,7 @@
     <script src="js/nav-menu.js"></script>
     <script src="js/orientation.js"></script>
     <script src="js/sidebar-toggle.js"></script>
+
     <style>
         .loading-screen {
             position: fixed;
@@ -57,57 +59,176 @@
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
-        .quantity-control {
-            width: 120px !important;
-            min-width: 120px !important;
-            display: flex !important;
-            align-items: center !important;
-            white-space: nowrap !important;
+        /* Select2 Custom Styles */
+        .select2-container {
+            width: 100% !important;
         }
 
-        .quantity-control .btn {
-            padding: 0.25rem 0.5rem !important;
-            font-size: 0.875rem !important;
-            min-width: 30px !important;
-            height: 30px !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            z-index: 3 !important;
+        .select2-container .select2-selection--multiple {
+            min-height: 38px !important;
+            border: 1px solid #ced4da !important;
+            border-radius: 0.375rem !important;
         }
 
-        .quantity-control input {
-            width: 50px !important;
-            text-align: center !important;
-            padding: 0.25rem !important;
-            font-size: 0.875rem !important;
-            height: 30px !important;
-            border-left: 0 !important;
-            border-right: 0 !important;
+        .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice {
+            /* background-color: #e9ecef !important;
+            border: 1px solid #dee2e6 !important;
+            border-radius: 0.25rem !important;
+            padding: 2px 8px !important;
+            margin: 2px !important;
+            font-size: 0.875rem !important; */
         }
 
-        .quantity-control input::-webkit-outer-spin-button,
-        .quantity-control input::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
+        .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice__remove {
+            /* border: none !important;
+            background: none !important;
+            padding: 0 4px !important;
+            float: right !important;
+            margin-left: 5px !important; */
         }
 
-        .quantity-control input[type=number] {
-            -moz-appearance: textfield;
+        .select2-container--bootstrap-5 .select2-dropdown {
+            border-color: #ced4da !important;
+        }
+
+        .select2-container--bootstrap-5 .select2-search__field {
+            border-radius: 0.25rem !important;
+            padding: 4px 8px !important;
+        }
+
+        .select2-container--bootstrap-5 .select2-results__option--highlighted[aria-selected] {
+            background-color: #f8f9fa !important;
+            color: #212529 !important;
+        }
+
+        .select2-container--bootstrap-5 .select2-results__option[aria-selected=true] {
+            background-color: #e9ecef !important;
+            color: #212529 !important;
+        }
+
+        /* Selected Filters Style */
+        #selectedFilters,
+        #selectedTanimFilters {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        #selectedFilters .selected-items,
+        #selectedTanimFilters .selected-items {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+
+        #selectedFilters .selected-tag,
+        #selectedTanimFilters .selected-tag {
+            background-color: #e9ecef;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            padding: 2px 8px;
+            font-size: 0.875rem;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        #selectedFilters .remove-tag,
+        #selectedTanimFilters .remove-tag {
+            margin-left: 5px;
+            cursor: pointer;
+            color: #dc3545;
+            font-weight: bold;
+        }
+
+        #selectedFilters:empty,
+        #selectedTanimFilters:empty {
+            display: none;
+        }
+
+        .modal-backdrop.show {
+            opacity: 0.7;
+        }
+
+        #orderSummaryModal .modal-content {
+            border-radius: 15px;
+            border: none;
+            box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        #orderSummaryModal .quantity-badge {
+            background: #f8f9fa;
+            border-radius: 20px;
+            padding: 8px 16px;
+            font-size: 0.9rem;
+            color: #212529;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #orderSummaryModal .quantity-badge .quantity-controls {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        #orderSummaryModal .quantity-badge button {
+            width: 24px;
+            height: 24px;
+            padding: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            border: none;
+            background: #212529;
+            color: #fff;
+            font-size: 1.2rem;
+            line-height: 1;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        #orderSummaryModal .quantity-badge button:hover {
+            background: #000;
+            transform: scale(1.1);
+        }
+
+        #orderSummaryModal .quantity-value {
+            font-weight: 500;
+            min-width: 30px;
+            text-align: center;
+        }
+
+        #orderSummaryModal .item-row {
+            padding: 12px;
+            margin-bottom: 8px;
+            background: #fff;
+            border-radius: 10px;
+            transition: all 0.2s;
+        }
+
+        #orderSummaryModal .item-row:hover {
+            background: #f8f9fa;
         }
     </style>
 </head>
+
 <body>
     <!-- Loading Screen -->
     <div class="loading-screen">
         <div class="loading-spinner"></div>
         <div class="loading-text">Yükleniyor...</div>
     </div>
-
     <div class="d-flex">
         <!-- Sidebar -->
         <div class="sidebar">
@@ -122,235 +243,1136 @@
                 <!-- User information will be loaded here -->
             </div>
 
-        </div>  
+        </div>
 
         <!-- Main Content -->
-        <div class="content">
+        <div class="main-content">
             <!-- Header -->
-            <div id="header"></div>
+            <header class="d-flex justify-content-between p-3 bg-white">
+                <div class="d-flex align-items-center">
+                    <button id="sidebarToggle" class="btn btn-link d-md-none">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <h5 class="mb-0">Stok Sayımı Oluştur</h5>
+                </div>
+                <div class="d-flex gap-2">
+                    <button class="btn btn-outline-secondary" onclick="logout()">
+                        Çıkış Yap <i class="bi bi-box-arrow-right"></i>
+                    </button>
+                </div>
+            </header>
 
-            <!-- Main Container -->
-            <div class="container-fluid mt-3">
-                <div class="card">
-                    <div class="card-header">
-                        <h5 class="card-title mb-0">Stok Sayımı Oluştur</h5>
+            <!-- Yükleniyor ekranı ve dinamik içerik -->
+            <div class="container-fluid p-4">
+              
+                        <div id="dynamic-content">
+                            <div class="d-flex justify-content-center align-items-center" style="height:300px;">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Yükleniyor...</span>
+                                </div>
+                            </div>
+                        </div> 
+            </div>
+
+            <script>
+                async function loadStockForm() {
+                    showLoading('Veriler yükleniyor...');
+                    const sessionId = localStorage.getItem('sessionId');
+                    const whsCode = localStorage.getItem('branchCode');
+                    const userName = localStorage.getItem('userName') || '-';
+                    if (!sessionId || !whsCode) {
+                        window.location.href = '/login.html';
+                        return;
+                    }
+                    try {
+                        const response = await fetch(`/api/count-new-list?sessionId=${sessionId}&whsCode=${whsCode}`);
+                        if (!response.ok) throw new Error('Veri alınamadı');
+                        const data = await response.json();
+
+                        console.log('Data:', data);
+
+                        // Form üst başlık ve tarih input
+                        let html = '';
+                        html += `<div class='card mb-3 p-4'><div class='card-body'>`;
+                        html += `<div class='row mb-2'>
+                        <div class='col-md-4'><b>Şube Kodu:</b> <span>${whsCode}</span></div>
+                        <div class='col-md-4'><b>Kullanıcı:</b> <span>${userName}</span></div>
+                        <div class='col-md-4'><label for='countDateInput'><b>Sayım Tarihi:</b></label> <input type='date' id='countDateInput' class='form-control form-control-sm' value='${new Date().toISOString().slice(0, 10)}'></div>
+                    </div>`;
+                        html += `</div></div>`;
+                        html += `<div class='card'><div class='card-body'>`;
+                        html += `<table id="countTable" class="table table-bordered table-hover"><thead><tr>
+                        <th>Kalem Kodu</th><th>Kalem Tanımı</th><th>Kalem Grubu</th><th>Ölçü Birimi</th><th>Sayım Miktarı</th>
+                    </tr></thead><tbody>`;
+                        ((data && data.value) || []).forEach(item => {
+                            html += `<tr>
+                            <td>${item.ItemCode || ''}</td>
+                            <td>${item.ItemName || ''}</td>
+                            <td>${item.ItemGroup || ''}</td>
+                            <td>${item.UomCode || ''}</td>
+                            <td>
+                                <div class="input-group quantity-control">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm decrease-qty" data-item='${encodeURIComponent(JSON.stringify(item))}'>-</button>
+                                    <input type="number" class="form-control form-control-sm count-input" data-item='${encodeURIComponent(JSON.stringify(item))}' min="0" value="0" style="width:60px;text-align:center;">
+                                    <button type="button" class="btn btn-outline-secondary btn-sm increase-qty" data-item='${encodeURIComponent(JSON.stringify(item))}'>+</button>
+                                </div>
+                            </td>
+                        </tr>`;
+                        });
+                        html += `</tbody></table>`;
+                        html += `<div class='text-end'><button class='btn btn-primary' id='submitCountBtn'>Sayımı Kaydet</button></div>`;
+                        html += `</div></div>`;
+                        document.getElementById('dynamic-content').innerHTML = html;
+
+                        // DataTable başlat
+                        setTimeout(() => {
+                            if (window.$ && $.fn.DataTable) {
+                                window.countTable = $('#countTable').DataTable({
+                                    responsive: true,
+                                    pageLength: 25,
+                                    lengthMenu: [[25, 50, 100], [25, 50, 100]],
+                                    language: {
+                                        "emptyTable": "Tabloda veri bulunmuyor",
+                                        "info": "_TOTAL_ kayıttan _START_ - _END_ arası gösteriliyor",
+                                        "infoEmpty": "Kayıt yok",
+                                        "infoFiltered": "(_MAX_ kayıt içerisinden bulunan)",
+                                        "lengthMenu": "Sayfada _MENU_ kayıt göster",
+                                        "loadingRecords": "Yükleniyor...",
+                                        "processing": "İşleniyor...",
+                                        "search": "Ara:",
+                                        "zeroRecords": "Eşleşen kayıt bulunamadı",
+                                        "paginate": {
+                                            "first": "İlk",
+                                            "last": "Son",
+                                            "next": "Sonraki",
+                                            "previous": "Önceki"
+                                        }
+                                    },
+                                    order: [[0, 'asc']],
+                                    columnDefs: [{
+                                        targets: -1,
+                                        orderable: false
+                                    }],
+                                    processing: true,
+                                    orderCellsTop: true,
+                                    orderMulti: true,
+                                    ordering: true,
+                                    drawCallback: function () {
+                                        // DataTable yeniden çizildiğinde, seçili miktarları korumak için
+                                        $('.count-input').each(function () {
+                                            const itemCode = $(this).data('item-code');
+                                            const savedQty = window.selectedQuantities ? window.selectedQuantities.get(itemCode) : null;
+                                            if (savedQty) {
+                                                $(this).val(savedQty);
+                                            }
+                                        });
+                                    }
+                                });
+
+                                // Filtreleme için DataTable search fonksiyonu
+                                $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+                                    // Sadece countTable için çalış
+                                    if (settings.nTable.id !== 'countTable') return true;
+
+                                    const kalemGrubuValues = ($('#itemGroupFilter').val() || []).map(x => String(x).trim());
+                                    const kalemTanimiValues = ($('#itemNameFilter').val() || []).map(x => String(x).trim());
+
+                                    // Kolon indexleri: 1 = Kalem Tanımı, 2 = Kalem Grubu
+                                    const rowName = String(data[1] || '').trim();
+                                    const rowGroup = String(data[2] || '').trim();
+
+                                    // Hiçbir filtre yoksa tüm satırları göster
+                                    if (kalemGrubuValues.length === 0 && kalemTanimiValues.length === 0) {
+                                        return true;
+                                    }
+
+                                    let pass = true;
+
+                                    // Kalem Grubu filtresi
+                                    if (kalemGrubuValues.length > 0 && !kalemGrubuValues.includes(rowGroup)) {
+                                        pass = false;
+                                    }
+
+                                    // Kalem Tanımı filtresi
+                                    if (kalemTanimiValues.length > 0 && !kalemTanimiValues.includes(rowName)) {
+                                        pass = false;
+                                    }
+
+                                    return pass;
+                                });
+                            }
+                        }, 200);
+                        // Buton event
+                        // + ve - butonları için event handlerlar
+                        setTimeout(() => {
+                            document.querySelectorAll('.decrease-qty').forEach(btn => {
+                                btn.onclick = function () {
+                                    const input = this.parentElement.querySelector('.count-input');
+                                    let val = parseFloat(input.value) || 0;
+                                    if (val > 0) input.value = val - 1;
+                                    input.dispatchEvent(new Event('change'));
+                                }
+                            });
+                            document.querySelectorAll('.increase-qty').forEach(btn => {
+                                btn.onclick = function () {
+                                    const input = this.parentElement.querySelector('.count-input');
+                                    let val = parseFloat(input.value) || 0;
+                                    input.value = val + 1;
+                                    input.dispatchEvent(new Event('change'));
+                                }
+                            });
+                        }, 100);
+
+                        // Filtreleme için üstte selectler oluştur
+                        let filterHtml = `<div class='row mb-3'>
+    <div class='col-md-6'>
+        <label for='itemNameFilter'><b>Kalem Tanımı:</b></label>
+        <select id='itemNameFilter' class='form-select form-select-sm' multiple></select>
+    </div>
+    <div class='col-md-6'>
+        <label for='itemGroupFilter'><b>Kalem Grubu:</b></label>
+        <select id='itemGroupFilter' class='form-select form-select-sm' multiple></select>
+    </div>
+</div>`;
+                        // Filtre satırını şube kodu ve kullanıcı bilgisinin hemen altına al
+                        const cardBody = document.querySelector('.card.mb-3 .card-body');
+                        cardBody.insertAdjacentHTML('afterend', filterHtml);
+                        // Select2 başlat
+                        setTimeout(() => {
+                            if (window.$ && $.fn.select2) {
+                                $('#itemGroupFilter').select2({ placeholder: 'Kalem Grubu seçiniz', allowClear: true, theme: 'bootstrap-5' });
+                                $('#itemNameFilter').select2({ placeholder: 'Kalem Tanımı seçiniz', allowClear: true, theme: 'bootstrap-5' });
+                            }
+                        }, 100);
+
+                        // Filtreleri doldur
+                        const itemGroups = [...new Set(((data && data.value) || []).map(x => x.ItemGroup).filter(Boolean))];
+                        const itemNames = [...new Set(((data && data.value) || []).map(x => x.ItemName).filter(Boolean))];
+                        itemGroups.forEach(g => {
+                            document.getElementById('itemGroupFilter').insertAdjacentHTML('beforeend', `<option value='${g}'>${g}</option>`)
+                        });
+                        itemNames.forEach(n => {
+                            document.getElementById('itemNameFilter').insertAdjacentHTML('beforeend', `<option value='${n}'>${n}</option>`)
+                        });
+
+                        // Global değişken - seçili miktarları saklamak için
+                        window.selectedQuantities = new Map();
+
+                        // DataTable ile filtreleme - anadepo-siparisi-olustur.html'deki gibi
+                        $('#itemGroupFilter, #itemNameFilter').on('change', function () {
+                            if (window.countTable) {
+                                window.countTable.draw(); // DataTable'ı yeniden çiz
+                            }
+                        });
+
+                        // Sayım özeti modalını göster
+                        function showCountSummaryModal() {
+                            const countData = [];
+
+                            // Tüm satırları kontrol et ve sayım miktarı olanları topla
+                            window.countTable.rows().every(function () {
+                                const rowData = this.data();
+                                const $row = $(this.node());
+                                const quantity = parseFloat($row.find('.count-input').val()) || 0;
+
+                                if (quantity > 0) {
+                                    // Seçili miktarları sakla
+                                    window.selectedQuantities.set(rowData[0], quantity);
+
+                                    countData.push({
+                                        itemCode: rowData[0],
+                                        itemName: rowData[1],
+                                        quantity: quantity,
+                                        uomCode: rowData[3]
+                                    });
+                                }
+                            });
+
+                            if (countData.length === 0) {
+                                Swal.fire({
+                                    icon: 'warning',
+                                    title: 'Uyarı',
+                                    text: 'Lütfen en az bir kalem için miktar giriniz.',
+                                    confirmButtonText: 'Tamam'
+                                });
+                                return;
+                            }
+
+                            // Modal içeriğini oluştur
+                            const summaryHtml = countData.map(item => `
+        <div class="item-row">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <div class="fw-bold">${item.itemName}</div>
+                    <div class="text-muted small">${item.itemCode}</div>
+                </div>
+                <div class="quantity-badge">
+                    <div class="quantity-controls">
+                        <button type="button" class="decrease-modal-qty" data-item-code="${item.itemCode}">−</button>
+                        <span class="quantity-value">${item.quantity}</span>
+                        <button type="button" class="increase-modal-qty" data-item-code="${item.itemCode}">+</button>
                     </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table id="countTable" class="table table-striped table-hover" style="width:100%">
-                                <thead>
-                                    <tr>
-                                        <th>Kalem Kodu</th>
-                                        <th>Kalem Tanımı</th>
-                                        <th>Kalem Grubu</th>
-                                        <th>Miktar</th>
-                                        <th>Ölçü Birimi</th>
-                                        <th>Giriş Tarihi</th>
-                                    </tr>
-                                </thead>
-                            </table>
-                        </div>
+                    <span class="ms-2">${item.uomCode}</span>
+                </div>
+            </div>
+        </div>
+    `).join('');
+
+                            $('#orderSummaryList').html(summaryHtml);
+
+                            // Modal'ı göster
+                            const modal = new bootstrap.Modal(document.getElementById('orderSummaryModal'));
+                            modal.show();
+
+                            // Modal içindeki butonlar için event handler'lar
+                            $('.decrease-modal-qty, .increase-modal-qty').off('click').on('click', function () {
+                                const $button = $(this);
+                                const itemCode = $button.data('item-code');
+                                const isIncrease = $button.hasClass('increase-modal-qty');
+
+                                // Mevcut miktarı al
+                                const currentQty = window.selectedQuantities.get(itemCode) || 0;
+
+                                // Yeni miktarı hesapla
+                                let newQty = isIncrease ? currentQty + 1 : Math.max(0, currentQty - 1);
+
+                                // Miktarı güncelle
+                                window.selectedQuantities.set(itemCode, newQty);
+
+                                // Modal içindeki görünümü güncelle
+                                $button.siblings('.quantity-value').text(newQty);
+
+                                // Tablodaki input'u da güncelle
+                                window.countTable.rows().every(function () {
+                                    const rowData = this.data();
+                                    if (rowData[0] === itemCode) {
+                                        const $row = $(this.node());
+                                        $row.find('.count-input').val(newQty);
+                                        return false; // Döngüyü durdur
+                                    }
+                                });
+
+                                // Eğer miktar 0 olduysa, satırı kaldır
+                                if (newQty === 0) {
+                                    $button.closest('.item-row').fadeOut(300, function () {
+                                        $(this).remove();
+                                        // Eğer hiç ürün kalmadıysa modalı kapat
+                                        if ($('#orderSummaryList .item-row').length === 0) {
+                                            bootstrap.Modal.getInstance(document.getElementById('orderSummaryModal')).hide();
+                                        }
+                                    });
+                                }
+                            });
+                        }
+
+                        // Sayımı Kaydet butonuna tıklandığında özet modalını göster
+                        $('#submitCountBtn').off('click').on('click', function () {
+                            showCountSummaryModal();
+                        });
+
+                        // DataTable için custom filtreleme fonksiyonu
+                        $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+                            // Sadece countTable için çalış
+                            if (settings.nTable.id !== 'countTable') return true;
+
+                            const kalemGrubuValues = ($('#itemGroupFilter').val() || []).map(x => String(x).trim());
+                            const kalemTanimiValues = ($('#itemNameFilter').val() || []).map(x => String(x).trim());
+
+                            // Kolon indexleri: 1 = Kalem Tanımı, 2 = Kalem Grubu
+                            const rowName = String(data[1] || '').trim();
+                            const rowGroup = String(data[2] || '').trim();
+
+                            // Hiçbir filtre yoksa tüm satırları göster
+                            if (kalemGrubuValues.length === 0 && kalemTanimiValues.length === 0) {
+                                return true;
+                            }
+
+                            let pass = true;
+
+                            // Kalem Grubu filtresi
+                            if (kalemGrubuValues.length > 0 && !kalemGrubuValues.includes(rowGroup)) {
+                                pass = false;
+                            }
+
+                            // Kalem Tanımı filtresi
+                            if (kalemTanimiValues.length > 0 && !kalemTanimiValues.includes(rowName)) {
+                                pass = false;
+                            }
+
+                            return pass;
+                        });
+
+                        // Modal'daki Onayla butonuna tıklandığında sayımı kaydet
+                        $('#confirmOrderBtn').off('click').on('click', async function () {
+                            try {
+                                showLoading('Sayımlar hazırlanıyor...');
+                                const counts = [];
+                                const refDate = document.getElementById('countDateInput').value;
+                                const userName = localStorage.getItem('userName') || '-';
+                                const whsCode = localStorage.getItem('branchCode');
+                                const sessionId = localStorage.getItem('sessionId');
+
+                                // Benzersiz GUID oluştur (tüm sayımların aynı batch'te olduğunu belirtmek için)
+                                const batchGuid = `${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+
+                                // DataTable'dan tüm satırları kontrol et
+                                window.countTable.rows().every(function () {
+                                    const rowData = this.data();
+                                    const $row = $(this.node());
+                                    const quantity = parseFloat($row.find('.count-input').val()) || 0;
+
+                                    if (quantity > 0) {
+                                        counts.push({
+                                            U_WhsCode: whsCode,
+                                            U_RefDate: refDate,
+                                            U_ItemCode: rowData[0],
+                                            U_ItemName: rowData[1],
+                                            U_Quantity: quantity,
+                                            U_UomCode: rowData[3],
+                                            U_SessionID: sessionId,
+                                            U_GUID: `${batchGuid}_${rowData[0]}`,
+                                            U_User: userName
+                                        });
+                                    }
+                                });
+
+                                if (counts.length === 0) {
+                                    Swal.fire('Uyarı', 'En az bir kalem için miktar girin!', 'warning');
+                                    return;
+                                }
+
+                                // Sayım bilgilerini göster
+                                showLoading(`${counts.length} ürün için sayım gönderiliyor...`);
+                                console.log(`Toplam ${counts.length} ürün sayımı gönderiliyor`);
+
+                                // Güvenli fetch fonksiyonu - oturum hatalarını yakalar
+                                async function fetchWithSessionCheck(url, options) {
+                                    const response = await fetch(url, options);
+                                    
+                                    // HTTP 401 kontrolü - oturum süresi dolmuş
+                                    if (response.status === 401) {
+                                        const responseJson = await response.json();
+                                        
+                                        if (responseJson.sessionExpired) {
+                                            console.error('Oturum süresi doldu, yeniden giriş yapılıyor...');
+                                            // Kullanıcıyı login sayfasına yönlendir
+                                            localStorage.removeItem('sessionId');
+                                            Swal.fire({
+                                                icon: 'error',
+                                                title: 'Oturum Süresi Doldu',
+                                                text: 'Oturum süreniz doldu. Yeniden giriş yapmanız gerekiyor.',
+                                                confirmButtonText: 'Giriş Yap'
+                                            }).then(() => {
+                                                window.location.href = '/login.html';
+                                            });
+                                            throw new Error('Oturum süresi doldu');
+                                        }
+                                    }
+                                    
+                                    return response;
+                                }
+
+                                // Tüm sayımları tek bir API çağrısında gönder
+                                const response = await fetchWithSessionCheck(`/api/count?sessionId=${sessionId}`, {
+                                    method: 'POST',
+                                    headers: { 'Content-Type': 'application/json' },
+                                    body: JSON.stringify(counts)
+                                });
+
+                                if (!response.ok) {
+                                    throw new Error(`Sunucu hatası: ${response.status} ${response.statusText}`);
+                                }
+
+                                const result = await response.json();
+                                console.log('Sayım sonucu:', result);
+                                
+                                // Hata kontrolü
+                                if (!result.success) {
+                                    throw new Error(result.error || 'Bilinmeyen bir hata oluştu');
+                                }
+
+                                // Başarı ve hata istatistikleri
+                                const successCount = result.successCount || 0;
+                                const failCount = result.failCount || 0;
+                                
+                                // Modal'ı kapat
+                                bootstrap.Modal.getInstance(document.getElementById('orderSummaryModal')).hide();
+
+                                // Başarı veya kısmi başarı mesajı göster
+                                if (failCount === 0) {
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Başarılı',
+                                        text: `${successCount} ürün sayımı başarıyla kaydedildi!`,
+                                        confirmButtonText: 'Tamam'
+                                    }).then(() => {
+                                        window.location.href = 'stok-sayimlarim.html';
+                                    });
+                                } else {
+                                    Swal.fire({
+                                        icon: 'warning',
+                                        title: 'Kısmi Başarı',
+                                        html: `${successCount} ürün kaydedildi<br>${failCount} ürün kaydedilemedi<br>Detaylar için konsolu kontrol edin.`,
+                                        confirmButtonText: 'Tamam'
+                                    }).then(() => {
+                                        window.location.href = 'stok-sayimlarim.html';
+                                    });
+                                }
+
+                                // Sayfayı yeniden yükle
+                                // loadStockForm();
+                            } catch (error) {
+                                console.error('Sayım gönderme hatası:', error);
+                                Swal.fire('Hata', `Sayım gönderilirken bir hata oluştu: ${error.message}`, 'error');
+                            } finally {
+                                hideLoading();
+                            }
+                        });
+
+                    } catch (err) {
+                        // Hata oluşursa tabloyu temizle ve sadece hata mesajı göster
+                        document.getElementById('dynamic-content').innerHTML = `<div class='alert alert-danger'>Veriler alınamadı: ${err.message}</div>`;
+                    } finally {
+                        hideLoading();
+                    }
+                }
+                document.addEventListener('DOMContentLoaded', loadStockForm);
+            </script>
+        </div>
+    </div>
+
+    <!-- Sipariş Özeti Modal -->
+    <div class="modal fade" id="orderSummaryModal" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header border-0 pb-0">
+                    <h5 class="modal-title fw-bold">Sipariş Özeti</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body pt-2">
+                    <div id="orderSummaryList" class="mb-3">
+                        <!-- Sipariş özetleri buraya eklenecek -->
                     </div>
+                </div>
+                <div class="modal-footer border-0 pt-0">
+                    <button type="button" class="btn btn-outline-dark px-4 rounded-pill"
+                        data-bs-dismiss="modal">Değiştir</button>
+                    <button type="button" class="btn btn-dark px-4 rounded-pill" id="confirmOrderBtn">Onayla</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Required Scripts -->
-    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+    <!-- Scripts -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/nav-menu.js"></script>
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
     <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
     <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+    <!-- Select2 -->
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
     <script>
+        // Loading Screen Functions
         function showLoading(message = 'Yükleniyor...') {
-            $('.loading-screen .loading-text').text(message);
-            $('.loading-screen').css('display', 'flex');
+            const loadingScreen = document.querySelector('.loading-screen');
+            const loadingText = loadingScreen.querySelector('.loading-text');
+            loadingText.textContent = message;
+            loadingScreen.classList.remove('d-none');
+            loadingScreen.style.display = 'flex';
         }
 
         function hideLoading() {
-            $('.loading-screen').hide();
+            const loadingScreen = document.querySelector('.loading-screen');
+            loadingScreen.style.display = 'none';
         }
 
-        function logout() {
-            localStorage.clear();
-            window.location.href = 'login.html';
-        }
-
-        function generateUUID() {
-            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
-                var r = Math.random() * 16 | 0,
-                    v = c == 'x' ? r : (r & 0x3 | 0x8);
-                return v.toString(16);
-            });
-        }
-
-        function handleQuantityChange(currentValue, isIncrease) {
-            currentValue = parseFloat(currentValue) || 0;
-            if (isIncrease) {
-                return currentValue + 1;
-            } else {
-                return Math.max(0, currentValue - 1);
-            }
-        }
-
+        // DataTables initialization
         $(document).ready(async function () {
             try {
                 showLoading('Veriler Yükleniyor...');
                 const sessionId = localStorage.getItem('sessionId');
-                const whsCode = localStorage.getItem('whsCode');
-
                 if (!sessionId) {
-                    logout();
+                    window.location.href = '/login.html';
                     return;
                 }
 
-                const table = $('#countTable').DataTable({
-                    ajax: {
-                        url: '/api/count-list',
-                        method: 'GET',
-                        data: function(d) {
-                            return {
-                                ...d,
-                                sessionId: sessionId,
-                                whsCode: whsCode
-                            };
-                        },
-                        dataSrc: ''
-                    },
+                console.log('Session ID:', sessionId);
+
+                let selectedQuantities = new Map(); // Store quantities across pagination
+
+                // Initialize DataTables with empty data first
+                const ordersTable = $('#orderTable').DataTable({
                     responsive: true,
-                    columns: [
-                        { data: 'ItemCode' },
-                        { data: 'ItemName' },
-                        { data: 'ItemGroup' },
-                        {
-                            data: null,
-                            render: function(data, type, row) {
-                                if (type === 'display') {
-                                    const quantity = row.Quantity || 0;
-                                    return `
-                                        <div class="quantity-control">
-                                            <button class="btn btn-outline-secondary decrease-qty">-</button>
-                                            <input type="number" class="form-control count-qty" value="${quantity}" min="0" step="1">
-                                            <button class="btn btn-outline-secondary increase-qty">+</button>
-                                        </div>
-                                    `;
-                                }
-                                return data.Quantity || 0;
-                            }
-                        },
-                        { data: 'UomCode' },
-                        {
-                            data: null,
-                            render: function(data, type, row) {
-                                const today = new Date().toISOString().split('T')[0];
-                                return `<input type="date" class="form-control doc-date" value="${row.DocDate || today}">`;
-                            }
-                        }
+                    pageLength: 25,
+                    lengthMenu: [
+                        [25, 50, 100],
+                        [25, 50, 100]
                     ],
-                    order: [[0, 'asc']]
+                    language: {
+                        "emptyTable": "Tabloda veri bulunmuyor",
+                        "info": "_TOTAL_ kayıttan _START_ - _END_ arası gösteriliyor",
+                        "infoEmpty": "Kayıt yok",
+                        "infoFiltered": "(_MAX_ kayıt içerisinden bulunan)",
+                        "lengthMenu": "Sayfada _MENU_ kayıt göster",
+                        "loadingRecords": "Yükleniyor...",
+                        "processing": "İşleniyor...",
+                        "search": "Ara:",
+                        "zeroRecords": "Eşleşen kayıt bulunamadı",
+                        "paginate": {
+                            "first": "İlk",
+                            "last": "Son",
+                            "next": "Sonraki",
+                            "previous": "Önceki"
+                        }
+                    },
+                    order: [
+                        [0, 'asc']
+                    ],
+                    columnDefs: [{
+                        targets: -1,
+                        orderable: false
+                    }],
+                    processing: true,
+                    orderCellsTop: true,
+                    orderMulti: true,
+                    ordering: true
                 });
 
-                // Quantity change handlers
-                $('#countTable').on('click', '.decrease-qty, .increase-qty', function() {
+                let primarySortColumn = null;
+
+
+
+                // Custom filtering function
+                // DataTable'ın kendi filtreleme fonksiyonu (normalize ederek karşılaştırma)
+                $.fn.dataTable.ext.search.push(function (settings, data, dataIndex) {
+                    const kalemGrubuValues = ($('#kalemGrubuFilter').val() || []).map(x => String(x).trim());
+                    const kalemTanimiValues = ($('#kalemTanimiFilter').val() || []).map(x => String(x).trim());
+                    const stokta = $('#stoktaFilter').val();
+
+                    // Kolon indexleri: 2 = Kalem Grubu, 1 = Kalem Tanımı
+                    const rowGroup = String(data[2] || '').trim();
+                    const rowName = String(data[1] || '').trim();
+
+                    // Hiçbir filtre yoksa tüm satırları göster
+                    if (kalemGrubuValues.length === 0 && kalemTanimiValues.length === 0 && !stokta) {
+                        return true;
+                    }
+
+                    let pass = true;
+
+                    // Kalem Grubu filtresi
+                    if (kalemGrubuValues.length > 0 && !kalemGrubuValues.includes(rowGroup)) {
+                        pass = false;
+                    }
+
+                    // Kalem Tanımı filtresi
+                    if (kalemTanimiValues.length > 0 && !kalemTanimiValues.includes(rowName)) {
+                        pass = false;
+                    }
+
+                    // Stokta filtresi
+                    if (stokta) {
+                        const stoktaMiktar = parseFloat(data[4]) || 0;
+                        if (stokta === 'Var' && stoktaMiktar <= 0) {
+                            pass = false;
+                        }
+                        if (stokta === 'Yok' && stoktaMiktar > 0) {
+                            pass = false;
+                        }
+                    }
+
+                    return pass;
+                });
+
+                // Function to load orders
+                async function loadOrders() {
+                    try {
+                        const whsCode = localStorage.getItem("branchCode");
+                        const response = await fetch('/stok-sayimi-list?sessionId=' +
+                            sessionId + '&whsCode=' + whsCode, {
+                            method: 'GET',
+                            credentials: 'include',
+                            headers: {
+                                'Accept': '*/*',
+                                'Content-Type': 'application/json',
+                                'Cookie': `B1SESSION=${sessionId}`
+                            }
+                        });
+
+
+                        if (!response.ok) {
+                            throw new Error(`HTTP error! status: ${response.status}`);
+                        }
+
+                        const data = await response.json();
+                        console.log('Response:', data);
+
+                        if (!data || !data.value) {
+                            console.error('Invalid response format:', data);
+                            alert('Veri formatı geçersiz');
+                            return;
+                        }
+
+                        const orders = data.value;
+                        console.log('Fetched orders:', orders);
+
+                        // Clear existing data
+                        ordersTable.clear();
+
+                        // Add new data
+                        orders.forEach(order => {
+                            const minQty = parseFloat(order.MinQty) || 0;
+                            const itemCode = order.ItemCode;
+
+                            // Get previously selected quantity if exists
+                            let currentQty = selectedQuantities.get(itemCode) || 0;
+
+                            ordersTable.row.add([
+                                order.ItemCode,
+                                order.ItemName,
+                                order.ItemGroup,
+                                order.OnHand,
+                                order.OnHand,
+                                order.MinQty,
+                                `<div class="input-group">
+                                    <button class="btn btn-dark decrease-qty" type="button">-</button>
+                                    <input type="number" class="form-control text-center order-qty" 
+                                        value="${currentQty}"
+                                        min="0"
+                                        data-min="${minQty}"
+                                        data-item-code="${itemCode}"
+                                        style="min-width: 60px;">
+                                    <button class="btn btn-dark increase-qty" type="button">+</button>
+                                </div>`,
+                                order.UomCode
+                            ]);
+                        });
+
+                        // Redraw the table
+                        ordersTable.draw();
+
+                        // Populate Kalem Grubu filter after data is loaded
+                        const kalemGrubuSet = new Set();
+                        const kalemTanimiSet = new Set();
+                        ordersTable.column(2).data().each(function (value) {
+                            if (value) kalemGrubuSet.add(value);
+                        });
+                        ordersTable.column(1).data().each(function (value) {
+                            if (value) kalemTanimiSet.add(value);
+                        });
+
+                        const kalemGrubuFilter = $('#kalemGrubuFilter');
+                        const kalemTanimiFilter = $('#kalemTanimiFilter');
+
+                        kalemGrubuFilter.empty();
+                        [...kalemGrubuSet].sort().forEach(group => {
+                            kalemGrubuFilter.append(
+                                `<option value="${group}">${group}</option>`);
+                        });
+
+                        kalemTanimiFilter.empty();
+                        [...kalemTanimiSet].sort().forEach(tanim => {
+                            kalemTanimiFilter.append(
+                                `<option value="${tanim}">${tanim}</option>`);
+                        });
+
+                        // Initialize Select2 for multiple selection
+                        $('#kalemGrubuFilter').select2({
+                            theme: 'bootstrap-5',
+                            width: '100%',
+                            placeholder: 'Kalem Grubu Seçin',
+                            allowClear: true,
+                            closeOnSelect: false,
+                            language: {
+                                noResults: function () {
+                                    return "Sonuç bulunamadı";
+                                }
+                            },
+                            templateResult: function (data) {
+                                if (!data.id) return data.text;
+                                return $('<span>' + data.text + '</span>');
+                            },
+                            templateSelection: function (data) {
+                                if (!data.id) return data.text;
+                                return $('<span>' + data.text + '</span>');
+                            }
+                        });
+
+                        $('#kalemTanimiFilter').select2({
+                            theme: 'bootstrap-5',
+                            width: '100%',
+                            placeholder: 'Kalem Tanımı Seçin',
+                            allowClear: true,
+                            closeOnSelect: false,
+                            language: {
+                                noResults: function () {
+                                    return "Sonuç bulunamadı";
+                                }
+                            },
+                            templateResult: function (data) {
+                                if (!data.id) return data.text;
+                                return $('<span>' + data.text + '</span>');
+                            },
+                            templateSelection: function (data) {
+                                if (!data.id) return data.text;
+                                return $('<span>' + data.text + '</span>');
+                            }
+                        });
+
+                        // Keep dropdown open after selection
+                        $('#kalemGrubuFilter, #kalemTanimiFilter').on('select2:select select2:unselect',
+                            function (e) {
+                                $(this).select2('open');
+                            });
+
+                        // Function to update selected filters display
+                        function updateSelectedFilters(filterId, containerId) {
+                            const selectedValues = $(`#${filterId}`).val() || [];
+                            const container = $(`#${containerId} .selected-items`);
+                            container.empty();
+
+                            if (selectedValues.length === 0) {
+                                container.append('<span class="text-muted">Filtre seçilmedi</span>');
+                                return;
+                            }
+
+                            selectedValues.forEach(value => {
+                                const tag = $(`<div class="selected-tag">
+                                    ${value}
+                                    <span class="remove-tag" data-value="${value}" data-filter="${filterId}">&times;</span>
+                                </div>`);
+                                container.append(tag);
+                            });
+                        }
+
+                        // Event handlers for filter changes
+                        $('#kalemGrubuFilter, #kalemTanimiFilter').on('change', function () {
+                            const filterId = $(this).attr('id');
+                            const containerId = filterId === 'kalemGrubuFilter' ?
+                                'selectedFilters' : 'selectedTanimFilters';
+                            updateSelectedFilters(filterId, containerId);
+                            ordersTable.draw();
+                        });
+
+                        // Handle removing tags by clicking X
+                        $(document).on('click', '.remove-tag', function () {
+                            const valueToRemove = $(this).data('value');
+                            const filterId = $(this).data('filter');
+                            const currentValues = $(`#${filterId}`).val() || [];
+                            const newValues = currentValues.filter(v => v !== valueToRemove);
+
+                            $(`#${filterId}`).val(newValues).trigger('change');
+                        });
+
+                        // Initial update of selected filters
+                        updateSelectedFilters('kalemGrubuFilter', 'selectedFilters');
+                        updateSelectedFilters('kalemTanimiFilter', 'selectedTanimFilters');
+
+                        // Add filter event listeners
+                        $('#stoktaFilter').off('change').on('change', function () {
+                            ordersTable.draw();
+                        });
+
+                    } catch (error) {
+                        hideLoading();
+                        console.error('Error fetching orders:', error);
+                        // alert('Stok sayımı  yüklenirken bir hata oluştu.');
+                    }
+                }
+
+                // Initial load
+                await loadOrders();
+
+                // Shared function for quantity control logic
+                function handleQuantityChange(currentValue, minQty, isIncrease) {
+                    if (isIncrease) {
+                        // Artırma (+) durumu
+                        if (currentValue === 0 && minQty > 0) {
+                            // 0'dan direkt minimum miktara çık
+                            return minQty;
+                        } else {
+                            // Normal artış
+                            return currentValue + 1;
+                        }
+                    } else {
+                        // Azaltma (-) durumu
+                        if (currentValue <= minQty) {
+                            // Minimum miktardaysa direkt 0'a in
+                            return 0;
+                        } else {
+                            // Normal azalış
+                            return currentValue - 1;
+                        }
+                    }
+                }
+
+                // Store quantity changes
+                $('#orderTable').on('change', '.order-qty', function () {
+                    const itemCode = $(this).data('item-code');
+                    const quantity = parseFloat($(this).val()) || 0;
+                    selectedQuantities.set(itemCode, quantity);
+                });
+
+                // Handle quantity buttons in the table
+                $('#orderTable').on('click', '.increase-qty, .decrease-qty', function () {
+                    const input = $(this).closest('.input-group').find('.order-qty');
+                    const currentValue = parseFloat(input.val()) || 0;
+                    const minQty = parseFloat(input.data('min')) || 0;
+                    const itemCode = input.data('item-code');
+                    const isIncrease = $(this).hasClass('increase-qty');
+                    const newValue = handleQuantityChange(currentValue, minQty, isIncrease);
+
+                    input.val(newValue);
+                    selectedQuantities.set(itemCode, newValue);
+                });
+
+                // Function to show order summary modal
+                function showOrderSummaryModal() {
+                    const orderData = [];
+
+                    // Get all rows with quantities
+                    ordersTable.rows().every(function () {
+                        const rowData = this.data();
+                        const $row = $(this.node());
+                        const quantity = parseFloat($row.find('.order-qty').val()) || 0;
+
+                        if (quantity > 0) {
+                            orderData.push({
+                                itemCode: String(rowData[0]),
+                                itemName: rowData[1],
+                                quantity: quantity,
+                                uomCode: rowData[7],
+                                minQty: parseFloat(rowData[5]) || 0
+                            });
+                        }
+                    });
+
+                    if (orderData.length === 0) {
+                        Swal.fire({
+                            icon: 'warning',
+                            title: 'Uyarı',
+                            text: 'Lütfen en az bir ürün için miktar giriniz.',
+                            confirmButtonText: 'Tamam'
+                        });
+                        return;
+                    }
+
+                    // Populate order summary modal
+                    const summaryHtml = orderData.map(item => `
+                        <div class="item-row">
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div class="fw-bold">${item.itemName}</div>
+                                    <div class="text-muted small">${item.itemCode}</div>
+                                </div>
+                                <div class="quantity-badge">
+                                    <div class="quantity-controls">
+                                        <button type="button" class="decrease-modal-qty" data-item-code="${item.itemCode}" data-min="${item.minQty}">−</button>
+                                        <span class="quantity-value">${item.quantity}</span>
+                                        <button type="button" class="increase-modal-qty" data-item-code="${item.itemCode}" data-min="${item.minQty}">+</button>
+                                    </div>
+                                    <span class="ms-2">${item.uomCode}</span>
+                                </div>
+                            </div>
+                        </div>
+                    `).join('');
+
+                    $('#orderSummaryList').html(summaryHtml);
+
+                    const modal = new bootstrap.Modal(document.getElementById('orderSummaryModal'));
+                    modal.show();
+                }
+
+                // Show summary when clicking either button
+                $('#createOrderBtn, #showOrderSummary').click(function () {
+                    showOrderSummaryModal();
+                });
+
+                // Create order from modal
+                $('#confirmOrderBtn').click(async function () {
+                    try {
+                        showLoading('Sipariş oluşturuluyor...');
+                        const orderItems = [];
+                        let hasError = false;
+                        const whsCode = localStorage.getItem("branchCode");
+
+                        // Collect all items with quantities
+                        ordersTable.rows().every(function () {
+                            const rowData = this.data();
+                            const $row = $(this.node());
+                            const quantity = parseFloat($row.find('.order-qty')
+                                .val()) || 0;
+                            const minQty = parseFloat(rowData[5]) || 0;
+                            const localStorageUserName = localStorage.getItem(
+                                "userName");
+                            console.log("localStorageUserName:", localStorageUserName);
+
+                            if (quantity > 0) {
+                                if (quantity < minQty) {
+                                    Swal.fire({
+                                        icon: 'warning',
+                                        title: 'Uyarı',
+                                        text: `${rowData[1]} için minimum sipariş miktarı ${minQty}'dir.`,
+                                        confirmButtonText: 'Tamam'
+                                    });
+                                    hasError = true;
+                                    return false;
+                                }
+
+                                orderItems.push({
+                                    U_Type: "MAIN",
+                                    U_WhsCode: whsCode,
+                                    U_ItemCode: rowData[0],
+                                    U_ItemName: rowData[1],
+                                    U_Quantity: quantity,
+                                    U_UomCode: rowData[7],
+                                    U_User: localStorageUserName
+                                });
+                            }
+                        });
+
+                        if (hasError) return;
+
+                        if (orderItems.length === 0) {
+                            alert('Lütfen en az bir ürün için miktar giriniz.');
+                            return;
+                        }
+
+                        // Create order
+                        const response = await fetch('/api/stok-sayimi-olustur?sessionId=' +
+                            sessionId, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify(orderItems)
+                        });
+
+                        console.log('Response:', response);
+
+                        if (!response.ok) {
+                            throw new Error('Sipariş oluşturulurken bir hata oluştu.');
+                        }
+
+                        const result = await response.json();
+
+                        // Hide loading and modal
+                        hideLoading();
+                        bootstrap.Modal.getInstance(document.getElementById(
+                            'orderSummaryModal')).hide();
+
+                        // Show success message
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Başarılı!',
+                            text: 'Sipariş başarıyla oluşturuldu!',
+                            confirmButtonText: 'Tamam'
+                        });
+
+                        // Clear quantities and reload orders
+                        selectedQuantities.clear();
+                        await loadOrders();
+
+                    } catch (error) {
+                        hideLoading();
+                        console.error('Error creating order:', error);
+                        alert('Sipariş oluşturulurken bir hata oluştu: ' + error.message);
+                    }
+                });
+
+                // Handle quantity changes in modal
+                $(document).on('click', '.decrease-modal-qty, .increase-modal-qty', function () {
                     const $button = $(this);
-                    const $input = $button.siblings('.count-qty');
-                    const currentValue = parseFloat($input.val()) || 0;
-                    const isIncrease = $button.hasClass('increase-qty');
-                    
-                    const newValue = handleQuantityChange(currentValue, isIncrease);
-                    $input.val(newValue);
-                    
-                    const row = table.row($button.closest('tr'));
-                    const rowData = row.data();
-                    
-                    // Update the data
-                    const updatedData = {
-                        U_WhsCode: whsCode,
-                        U_ItemCode: rowData.ItemCode,
-                        U_ItemName: rowData.ItemName,
-                        U_Quantity: newValue,
-                        U_UomCode: rowData.UomCode,
-                        U_DocDate: $button.closest('tr').find('.doc-date').val(),
-                        U_SessionID: sessionId,
-                        U_GUID: generateUUID(),
-                        U_User: localStorage.getItem('username')
-                    };
+                    const itemCode = $button.data('item-code');
+                    const minQty = parseFloat($button.data('min')) || 0;
+                    const isIncrease = $button.hasClass('increase-modal-qty');
 
-                    // Send update to server
-                    $.ajax({
-                        url: '/api/count-update',
-                        method: 'POST',
-                        contentType: 'application/json',
-                        data: JSON.stringify(updatedData),
-                        success: function(response) {
-                            console.log('Update successful:', response);
-                        },
-                        error: function(error) {
-                            console.error('Update failed:', error);
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Hata',
-                                text: 'Güncelleme sırasında bir hata oluştu.'
-                            });
+                    let $input = null;
+                    let tableMinQty = 0;
+
+                    ordersTable.rows().every(function () {
+                        const rowData = this.data();
+                        if (String(rowData[0]) === String(itemCode)) {
+                            $input = $(this.node()).find('.order-qty');
+                            tableMinQty = parseFloat(rowData[5]) ||
+                                0; // MinQty from table data
+                            return false;
                         }
                     });
-                });
 
-                // Date change handler
-                $('#countTable').on('change', '.doc-date', function() {
-                    const $input = $(this);
-                    const row = table.row($input.closest('tr'));
-                    const rowData = row.data();
-                    
-                    const updatedData = {
-                        U_WhsCode: whsCode,
-                        U_ItemCode: rowData.ItemCode,
-                        U_ItemName: rowData.ItemName,
-                        U_Quantity: parseFloat($input.closest('tr').find('.count-qty').val()) || 0,
-                        U_UomCode: rowData.UomCode,
-                        U_DocDate: $input.val(),
-                        U_SessionID: sessionId,
-                        U_GUID: generateUUID(),
-                        U_User: localStorage.getItem('username')
-                    };
+                    if ($input) {
+                        const currentValue = parseFloat($input.val()) || 0;
 
-                    // Send update to server
-                    $.ajax({
-                        url: '/api/count-update',
-                        method: 'POST',
-                        contentType: 'application/json',
-                        data: JSON.stringify(updatedData),
-                        success: function(response) {
-                            console.log('Update successful:', response);
-                        },
-                        error: function(error) {
-                            console.error('Update failed:', error);
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Hata',
-                                text: 'Güncelleme sırasında bir hata oluştu.'
-                            });
+                        let newValue;
+                        if (isIncrease) {
+                            // Artırma (+) durumu
+                            if (currentValue === 0 && tableMinQty > 0) {
+                                newValue = tableMinQty; // 0'dan direkt minimum miktara
+                            } else {
+                                newValue = currentValue + 1; // Normal artış
+                            }
+                        } else {
+                            // Azaltma (-) durumu
+                            if (currentValue <= tableMinQty) {
+                                newValue = 0; // Minimum miktardaysa direkt 0'a
+                            } else {
+                                newValue = currentValue - 1; // Normal azalış
+                            }
                         }
-                    });
+
+                        // Update both table and modal
+                        $input.val(newValue);
+                        selectedQuantities.set(itemCode, newValue);
+                        const $quantityValue = $button.closest('.quantity-controls').find(
+                            '.quantity-value');
+                        $quantityValue.text(newValue);
+
+                        if (newValue === 0) {
+                            const shouldRemove = confirm(
+                                'Bu ürünü sipariş özetinden kaldırmak istiyor musunuz?');
+                            if (shouldRemove) {
+                                $button.closest('.item-row').fadeOut(300, function () {
+                                    $(this).remove();
+                                    if ($('#orderSummaryList .item-row').length === 0) {
+                                        bootstrap.Modal.getInstance(document.getElementById(
+                                            'orderSummaryModal')).hide();
+                                    }
+                                });
+                            } else {
+                                const resetValue = tableMinQty > 0 ? tableMinQty : 1;
+                                $input.val(resetValue);
+                                selectedQuantities.set(itemCode, resetValue);
+                                $quantityValue.text(resetValue);
+                            }
+                        }
+                    }
                 });
 
-                hideLoading();
+                // Sidebar toggle for mobile
+                $('#sidebarToggle').click(function () {
+                    $('body').toggleClass('show-sidebar');
+                });
+
             } catch (error) {
-                console.error('Error:', error);
                 hideLoading();
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Hata',
-                    text: 'Veriler yüklenirken bir hata oluştu.'
-                });
+                console.error('Error:', error);
+                alert('Veriler yüklenirken bir hata oluştu.');
+            } finally {
+                hideLoading();
             }
         });
+
+        // Format date for display
+        function formatDate(date) {
+            if (!date) return '';
+            const d = new Date(date);
+            return d.toLocaleDateString('tr-TR');
+        }
     </script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="js/datatable-helper.js"></script>
 </body>
+
 </html>

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CREMMA - Stok Sayımlarım</title>
+    <link rel="icon" type="image/png" href="img/favicon.png">
+    <script src="js/loadHeader.js"></script>
+    <script src="js/sidebar-user.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+    <link href="css/orientation.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.7/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css" rel="stylesheet">
+    <style>
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(255, 255, 255, 0.9);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .loading-content { text-align: center; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        .loading-spinner { width: 4rem; height: 4rem; border: 4px solid #f3f3f3; border-top: 4px solid #dc3545; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 1rem; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .loading-text { color: #333; font-size: 1.1rem; margin-top: 1rem; }
+        
+        /* DataTable genişlik düzeltmeleri */
+        .dataTables_wrapper {
+            width: 100% !important;
+        }
+        .dataTables_scrollBody {
+            width: 100% !important;
+        }
+        table.dataTable {
+            width: 100% !important;
+            margin-left: 0 !important;
+            margin-right: 0 !important;
+        }
+        .card-body {
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        /* Esnek tablo hücresi düzenlemesi */
+        .table th, .table td {
+            white-space: normal;
+            word-break: break-word;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div class="loading-screen">
+        <div class="loading-content">
+            <div class="loading-spinner"></div>
+            <div class="loading-text">Yükleniyor...</div>
+        </div>
+    </div>
+    <div class="d-flex">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div id="logo-container"></div>
+            <div id="sidebar-nav"></div>
+            <div id="sidebar-user"></div>
+        </div>
+        <!-- Main Content -->
+        <div class="main-content">
+            <header class="d-flex justify-content-between p-3 bg-white">
+                <div class="d-flex align-items-center">
+                    <button id="sidebarToggle" class="btn btn-link d-md-none">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <h5 class="mb-0">Stok Sayımlarım</h5>
+                </div>
+                <div class="d-flex align-items-center">
+                    <a href="stok-sayimi-olustur.html" class="btn btn-danger me-2">
+                        <i class="bi bi-plus"></i> Yeni Sayım Oluştur
+                    </a>
+                    <button class="btn btn-outline-secondary" onclick="logout()">
+                        Çıkış Yap <i class="bi bi-box-arrow-right"></i>
+                    </button>
+                </div>
+            </header>
+            <div class="container-fluid p-4">
+                <!-- Filters -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label class="form-label">Sipariş Durumu</label>
+                                <select id="statusFilter" class="form-select">
+                                    <option value="">Tüm Durumlar</option>
+                                    <option value="1">Beklemede</option>
+                                    <option value="2">Tamamlandı</option>
+                                    <option value="3">İptal Edildi</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Başlangıç Tarihi</label>
+                                <input id="dateFromFilter" type="date" class="form-control">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="form-label">Bitiş Tarihi</label>
+                                <input id="dateToFilter" type="date" class="form-control">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table id="sayimListesiTable" class="table table-hover w-100">
+                                <thead>
+                                    <tr>
+                                        <th>Şube Kodu</th>
+                                        <th>Sayım No</th>
+                                        <th>Sayım Tarihi</th>
+                                        <th>Giriş Tarihi</th>
+                                        <th>Durum</th>
+                                        <th>İşlemler</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Data will be populated by JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+    <script src="js/nav-menu.js"></script>
+    <script src="js/sidebar-toggle.js"></script>
+    <script src="js/datatable-helper.js"></script>
+    <script src="js/stok-sayimlarim.js"></script>
+    <script>
+        function logout() {
+            localStorage.clear();
+            window.location.href = '/login.html';
+        }
+    </script>
+</body>
+</html>
