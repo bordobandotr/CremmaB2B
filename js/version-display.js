@@ -38,7 +38,7 @@ async function loadAppVersion() {
             return storedVersion;
         }
         
-        return '1.0.0'; // Default fallback version
+        return '1.0.43'; // Default fallback version from package.json
     }
 }
 
