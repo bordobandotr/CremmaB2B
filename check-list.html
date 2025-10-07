@@ -11,48 +11,35 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
     <link href="css/style.css" rel="stylesheet">
     <link href="css/orientation.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.css" rel="stylesheet">
     <style>
-        .table > :not(caption) > * > * {
-            padding: 1rem;
-        }
-        
-        .table tbody tr {
-            border-bottom: 1px solid #dee2e6;
-        }
-
-        .table thead {
-            background-color: #f8f9fa;
-        }
-
-        .form-check {
-            display: flex;
-            justify-content: center;
-            margin: 0;
-        }
-
-        .form-check-input {
+        /* Make the open checklist filter switch larger */
+        #openChecklistFilter {
             width: 3em;
-            height: 3em;
-            margin: 0;
+            height: 1.5em;
             cursor: pointer;
         }
-
-        .form-check-input:checked {
-            background-color: #198754;
-            border-color: #198754;
-        }
-
-        .table tbody tr:nth-of-type(odd) {
-            background-color: rgba(0, 0, 0, 0.02);
-        }
-
-        .table tbody tr:hover {
-            background-color: rgba(0, 0, 0, 0.04);
-        }
-
-        #kaydetBtn {
-            padding: 0.5rem 1.5rem;
+        label[for="openChecklistFilter"] {
+            cursor: pointer;
+            padding-left: 0.5rem;
             font-size: 1rem;
+            font-weight: bold;
+            padding-top: 0.3rem;
+        }
+
+        .table .form-check-input {
+            width: 1.5em;
+            height: 1.5em;
+        }
+
+        /* Set a minimum width for the responsible group filter */
+        #responsibleGroupFilter-ts-control {
+            min-width: 200px; /* Adjust as needed */
+        }
+
+
+        #frequencyFilter-ts-control {
+            min-width: 150px; /* Adjust as needed */
         }
     </style>
 </head>
@@ -77,34 +64,60 @@
                     <h5 class="mb-0">Check List</h5>
                 </div>
                 <div class="d-flex align-items-center">
-                    <button class="btn btn-dark" onclick="logout()">
+                    <button class="btn btn-outline-secondary" onclick="logout()">
                         Çıkış Yap <i class="bi bi-box-arrow-right"></i>
                     </button>
                 </div>
             </header>
 
             <!-- Content -->
-            <div class="container-fluid p-4">
+            <div class="container-fluid mt-4">
+                <!-- Filters -->
+                <div class="row mb-4">
+                    <div class="col-12">
+                        <div class="d-flex justify-content-start align-items-center gap-3">
+                            <!-- Open Checklists Filter -->
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" id="openChecklistFilter">
+                                <label class="form-check-label" for="openChecklistFilter">Açık Checklistler</label>
+                                <span id="openChecklistCount" class="badge bg-secondary ms-1">0</span>
+                            </div>
+
+                            <!-- Frequency Filter -->
+                            <div>
+                                <select id="frequencyFilter" class="form-select form-select-sm" multiple placeholder="Sıklık Seç..."></select>
+                            </div>
+
+                            <!-- Responsible Group Filter -->
+                            <div>
+                                <select id="responsibleGroupFilter" class="form-select form-select-sm" multiple placeholder="Sorumlu Grup Seç..."></select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <div class="card">
                     <div class="card-body">
                         <div class="d-flex justify-content-between align-items-center mb-4">
                             <h4 class="mb-0">Check List</h4>
-                            <button class="btn btn-dark" id="kaydetBtn">Kaydet</button>
+                            <button class="btn btn-danger" id="kaydetBtn">Kaydet</button>
                         </div>
                         <div class="table-responsive">
-                            <table class="table">
+                            <table class="table table-hover">
                                 <thead>
                                     <tr>
-                                        <th style="width: 5%">No</th>
+                                        <th style="width: 5%">Kod</th>
+                                        <th style="width: 10%">İş Kodu</th>
                                         <th style="width: 20%">İş Tanımı</th>
                                         <th style="width: 10%; text-align: center;">İşlem</th>
-                                        <th style="width: 25%">Açıklama</th>
-                                        <th style="width: 20%">Sorumlu Personel</th>
-                                        <th style="width: 10%">Sıklık</th>
+                                        <th style="width: 15%">Açıklama</th>
+                                        <th style="width: 15%">Sorumlu Personel</th>
+                                        <th style="width: 10%">Sorumlu Grup</th>
+                                        <th style="width: 5%">Sıklık</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <!-- Table content will be dynamically populated -->
+                                    <!-- Dynamically populated -->
                                 </tbody>
                             </table>
                         </div>
@@ -118,64 +131,130 @@
     <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
+
     <script>
+        let allChecklistItems = [];
+        let frequencySelect, responsibleGroupSelect;
+
         document.addEventListener('DOMContentLoaded', function () {
+            initializeFilters();
             loadCheckList();
             document.getElementById('kaydetBtn').addEventListener('click', saveCheckList);
         });
+
+        function getFrequencyText(freq) {
+            switch (String(freq)) {
+                case '1': return 'Günlük';
+                case '2': return 'Haftalık';
+                case '3': return 'Aylık';
+                default: return 'Bilinmiyor';
+            }
+        }
+
+        function initializeFilters() {
+            frequencySelect = new TomSelect('#frequencyFilter', { create: false, plugins: ['remove_button'] });
+            responsibleGroupSelect = new TomSelect('#responsibleGroupFilter', { create: false, plugins: ['remove_button'] });
+
+            document.getElementById('openChecklistFilter').addEventListener('change', filterAndDisplayItems);
+            frequencySelect.on('change', filterAndDisplayItems);
+            responsibleGroupSelect.on('change', filterAndDisplayItems);
+        }
 
         async function loadCheckList() {
             try {
                 const sessionId = localStorage.getItem('sessionId');
                 const whsCode = localStorage.getItem("branchCode");
 
-                console.log('sessionId:', sessionId);
-                console.log('whsCode:', whsCode);
-
                 if (!sessionId || !whsCode) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: 'Hata',
-                        text: 'Oturum bilgisi bulunamadı. Lütfen tekrar giriş yapın.'
-                    });
+                    Swal.fire({ icon: 'error', title: 'Hata', text: 'Oturum bilgisi bulunamadı. Lütfen tekrar giriş yapın.' });
                     return;
                 }
 
-                const response = await fetch(`/api/checklist?sessionId=${sessionId}&whsCode=${whsCode}`);
+                const response = await fetch(`/api/checklist?sessionId=${sessionId}&whsCode=${whsCode}`, { cache: 'no-cache' });
                 const data = await response.json();
 
                 if (data.success) {
-                    populateCheckList(data.data);
+                    allChecklistItems = data.data.map(item => ({
+                        ...item,
+                        FrequencyText: getFrequencyText(item.Frequency)
+                    }));
+                    populateFilterOptions();
+                    filterAndDisplayItems();
                 } else {
                     throw new Error(data.error);
                 }
             } catch (error) {
                 console.error('Error loading checklist:', error);
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Hata',
-                    text: 'Kontrol listesi yüklenirken bir hata oluştu.'
-                });
+                Swal.fire({ icon: 'error', title: 'Hata', text: 'Kontrol listesi yüklenirken bir hata oluştu.' });
             }
         }
 
-        function populateCheckList(items) {
+        function populateFilterOptions() {
+            const frequencies = [...new Set(allChecklistItems.map(item => item.FrequencyText))].map(f => ({ value: f, text: f }));
+            const groups = [...new Set(allChecklistItems.map(item => item.SorumluGrup).filter(g => g))].map(g => ({ value: g, text: g }));
+
+            frequencySelect.clearOptions();
+            frequencySelect.addOptions(frequencies);
+
+            responsibleGroupSelect.clearOptions();
+            responsibleGroupSelect.addOptions(groups);
+        }
+
+        function filterAndDisplayItems() {
+            const isOpenOnly = document.getElementById('openChecklistFilter').checked;
+            const selectedFrequencies = frequencySelect.getValue();
+            const selectedGroups = responsibleGroupSelect.getValue();
+
+            let filteredItems = allChecklistItems;
+
+            // Apply text/select filters first
+            if (selectedFrequencies.length > 0) {
+                filteredItems = filteredItems.filter(item => selectedFrequencies.includes(item.FrequencyText));
+            }
+
+            if (selectedGroups.length > 0) {
+                filteredItems = filteredItems.filter(item => selectedGroups.includes(item.SorumluGrup));
+            }
+
+            // After filtering, count the open ones and update the badge
+            const openCount = filteredItems.filter(item => !item.DocDate).length;
+            document.getElementById('openChecklistCount').textContent = openCount;
+
+            // Now, apply the 'open only' filter if it's checked
+            if (isOpenOnly) {
+                filteredItems = filteredItems.filter(item => !item.DocDate);
+            }
+
+            renderTable(filteredItems);
+        }
+
+        function renderTable(items) {
             const tbody = document.querySelector('tbody');
             tbody.innerHTML = '';
 
+            if (items.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" class="text-center p-4">Filtreyle eşleşen kayıt bulunamadı.</td></tr>';
+                return;
+            }
+
             items.forEach(item => {
                 const row = document.createElement('tr');
+                const isDone = item.DocDate; // DocDate being present means it's done
+
                 row.innerHTML = `
                     <td class="align-middle">${item.RowCnt}</td>
+                    <td class="align-middle">${item.WorkCode}</td>
                     <td class="align-middle">${item.WorkName}</td>
                     <td class="align-middle text-center">
-                        <div class="form-check">
-                            <input class="form-check-input" type="checkbox" ${item.WorkStatus === 'True' ? 'checked disabled' : ''}>
+                        <div class="form-check d-flex justify-content-center">
+                            <input class="form-check-input" type="checkbox" ${isDone ? 'checked disabled' : ''}>
                         </div>
                     </td>
                     <td class="align-middle">${item.FreeText || ''}</td>
                     <td class="align-middle">${item.Responsible || ''}</td>
-                    <td class="align-middle">${item.Frequency  || ''}</td>
+                    <td class="align-middle">${item.SorumluGrup || ''}</td>
+                    <td class="align-middle">${item.FrequencyText || ''}</td>
                 `;
                 row.dataset.workCode = item.WorkCode;
                 tbody.appendChild(row);
@@ -201,13 +280,15 @@
                 const checkboxes = document.querySelectorAll('.form-check-input:checked:not([disabled])');
                 const tasks = Array.from(checkboxes).map(checkbox => {
                     const row = checkbox.closest('tr');
+                    // Find the original item from allChecklistItems to get original data
+                    const originalItem = allChecklistItems.find(item => item.WorkCode == row.dataset.workCode);
                     return {
-                        LineNum: parseInt(row.cells[0].textContent),
-                        TaskCode: row.dataset.workCode,
-                        TaskName: row.cells[1].textContent,
-                        Status: 'C',  // Since we're only sending checked items
-                        Description: row.cells[3].textContent,
-                        Frequency: row.cells[5].textContent,
+                        LineNum: originalItem.RowCnt,
+                        TaskCode: originalItem.WorkCode,
+                        TaskName: originalItem.WorkName,
+                        Status: 'C',  // Completed
+                        Description: originalItem.FreeText,
+                        Frequency: originalItem.Frequency, // Send original numeric value
                     };
                 });
 

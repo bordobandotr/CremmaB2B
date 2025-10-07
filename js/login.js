@@ -1,6 +1,6 @@
-document.getElementById('loginForm').addEventListener('submit', async function(e) {
+document.getElementById('loginForm').addEventListener('submit', async function (e) {
     e.preventDefault();
-    
+
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
     const errorMessage = document.getElementById('errorMessage');
@@ -41,17 +41,12 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
 
         // If validation successful, proceed with SAP login using admin credentials
         const sapResponse = await axios.post(
-          "/b1s/v1/Login",
-          {
-            UserName: validationResponse.data.user.username, // This will be admin username
-            Password: validationResponse.data.user.password, // This will be admin password
-            CompanyDB: "CREMMA_CANLI",
-          },
-          {
-            headers: {
-              "Content-Type": "application/json",
-            },
-          }
+            "/api/login",
+            {
+                UserName: validationResponse.data.user.username, // This will be admin username
+                Password: validationResponse.data.user.password, // This will be admin password
+                CompanyDB: "CREMMA_CANLI_2209",
+            }
         );
 
         await new Promise(resolve => setTimeout(resolve, 2000)); // 2 second delay
@@ -65,15 +60,15 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
             localStorage.setItem('sessionId', sapResponse.data.SessionId);
             localStorage.setItem('sessionTimeout', sapResponse.data.SessionTimeout);
             localStorage.setItem('b1Version', sapResponse.data.Version);
-            
-             console.log('SessionId:', sapResponse.data.SessionId);
-             console.log('SessionTimeout:', sapResponse.data.SessionTimeout);
-             console.log('Version:', sapResponse.data.Version);
-             console.log('User Name:', validationResponse.data.user.name);
-             console.log('User Type:', validationResponse.data.user.type);
-             console.log('Branch Code:', validationResponse.data.user.branchCode);
-             console.log('Branch Name:', validationResponse.data.user.branchName);
- 
+
+            console.log('SessionId:', sapResponse.data.SessionId);
+            console.log('SessionTimeout:', sapResponse.data.SessionTimeout);
+            console.log('Version:', sapResponse.data.Version);
+            console.log('User Name:', validationResponse.data.user.name);
+            console.log('User Type:', validationResponse.data.user.type);
+            console.log('Branch Code:', validationResponse.data.user.branchCode);
+            console.log('Branch Name:', validationResponse.data.user.branchName);
+
 
 
             // Hide loading screen and redirect
@@ -82,26 +77,44 @@ document.getElementById('loginForm').addEventListener('submit', async function(e
         } else {
             hideLoading();
             errorMessage.textContent = 'SAP bağlantısında hata oluştu';
-            errorMessage.style.display = 'block';
         }
     } catch (error) {
         console.error('Login error:', error);
-        
+
         await new Promise(resolve => setTimeout(resolve, 2000)); // 2 second delay
-        
-        // Hide loading screen
         hideLoading();
-        
+
         if (error.response) {
+            // Sunucudan bir hata kodu ile yanıt geldi (4xx, 5xx)
             console.error('Error response:', error.response);
-            errorMessage.textContent = error.response.data.error?.message?.value || 'Giriş yapılırken bir hata oluştu';
+            const status = error.response.status;
+            const data = error.response.data;
+
+            if (status === 401) {
+                errorMessage.textContent = 'Kullanıcı adı veya şifre hatalı.';
+            } else if (status >= 500) {
+                // Sunucu taraflı hatalar (500, 502, 503 vb.)
+                if (data && data.details && typeof data.details === 'string') {
+                    if (data.details.includes('ECONNREFUSED')) {
+                        errorMessage.textContent = 'SAP sunucusuna bağlanılamadı. Lütfen sistem yöneticinize başvurun.';
+                    } else {
+                        errorMessage.textContent = 'SAP sunucusunda bir hata oluştu. Lütfen daha sonra tekrar deneyin.';
+                    }
+                } else {
+                    errorMessage.textContent = 'Sunucuda beklenmedik bir hata oluştu (Kod: ' + status + ').';
+                }
+            } else {
+                errorMessage.textContent = 'Giriş yapılırken bir hata oluştu (Kod: ' + status + ').';
+            }
         } else if (error.request) {
+            // İstek yapıldı ancak sunucudan yanıt alınamadı
             console.error('Error request:', error.request);
-            errorMessage.textContent = 'Sunucuya bağlanılamadı';
+            errorMessage.textContent = 'Sunucuya ulaşılamadı. Lütfen ağ bağlantınızı kontrol edin veya sistem yöneticinize başvurun.';
         } else {
-            errorMessage.textContent = 'Giriş yapılırken bir hata oluştu';
+            // İsteği hazırlarken bir hata oluştu
+            errorMessage.textContent = 'Giriş isteği oluşturulurken bir hata oluştu: ' + error.message;
         }
-        
+
         errorMessage.style.display = 'block';
     }
 });

@@ -86,3 +86,10 @@ function loadJS(src, async = false, defer = false) {
     script.defer = defer;
     document.body.appendChild(script);
 }
+
+
+
+function logout() {
+    localStorage.clear();
+    window.location.href = '/login.html';
+}

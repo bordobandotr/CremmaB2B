@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="tr">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,16 +9,18 @@
     <script src="js/loadHeader.js"></script>
     <link rel="stylesheet" href="css/login.css">
 </head>
+
 <body>
     <div class="container-fluid p-0">
         <div class="row g-0 login-container">
             <!-- Left Image Section -->
             <div class="col-md-6">
                 <div class="image-section">
-                    <img src="assets/cremma-store.png" alt="Cremma Store" class="w-100 h-100 object-fit-cover" style="position: absolute;">
+                    <img src="assets/cremma-store.png" alt="Cremma Store" class="w-100 h-100 object-fit-cover"
+                        style="position: absolute;">
                 </div>
             </div>
-            
+
             <!-- Right Form Section -->
             <div class="col-md-6">
                 <div class="form-section">
@@ -26,19 +29,20 @@
                             <img src="assets/img/_cremma.png" alt="Cremma Logo" class="w-100 h-100 object-fit-cover">
                         </div>
                         <form id="loginForm" class="mt-5">
-                            <div class="mb-3"> 
-                                <input type="text" class="form-control" id="username" required placeholder="Kullanıcı Adı">
+                            <div class="mb-3">
+                                <input type="text" class="form-control" id="username" required
+                                    placeholder="Kullanıcı Adı">
                             </div>
-                            <div class="mb-3"> 
+                            <div class="mb-3">
                                 <input type="password" class="form-control" id="password" required placeholder="Sifre">
                             </div>
                             <div class="d-grid">
-                                <button type="submit" class="btn btn-login">Giriş Yap</button>
+                                <button type="submit" class="btn btn-danger">Giriş Yap</button>
                             </div>
                         </form>
                         <div id="errorMessage" class="alert alert-danger mt-3" style="display: none;">
                         </div>
-                        
+
                         <!-- Loading Screen -->
                         <div id="loadingScreen" class="loading-overlay" style="display: none;">
                             <div class="loading-content">
@@ -61,4 +65,5 @@
     <!-- Login JS -->
     <script src="js/login.js"></script>
 </body>
+
 </html>

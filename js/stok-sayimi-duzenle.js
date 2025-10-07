@@ -158,13 +158,55 @@ $(document).ready(function () {
     // Tarih formatını düzenle (YYYY-MM-DD)
     function formatDateForInput(dateStr) {
         try {
-            if (!dateStr) return new Date().toISOString().split('T')[0];
+            // Null, undefined, boş string kontrolü
+            if (!dateStr) {
+                console.log('formatDateForInput: Empty date value, returning today');
+                return new Date().toISOString().split('T')[0];
+            }
             
-            const date = new Date(dateStr);
+            // SAP'ten gelen tarih formatı bazen 'YYYY-MM-DD' veya 'YYYYMMDD' veya 'DD.MM.YYYY' olabilir
+            let date;
+            console.log('formatDateForInput raw value:', dateStr);
+            
+            // SAP'den gelen YYYYMMDD formatını tanıma ve işleme
+            if (typeof dateStr === 'string' && dateStr.length === 8 && !dateStr.includes('-') && !dateStr.includes('.')) {
+                // YYYYMMDD formatını ele al
+                const year = dateStr.substring(0, 4);
+                const month = dateStr.substring(4, 6);
+                const day = dateStr.substring(6, 8);
+                date = new Date(year, month - 1, day);
+                console.log('formatDateForInput: Parsed YYYYMMDD format', dateStr, 'as', year, month, day, date);
+            }
+            // '.' içeren format - Muhtemelen DD.MM.YYYY
+            else if (typeof dateStr === 'string' && dateStr.includes('.')) {
+                const parts = dateStr.split('.');
+                if (parts.length === 3) {
+                    date = new Date(parts[2], parts[1] - 1, parts[0]);
+                    console.log('formatDateForInput: Parsed DD.MM.YYYY format', date);
+                } else {
+                    date = new Date(dateStr);
+                }
+            } 
+            // ISO format veya timestamp - doğrudan new Date ile parse et
+            else {
+                date = new Date(dateStr);
+                console.log('formatDateForInput: Parsed standard format', date);
+            }
+            
+            // Geçerli tarih mi kontrol et
             if (isNaN(date.getTime())) {
+                console.log('formatDateForInput: Invalid date, returning today');
                 return new Date().toISOString().split('T')[0]; // Geçersizse bugünü döndür
             }
-            return date.toISOString().split('T')[0];
+            
+            // YYYY-MM-DD formatına dönüştür
+            const yyyy = date.getFullYear();
+            const mm = String(date.getMonth() + 1).padStart(2, '0');
+            const dd = String(date.getDate()).padStart(2, '0');
+            
+            const formattedDate = `${yyyy}-${mm}-${dd}`;
+            console.log('formatDateForInput: Formatted result', formattedDate);
+            return formattedDate;
         } catch (e) {
             console.error("Tarih dönüştürme hatası:", e);
             return new Date().toISOString().split('T')[0]; // Hata durumunda bugünü döndür
@@ -215,6 +257,9 @@ $(document).ready(function () {
                 return;
             }
             
+            console.log('Sayım detayları yüklendi:', data.length, 'kalem var');
+            console.log('İlk kalem örneği:', data[0]);
+            
             // Orijinal değerleri sakla
             originalItems = deepCopy(data);
             updateProgressBar(30);
@@ -245,6 +290,37 @@ $(document).ready(function () {
     function buildPage(data) {
         const firstItem = data[0]; // İlk ürün, genel bilgiler için kullanılacak
         
+        console.log('data', data);
+        console.log('Building page with data:', data.length, 'items');
+        
+        // Tüm tarih alanlarını detaylı kontrol et
+        console.log('First item date fields:', {
+            RefDate: firstItem.RefDate,
+            DocDate: firstItem.DocDate,
+            CreateDate: firstItem.CreateDate,
+            UpdateDate: firstItem.UpdateDate
+        });
+        
+        // Öncelik RefDate > DocDate > Bugün
+        // Yeni formatları doğru şekilde ele almak için
+        let dateToUse;
+        
+        if (firstItem.RefDate) {
+            // RefDate varsa, formatını kontrol et ve uygun şekilde işle
+            dateToUse = firstItem.RefDate;
+            console.log('Using RefDate:', dateToUse);
+        } 
+        else if (firstItem.DocDate) {
+            // RefDate yoksa DocDate'i kullan
+            dateToUse = firstItem.DocDate;
+            console.log('Using DocDate:', dateToUse);
+        }
+        else {
+            // İkisi de yoksa bugünü kullan
+            dateToUse = new Date().toISOString().split('T')[0];
+            console.log('Using today as default date:', dateToUse);
+        }
+        
         let html = '';
         html += `<div class='card mb-3'><div class='card-body'>`;
         html += `<div class='row mb-2'>
@@ -259,8 +335,11 @@ $(document).ready(function () {
                     <option value='3' ${firstItem.DocStatus === '3' ? 'selected' : ''}>İptal Edildi</option>
                 </select>
             </div>
-            <div class='col-md-2'><label for='countDateInput'><b>Sayım Tarihi:</b></label> <input type='date' id='countDateInput' class='form-control form-control-sm' value='${formatDateForInput(firstItem.RefDate || new Date().toISOString())}'></div>
+            <div class='col-md-2'><label for='countDateInput'><b>Sayım Tarihi:</b></label> <input type='date' id='countDateInput' class='form-control form-control-sm' value='${formatDateForInput(dateToUse)}'></div>
         </div>`;
+        
+        console.log('Sayım Tarihi (formatlanmış):', formatDateForInput(dateToUse));
+        console.log('Formatlanmamış tarih değeri:', dateToUse);
         
         html += `</div></div>`;
         
@@ -286,16 +365,23 @@ $(document).ready(function () {
         </tr></thead><tbody>`;
         
         data.forEach(item => {
+            const itemCode = item.ItemCode || ''; // ItemCode'u al, yoksa boş string kullan
+            
+            if (!itemCode) {
+                console.warn('Ürün kodu olmayan öğe:', item);
+                return; // ItemCode olmayan öğeleri atla
+            }
+            
             html += `<tr>
-                <td>${item.ItemCode || ''}</td>
+                <td>${itemCode}</td>
                 <td>${item.ItemName || ''}</td>
                 <td>${item.ItemGroup || ''}</td>
                 <td>${item.UomCode || ''}</td>
                 <td>
                     <div class="input-group quantity-control">
-                        <button type="button" class="btn btn-outline-secondary btn-sm decrease-qty" data-item-code="${item.ItemCode}">-</button>
-                        <input type="number" class="form-control form-control-sm count-input" data-item-code="${item.ItemCode}" data-original-quantity="${item.Quantity || 0}" min="0" value="${item.Quantity || 0}" style="width:60px;text-align:center;">
-                        <button type="button" class="btn btn-outline-secondary btn-sm increase-qty" data-item-code="${item.ItemCode}">+</button>
+                        <button type="button" class="btn btn-outline-secondary btn-sm decrease-qty" data-item-code="${itemCode}">-</button>
+                        <input type="number" class="form-control form-control-sm count-input" data-item-code="${itemCode}" data-original-quantity="${item.Quantity || 0}" min="0" value="${item.Quantity || 0}" style="width:60px;text-align:center;">
+                        <button type="button" class="btn btn-outline-secondary btn-sm increase-qty" data-item-code="${itemCode}">+</button>
                     </div>
                 </td>
             </tr>`;
@@ -353,6 +439,8 @@ $(document).ready(function () {
             }
         }, 200);
         
+        console.log('Sayfa oluşturuldu, event dinleyiciler ayarlanıyor...');
+        
         // Buton event handlers - event delegation kullanarak sayfalar arası çalışmasını sağla
         
         // + ve - butonları için event handlers
@@ -376,8 +464,15 @@ $(document).ready(function () {
         $(document).on('change', '.count-input', function() {
             const input = this;
             const itemCode = input.getAttribute('data-item-code');
+            if (!itemCode) {
+                console.error('Input element does not have data-item-code attribute:', input);
+                return;
+            }
+            
             const originalQty = parseFloat(input.getAttribute('data-original-quantity')) || 0;
             const newQty = parseFloat(input.value) || 0;
+            
+            console.log(`Change detected - ItemCode: ${itemCode}, Original: ${originalQty}, New: ${newQty}`);
             
             if (newQty !== originalQty) {
                 // Değişiklik var, arka plan rengini değiştir
@@ -386,6 +481,7 @@ $(document).ready(function () {
                 // Değişen ürünleri sakla
                 const item = originalItems.find(i => i.ItemCode === itemCode);
                 if (item) {
+                    console.log(`Adding to changedItemsMap - Key: ${itemCode}, ItemName: ${item.ItemName}, NewQty: ${newQty}`);
                     changedItemsMap.set(itemCode, {
                         itemCode: itemCode,
                         originalQuantity: originalQty,
@@ -393,6 +489,8 @@ $(document).ready(function () {
                         itemName: item.ItemName,
                         uomCode: item.UomCode
                     });
+                } else {
+                    console.warn(`Original item not found for itemCode: ${itemCode}`);
                 }
             } else {
                 // Değişiklik yok, normal arka plana dön
@@ -400,12 +498,14 @@ $(document).ready(function () {
                 
                 // Değişikliği map'ten kaldır
                 if (changedItemsMap.has(itemCode)) {
+                    console.log(`Removing from changedItemsMap - Key: ${itemCode}`);
                     changedItemsMap.delete(itemCode);
                 }
             }
             
             // Değişiklik sayacını güncelle
             updateChangedItemCount();
+            console.log(`ChangedItemsMap size after update: ${changedItemsMap.size}`);
         });
         
         // Önizle ve Güncelle butonu
@@ -498,9 +598,41 @@ $(document).ready(function () {
             <strong>Durum:</strong> <span class="${statusClass}">${statusText}</span>
         </div>`;
         
+        // Güncellenecek olan ürünleri belirle
+        const allUpdateItems = [];
+        
+        originalItems.forEach(item => {
+            // Değişen ürün mü kontrol et
+            if (changedItemsMap.has(item.ItemCode)) {
+                const changedItem = changedItemsMap.get(item.ItemCode);
+                if (parseFloat(changedItem.newQuantity) > 0) {
+                    allUpdateItems.push({
+                        itemCode: item.ItemCode,
+                        itemName: item.ItemName,
+                        quantity: changedItem.newQuantity,
+                        originalQuantity: item.Quantity,
+                        uomCode: item.UomCode,
+                        isChanged: true
+                    });
+                }
+            } 
+            // Değişmeyen ama sıfırdan büyük ürünler
+            else if (parseFloat(item.Quantity) > 0) {
+                allUpdateItems.push({
+                    itemCode: item.ItemCode,
+                    itemName: item.ItemName,
+                    quantity: item.Quantity,
+                    originalQuantity: item.Quantity,
+                    uomCode: item.UomCode,
+                    isChanged: false
+                });
+            }
+        });
+        
+        // Modalda bilgi göster
         if (hasChanges) {
             modalHtml += `<div class="alert alert-info mb-3">
-                <strong>${changedItemsMap.size}</strong> ürün için değişiklik yapıldı
+                <strong>${changedItemsMap.size}</strong> ürün için değişiklik yapıldı, toplamda <strong>${allUpdateItems.length}</strong> ürün gönderilecek
             </div>`;
             
             // Değişen ürünleri modalda göster
@@ -525,31 +657,31 @@ $(document).ready(function () {
                 </div>`;
             });
         } else {
-            modalHtml += `<div class="alert alert-warning mb-3">
-                Hiçbir üründe değişiklik yapılmadı. Yine de güncellemek istiyor musunuz?
+            modalHtml += `<div class="alert alert-info mb-3">
+                Hiçbir üründe değişiklik yapılmadı. Güncellemede <strong>${allUpdateItems.length}</strong> ürün gönderilecek.
             </div>`;
             
             // Birkaç örnek ürün göster
-            const sampleItems = originalItems.slice(0, Math.min(5, originalItems.length));
+            const sampleItems = allUpdateItems.slice(0, Math.min(5, allUpdateItems.length));
             sampleItems.forEach(item => {
                 modalHtml += `
                 <div class="item-row">
                     <div class="d-flex justify-content-between align-items-center">
                         <div>
-                            <div class="fw-bold">${item.ItemName}</div>
-                            <div class="text-muted small">${item.ItemCode}</div>
+                            <div class="fw-bold">${item.itemName}</div>
+                            <div class="text-muted small">${item.itemCode}</div>
                         </div>
                         <div class="quantity-badge">
-                            <span>${item.Quantity}</span>
-                            <span class="ms-2">${item.UomCode}</span>
+                            <span>${item.quantity}</span>
+                            <span class="ms-2">${item.uomCode}</span>
                         </div>
                     </div>
                 </div>`;
             });
             
-            if (originalItems.length > 5) {
+            if (allUpdateItems.length > 5) {
                 modalHtml += `<div class="text-center mt-2 small text-muted">
-                    ve ${originalItems.length - 5} ürün daha...
+                    ve ${allUpdateItems.length - 5} ürün daha...
                 </div>`;
             }
         }
@@ -597,45 +729,84 @@ $(document).ready(function () {
         // Durum değerini al
         const docStatus = $('#docStatusSelect').val() || '1';
         
-        // Değişen ürünleri tespit et
-        const changedItems = [];
-        const hasChanges = changedItemsMap.size > 0;
+        // Gönderilecek ürünleri saklamak için bir harita (key: ItemCode)
+        const itemsToUpdateMap = new Map();
         
-        if (hasChanges) {
-            // Sadece değişen ürünleri gönder
-            changedItemsMap.forEach(item => {
-                changedItems.push({
-                    ItemCode: item.itemCode,
-                    ItemName: item.itemName,
-                    Quantity: item.newQuantity,
-                    UomCode: item.uomCode
-                });
-            });
-        } else {
-            // Değişiklik yoksa tüm ürünleri gönder
-            originalItems.forEach(item => {
-                changedItems.push({
-                    ItemCode: item.ItemCode,
-                    ItemName: item.ItemName,
-                    Quantity: item.Quantity,
-                    UomCode: item.UomCode
-                });
+        console.log('Original items count:', originalItems.length);
+        console.log('Changed items map size:', changedItemsMap.size);
+        
+        // Map içeriğini göster - debug
+        if (changedItemsMap.size > 0) {
+            console.log('Changed map entries:');
+            changedItemsMap.forEach((value, key) => {
+                console.log(`Key: ${key}, Value:`, value);
             });
         }
         
-        if (changedItems.length === 0) {
+        // ADIM 1: Önce tüm mevcut sıfırdan büyük miktara sahip ürünleri itemsToUpdateMap'e ekle
+        originalItems.forEach(item => {
+            const itemCode = item.ItemCode || item.itemCode;
+            if (!itemCode) {
+                console.warn('Ürün kodu olmayan öğe atlıyorum:', item);
+                return;
+            }
+            
+            const quantity = parseFloat(item.Quantity);
+            if (quantity > 0) {
+                itemsToUpdateMap.set(itemCode, {
+                    ItemCode: itemCode,
+                    ItemName: item.ItemName || item.itemName,
+                    Quantity: quantity,
+                    UomCode: item.UomCode || item.uomCode
+                });
+                console.log(`Mevcut ürün eklendi - Kod: ${itemCode}, Miktar: ${quantity}`);
+            }
+        });
+        
+        // ADIM 2: Değişen ürünleri haritaya ekle (mevcut değerleri güncelle veya yenilerini ekle)
+        changedItemsMap.forEach((changedItem, itemCode) => {
+            const newQuantity = parseFloat(changedItem.newQuantity);
+            if (newQuantity > 0) {
+                // Mevcut üründen UomCode ve ItemName alma
+                const originalItem = originalItems.find(i => i.ItemCode === itemCode);
+                
+                itemsToUpdateMap.set(itemCode, {
+                    ItemCode: itemCode,
+                    ItemName: originalItem ? (originalItem.ItemName || changedItem.itemName) : changedItem.itemName,
+                    Quantity: newQuantity,
+                    UomCode: originalItem ? (originalItem.UomCode || changedItem.uomCode) : changedItem.uomCode
+                });
+                console.log(`Değişen ürün güncellendi - Kod: ${itemCode}, Yeni miktar: ${newQuantity}`);
+            } else {
+                // Değişen ürünün miktarı 0 ise ve haritada varsa kaldır
+                if (itemsToUpdateMap.has(itemCode)) {
+                    itemsToUpdateMap.delete(itemCode);
+                    console.log(`Miktar 0 olduğu için kaldırıldı - Kod: ${itemCode}`);
+                }
+            }
+        });
+        
+        // ADIM 3: Haritadan nihai gönderilecek ürün listesini oluştur
+        const itemsToUpdate = Array.from(itemsToUpdateMap.values());
+        
+        console.log(`Toplam güncellenecek ürün sayısı: ${itemsToUpdate.length}`);
+        console.log('İlk 5 güncellenecek ürün:', itemsToUpdate.slice(0, 5));
+        
+        // Hiç güncellenecek ürün yoksa uyarı göster
+        if (itemsToUpdate.length === 0) {
             hideLoading();
             Swal.fire({
                 icon: 'warning',
                 title: 'Uyarı',
-                text: 'Güncellenecek ürün bulunamadı!',
+                text: 'Güncellenecek ürün bulunamadı! Lütfen en az bir ürün için değer girin.',
                 confirmButtonText: 'Tamam'
             });
             return;
         }
         
+        // Güncelleme işlemine devam et
         updateProgressBar(30);
-        showLoading(`${changedItems.length} ürün için güncelleme hazırlanıyor...`);
+        showLoading(`${itemsToUpdate.length} ürün için güncelleme hazırlanıyor...`);
         
         // PUT isteği verisini hazırla
         const updateData = {
@@ -647,7 +818,7 @@ $(document).ready(function () {
             U_DocStatus: docStatus,
             U_UpdateGUID: generateUUID(),
             U_User: userName,
-            AS_B2B_COUNT_DETAILCollection: changedItems
+            AS_B2B_COUNT_DETAILCollection: itemsToUpdate
         };
         
         updateProgressBar(50);
@@ -657,7 +828,7 @@ $(document).ready(function () {
         console.log('Güncelleme verisi:', updateData);
         
         // API isteği gönder
-        retryAjax({
+        $.ajax({
             url: `/api/count-update`,
             method: 'POST',
             contentType: 'application/json',
@@ -665,32 +836,30 @@ $(document).ready(function () {
             headers: {
                 'X-Session-Id': sessionId
             }
-        }, 3, 1000)
-        .then(result => {
+        })
+        .done(result => {
             updateProgressBar(100);
             hideLoading();
             
             console.log('Güncelleme sonucu:', result);
             
-            if (result.success) {
+            if (result.success || (typeof result === 'object' && !(result.success === false))) {
                 // Güncelleme başarılı
-                if (hasChanges) {
-                    // Tüm değişiklikleri orijinal değer olarak ayarla
-                    changedItemsMap.forEach((item, itemCode) => {
-                        const originalItem = originalItems.find(i => i.ItemCode === itemCode);
-                        if (originalItem) {
-                            originalItem.Quantity = item.newQuantity;
-                        }
-                        
-                        // Arka plan rengini sıfırla
-                        const row = $(`input.count-input[data-item-code="${itemCode}"]`).closest('tr');
-                        row.removeClass('row-changed');
-                    });
+                // Değişen ürünleri güncelle
+                changedItemsMap.forEach((item, itemCode) => {
+                    const originalItem = originalItems.find(i => i.ItemCode === itemCode);
+                    if (originalItem) {
+                        originalItem.Quantity = item.newQuantity;
+                    }
                     
-                    // Değişiklik haritasını temizle
-                    changedItemsMap.clear();
-                    updateChangedItemCount();
-                }
+                    // Arka plan rengini sıfırla
+                    const row = $(`input.count-input[data-item-code="${itemCode}"]`).closest('tr');
+                    row.removeClass('row-changed');
+                });
+                
+                // Değişiklik haritasını temizle
+                changedItemsMap.clear();
+                updateChangedItemCount();
                 
                 Swal.fire({
                     icon: 'success',
@@ -710,9 +879,12 @@ $(document).ready(function () {
                 });
             }
         })
-        .catch(error => {
+        .fail(error => {
             hideLoading();
             console.error('Güncelleme hatası:', error);
+            
+            // Oturum hatası kontrolü
+            if (handleSessionError(error)) return;
             
             let errorMsg = 'Stok sayımı güncellenirken bir hata oluştu.';
             

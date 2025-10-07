@@ -81,7 +81,7 @@
                         <i class="bi bi-plus-lg me-1"></i>Yeni Transfer Oluştur
                     </a>
                 </div>
-                <button class="btn btn-dark" onclick="logout()">
+                <button class="btn btn-outline-secondary" onclick="logout()">
                     Çıkış Yap <i class="bi bi-box-arrow-right"></i>
                 </button>
             </div>
@@ -1469,10 +1469,6 @@
 		$('#remainingQuantity').text(deliveryQty);
 	}
 
-	function logout() {
-		localStorage.clear();
-		window.location.href = '/login.html';
-	}
 </script>
 <script src="js/api.js"></script>
 <script src="js/datatable-helper.js"></script>

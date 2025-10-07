@@ -1,209 +1,209 @@
 {
-    "branchCode": "1010",
-    "admin": {
-    "username": "manager",
-    "password": "1234",
-    "type": "admin"
+  "branchCode": "1010",
+  "admin": {
+  "username": "manager",
+  "password": "1234",
+  "type": "admin"
+},
+"branches": [
+  {
+    "branchCode": "1000",
+    "branchName": "Koşuyolu",
+    "users": [
+      {
+        "name": "Koşuyolu 1000",
+        "username": "1000",
+        "password": "Crm1001@",
+        "type": "branch_user"
+      },
+      {
+        "name": "Koşuyolu Admin",
+        "username": "A1000",
+        "password": "P@ssw0rd1453@",
+        "type": "branch_manager"
+      }
+    ]
   },
-  "branches": [
-    {
-      "branchCode": "1000",
-      "branchName": "Koşuyolu",
-      "users": [
-        {
-          "name": "Koşuyolu 1000",
-          "username": "1000",
-          "password": "Crm1453@",
-          "type": "branch_user"
-        },
-        {
-          "name": "Koşuyolu Admin",
-          "username": "A1000",
-          "password": "P@ssw0rd1453@",
-          "type": "branch_manager"
-        }
-      ]
-    },
-    {
-      "branchCode": "1005",
-      "branchName": "Caddebostan",
-      "users": [
-        {
-          "name": "Caddebostan 1005",
-          "username": "1005",
-          "password": "Crm1453@",
-          "type": "branch_user"
-        },
-        {
-          "name": "Caddebostan Admin",
-          "username": "A1005",
-          "password": "P@ssw0rd1453",
-          "type": "branch_manager"
-        }
-      ]
-    },
-    {
-      "branchCode": "1010",
-      "branchName": "Suadiye",
-      "users": [
-        {
-          "name": "Suadiye 1010",
-          "username": "1010",
-          "password": "Crm1453@",
-          "type": "branch_user"
-        },
-        {
-          "name": "Suadiye Admin",
-          "username": "A1010",
-          "password": "P@ssw0rd1453",
-          "type": "branch_manager"
-        }
-      ]
-    },
-    {
-      "branchCode": "1015",
-      "branchName": "Galataport",
-      "users": [
-        {
-          "name": "Galataport 1015",
-          "username": "1015",
-          "password": "Crm1453@",
-          "type": "branch_user"
-        },
-        {
-          "name": "Galataport Admin",
-          "username": "A1015",
-          "password": "P@ssw0rd1453",
-          "type": "branch_manager"
-        }
-      ]
-    },
-    {
-      "branchCode": "1020",
-      "branchName": "Kazasker",
-      "users": [
-        {
-          "name": "Kazasker 1020",
-          "username": "1020",
-          "password": "Crm1453@",
-          "type": "branch_user"
-        },
-        {
-          "name": "Kazasker Admin",
-          "username": "A1020",
-          "password": "P@ssw0rd1453",
-          "type": "branch_manager"
-        }
-      ]
-    },
-    {
-      "branchCode": "1025",
-      "branchName": "Küçükyalı",
-      "users": [
-        {
-          "name": "Küçükyalı 1025",
-          "username": "1025",
-          "password": "Crm1453@",
-          "type": "branch_user"
-        },
-        {
-          "name": "Küçükyalı Admin",
-          "username": "A1025",
-          "password": "P@ssw0rd1453",
-          "type": "branch_manager"
-        }
-      ]
-    },
-    {
-      "branchCode": "1030",
-      "branchName": "Hilltown Avm",
-      "users": [
-        {
-          "name": "Hilltown Avm 1030",
-          "username": "1030",
-          "password": "Crm1453@",
-          "type": "branch_user"
-        },
-        {
-          "name": "Hilltown Admin",
-          "username": "A1030",
-          "password": "P@ssw0rd1453",
-          "type": "branch_manager"
-        }
-      ]
-    },
-    {
-      "branchCode": "1035",
-      "branchName": "Emin Ali Paşa",
-      "users": [
-        {
-          "name": "Emin Ali Paşa 1035",
-          "username": "1035",
-          "password": "Crm1453@",
-          "type": "branch_user"
-        },
-        {
-          "name": "Emin Ali Paşa Admin",
-          "username": "A1035",
-          "password": "P@ssw0rd1453",
-          "type": "branch_manager"
-        }
-      ]
-    },
-    {
-      "branchCode": "1040",
-      "branchName": "Piazza Avm",
-      "users": [
-        {
-          "name": "Piazza Avm 1040",
-          "username": "1040",
-          "password": "Crm1453@",
-          "type": "branch_user"
-        },
-        {
-          "name": "Piazza Avm Admin",
-          "username": "A1040",
-          "password": "P@ssw0rd1453",
-          "type": "branch_manager"
-        }
-      ]
-    },
-    {
-      "branchCode": "1045",
-      "branchName": "Lens",
-      "users": [
-        {
-          "name": "Lens 1045",
-          "username": "1045",
-          "password": "Crm1453@",
-          "type": "branch_user"
-        },
-        {
-          "name": "Lens Admin",
-          "username": "A1045",
-          "password": "P@ssw0rd1453",
-          "type": "branch_manager"
-        }
-      ]
-    },
-    {
-      "branchCode": "1050",
-      "branchName": "TuzlaPort",
-      "users": [
-        {
-          "name": "TuzlaPort 1050",
-          "username": "1050",
-          "password": "Crm1453@",
-          "type": "branch_user"
-        },
-        {
-          "name": "TuzlaPort Admin",
-          "username": "A1050",
-          "password": "P@ssw0rd1453",
-          "type": "branch_manager"
-        }
-      ]
-    }
-  ]
+  {
+    "branchCode": "1005",
+    "branchName": "Caddebostan",
+    "users": [
+      {
+        "name": "Caddebostan 1005",
+        "username": "1005",
+        "password": "Crm1551@",
+        "type": "branch_user"
+      },
+      {
+        "name": "Caddebostan Admin",
+        "username": "A1005",
+        "password": "P@ssw0rd1453",
+        "type": "branch_manager"
+      }
+    ]
+  },
+  {
+    "branchCode": "1010",
+    "branchName": "Suadiye",
+    "users": [
+      {
+        "name": "Suadiye 1010",
+        "username": "1010",
+        "password": "Crm2002@",
+        "type": "branch_user"
+      },
+      {
+        "name": "Suadiye Admin",
+        "username": "A1010",
+        "password": "P@ssw0rd1453",
+        "type": "branch_manager"
+      }
+    ]
+  },
+  {
+    "branchCode": "1015",
+    "branchName": "Galataport",
+    "users": [
+      {
+        "name": "Galataport 1015",
+        "username": "1015",
+        "password": "Crm2552@",
+        "type": "branch_user"
+      },
+      {
+        "name": "Galataport Admin",
+        "username": "A1015",
+        "password": "P@ssw0rd1453",
+        "type": "branch_manager"
+      }
+    ]
+  },
+  {
+    "branchCode": "1020",
+    "branchName": "Kazasker",
+    "users": [
+      {
+        "name": "Kazasker 1020",
+        "username": "1020",
+        "password": "Crm3003@",
+        "type": "branch_user"
+      },
+      {
+        "name": "Kazasker Admin",
+        "username": "A1020",
+        "password": "P@ssw0rd1453",
+        "type": "branch_manager"
+      }
+    ]
+  },
+  {
+    "branchCode": "1025",
+    "branchName": "Küçükyalı",
+    "users": [
+      {
+        "name": "Küçükyalı 1025",
+        "username": "1025",
+        "password": "Crm3553@",
+        "type": "branch_user"
+      },
+      {
+        "name": "Küçükyalı Admin",
+        "username": "A1025",
+        "password": "P@ssw0rd1453",
+        "type": "branch_manager"
+      }
+    ]
+  },
+  {
+    "branchCode": "1030",
+    "branchName": "Hilltown Avm",
+    "users": [
+      {
+        "name": "Hilltown Avm 1030",
+        "username": "1030",
+        "password": "Crm4004@",
+        "type": "branch_user"
+      },
+      {
+        "name": "Hilltown Admin",
+        "username": "A1030",
+        "password": "P@ssw0rd1453",
+        "type": "branch_manager"
+      }
+    ]
+  },
+  {
+    "branchCode": "1035",
+    "branchName": "Emin Ali Paşa",
+    "users": [
+      {
+        "name": "Emin Ali Paşa 1035",
+        "username": "1035",
+        "password": "Crm4554@",
+        "type": "branch_user"
+      },
+      {
+        "name": "Emin Ali Paşa Admin",
+        "username": "A1035",
+        "password": "P@ssw0rd1453",
+        "type": "branch_manager"
+      }
+    ]
+  },
+  {
+    "branchCode": "1040",
+    "branchName": "Piazza Avm",
+    "users": [
+      {
+        "name": "Piazza Avm 1040",
+        "username": "1040",
+        "password": "Crm5005@",
+        "type": "branch_user"
+      },
+      {
+        "name": "Piazza Avm Admin",
+        "username": "A1040",
+        "password": "P@ssw0rd1453",
+        "type": "branch_manager"
+      }
+    ]
+  },
+  {
+    "branchCode": "1045",
+    "branchName": "Lens",
+    "users": [
+      {
+        "name": "Lens 1045",
+        "username": "1045",
+        "password": "Crm5555@",
+        "type": "branch_user"
+      },
+      {
+        "name": "Lens Admin",
+        "username": "A1045",
+        "password": "P@ssw0rd1453",
+        "type": "branch_manager"
+      }
+    ]
+  },
+  {
+    "branchCode": "1050",
+    "branchName": "TuzlaPort",
+    "users": [
+      {
+        "name": "TuzlaPort 1050",
+        "username": "1050",
+        "password": "Crm6006@",
+        "type": "branch_user"
+      },
+      {
+        "name": "TuzlaPort Admin",
+        "username": "A1050",
+        "password": "P@ssw0rd1453",
+        "type": "branch_manager"
+      }
+    ]
+  }
+]
 }
 

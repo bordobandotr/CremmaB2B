@@ -182,83 +182,83 @@
                     <div class="card-body">
                         <!-- Ticket Details -->
                         <div id="ticketDetails">
-                            <div class="row mb-4">
-                                <div class="col-md-6">
+                            <div class="row mb-3">
+                                <div class="col-md-3">
                                     <h6>Ticket ID</h6>
-                                    <p id="docNum"></p>
+                                    <p id="docNum" class="text-muted"></p>
                                 </div>
-                                <div class="col-md-6">
-                                    <h6>Şube (Gönderen)</h6>
-                                    <p id="fromWhsName"></p>
+                                <div class="col-md-3">
+                                    <h6>Açılış Tarihi</h6>
+                                    <p id="docDate" class="text-muted"></p>
                                 </div>
-                            </div>
-                            <div class="row mb-4">
-                                <div class="col-md-6">
-                                    <h6>Ticket Açılış Tarihi</h6>
-                                    <p id="docDate"></p>
-                                </div>
-                                <div class="col-md-6">
-                                    <h6>Kullanıcı (Ticket Alıcı)</h6>
-                                    <p id="userName"></p>
-                                </div>
-                            </div>
-                            <div class="row mb-4">
-                                <div class="col-md-6">
+                                <div class="col-md-3">
                                     <h6>Öncelik</h6>
                                     <span id="priority" class="priority-badge"></span>
                                 </div>
-                                <div class="col-md-6">
+                                <div class="col-md-3">
                                     <h6>Durum</h6>
                                     <span id="docStatus" class="status-badge"></span>
                                 </div>
                             </div>
-                            <div class="row mb-4">
-                                <div class="col-12">
-                                    <h6>Açıklama</h6>
-                                    <p id="freeText"></p>
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <h6>Gönderen Şube</h6>
+                                    <p id="fromWhsName" class="text-muted"></p>
+                                </div>
+                                <div class="col-md-6">
+                                    <h6>Alıcı Şube</h6>
+                                    <p id="toWhsName" class="text-muted"></p>
                                 </div>
                             </div>
                             <div class="row mb-4">
-                                <div class="col-12">
+                                <div class="col-md-6">
+                                    <h6>Kullanıcı (Alıcı)</h6>
+                                    <p id="userName" class="text-muted"></p>
+                                </div>
+                                <div class="col-md-6">
                                     <h6>Görsel</h6>
                                     <img id="image" class="ticket-image d-none" alt="Ticket Görseli">
                                 </div>
                             </div>
-                        </div>
-
-                        <div class="d-flex justify-content-end gap-2 mb-3">
-                            <button id="btnInProgress" class="btn btn-warning">
-                                <i class="bi bi-hourglass-split"></i> İnceleniyor
-                            </button>
-                            <button id="btnResolved" class="btn btn-success">
-                                <i class="bi bi-check-circle"></i> Çözüldü
-                            </button>
-                            <button id="btnClose" class="btn btn-danger">
-                                <i class="bi bi-x-circle"></i> Kapat
-                            </button>
-                        </div>
-
-                        <!-- Reply Section -->
-                        <div class="reply-section">
-                            <h5 class="mb-4">Yanıtlar</h5>
-                            <div id="replyList"></div>
-
-                            <!-- Reply Form -->
-                            <form id="replyForm" class="mt-4">
-                                <div class="mb-3">
-                                    <label for="replyText" class="form-label">Yanıt</label>
-                                    <textarea class="form-control" id="replyText" rows="3" required></textarea>
+                            <div class="row">
+                                <div class="col-12">
+                                    <h6>Konu</h6>
+                                    <p id="freeText" class="text-muted"></p>
                                 </div>
-                                <div class="mb-3">
-                                    <label for="replyImage" class="form-label">Görsel</label>
-                                    <input type="file" class="form-control" id="replyImage" accept="image/*">
-                                    <img id="replyPreview" class="reply-image mt-2 d-none" alt="Yanıt Görseli">
-                                </div>
-                                <button type="submit" class="btn btn-primary">
-                                    <i class="bi bi-send"></i> Yanıtla
-                                </button>
-                            </form>
+                            </div>
                         </div>
+
+                        <div class="d-flex justify-content-end gap-2 mt-4">
+                            <button id="btnInProgress" class="btn btn-warning">İnceleniyor</button>
+                            <button id="btnResolved" class="btn btn-success">Çözüldü</button>
+                            <button id="btnClose" class="btn btn-danger">Kapat</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Replies Card -->
+                <div class="card mt-4">
+                    <div class="card-body">
+                        <h5 class="card-title">Yanıtlar</h5>
+                        <div id="replyList" class="mb-4"></div>
+                        
+                        <!-- Reply Form -->
+                        <form id="replyForm" class="bg-light p-3 rounded border border-black>
+                            <h6 class="mb-3">Yanıt Ekle</h6>
+                            <div class="mb-3">
+                                <textarea class="form-control" id="replyText" rows="3" placeholder="Yanıtınızı buraya yazın..." required></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="replyImage" class="form-label">Görsel Ekle</label>
+                                <input type="file" class="form-control" id="replyImage" accept="image/*">
+                                <img id="replyPreview" class="reply-image mt-2 d-none" alt="Yanıt Görseli">
+                            </div>
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-send"></i> Gönder
+                            </button>
+                        </form>
+                    </div>
+                </div>
                     </div>
                 </div>
             </div>
@@ -300,8 +300,13 @@
         }
 
         function formatDate(dateString) {
-            const date = new Date();
-            return date.toLocaleDateString('tr-TR');
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            // Check if the date is valid
+            if (isNaN(date.getTime())) {
+                return ''; // Return empty for invalid dates
+            }
+            return date.toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
         }
 
         function getPriorityBadgeClass(priority) {
@@ -357,7 +362,9 @@
                     throw new Error('Ticket ID bulunamadı');
                 }
 
-                const response = await fetch(`/api/tickets/${docNum}?sessionId=${sessionId}`);
+                const response = await fetch(`/api/tickets/${docNum}?sessionId=${sessionId}`, {
+                    cache: 'no-cache' // Force browser to bypass cache
+                });
                 const data = await response.json();
 
                 console.log("data", data);
@@ -367,7 +374,8 @@
 
                 // Update ticket details
                 $('#docNum').text(mainTicket.DocNum);
-                $('#fromWhsName').text(mainTicket.FromWhsName);
+                $('#fromWhsName').text(`${mainTicket.FromWhsName} (${mainTicket.WhsCode})`);
+                $('#toWhsName').text(`${mainTicket.ToWhsName} (${mainTicket.ToWhsCode})`);
                 $('#docDate').text(formatDate(mainTicket.DocDate));
                 $('#userName').text(mainTicket.UserName);
                 
@@ -385,26 +393,34 @@
                     $('#image').attr('src', mainTicket.Image).removeClass('d-none');
                 }
 
-                // Handle replies (rest of the items in the response)
+                // Handle all replies
                 const replyList = $('#replyList');
                 replyList.empty();
+                let replyCount = 0;
 
-                // Skip the first item (main ticket) and process the rest as replies
-                data.value.slice(1).forEach(reply => {
-                    if (reply.FreeTextD) { // Only show if there's reply text
+                // Iterate over ALL items, as each can contain a reply
+                data.value.forEach(reply => {
+                    // A reply exists if it has content in the detail fields
+                    if (reply.FreeTextD) { 
                         const replyHtml = `
                             <div class="reply-item">
                                 <div class="mb-2">
-                                    <strong>${reply.UserName}</strong>
-                                    <small class="text-muted ms-2">${reply.ReplyDate}</small>
+                                    <strong>${reply.UserD || 'Bilinmeyen Kullanıcı'}</strong>
+                                    <small class="text-muted ms-2">${formatDate(reply.ReplyDate)}</small>
                                 </div>
                                 <p>${reply.FreeTextD}</p>
                                 ${reply.ImageD ? `<img src="${reply.ImageD}" class="reply-image" alt="Yanıt Görseli">` : ''}
                             </div>
                         `;
                         replyList.append(replyHtml);
+                        replyCount++;
                     }
                 });
+
+                // If no replies were found after checking all items
+                if (replyCount === 0) {
+                    replyList.html('<div class="text-center text-muted p-3">Henüz bir yanıt eklenmemiş.</div>');
+                }
 
             } catch (error) {
                 console.error('Error loading ticket details:', error);
@@ -442,7 +458,7 @@
 
                 const result = await Swal.fire({
                     title: 'Onay',
-                    text: `Destek talebinin durumunu "${statusText}" olarak güncellemek istediğinize emin misiniz?`,
+                    text: `Ticket durumunu "${statusText}" olarak güncellemek istediğinize emin misiniz?`,
                     icon: 'question',
                     showCancelButton: true,
                     confirmButtonText: 'Evet',
@@ -469,14 +485,14 @@
                 // console.log('Response:', response);
 
                 if (!response.ok) {
-                    throw new Error('Destek talebi durumu güncellenirken bir hata oluştu');
+                    throw new Error('Ticket durumu güncellenirken bir hata oluştu');
                 }
 
                 
 
                 Swal.fire({
                     title: 'Başarılı',
-                    text: 'Destek talebi durumu başarıyla güncellendi',
+                    text: 'Ticket durumu başarıyla güncellendi',
                     icon: 'success',
                     confirmButtonText: 'Tamam'
                 });
@@ -486,7 +502,7 @@
                 console.error('Error updating ticket status:', error);
                 Swal.fire({
                     title: 'Hata',
-                    text: error.message || 'Destek talebi durumu güncellenirken bir hata oluştu',
+                    text: error.message || 'Ticket durumu güncellenirken bir hata oluştu',
                     icon: 'error',
                     confirmButtonText: 'Tamam'
                 });
@@ -530,14 +546,16 @@
                 $('#replyImage').val('');
                 $('#replyPreview').addClass('d-none');
 
-                // Reload ticket details (which includes replies)
-                await loadTicketDetails();
-
                 Swal.fire({
                     title: 'Başarılı',
                     text: 'Yanıtınız başarıyla gönderildi.',
                     icon: 'success',
                     confirmButtonText: 'Tamam'
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        // Reload ticket details to show the new reply
+                        loadTicketDetails();
+                    }
                 });
             } catch (error) {
                 console.error('Error sending reply:', error);

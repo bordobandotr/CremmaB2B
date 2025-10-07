@@ -312,9 +312,33 @@ app.use('/uploads', express.static('uploads'));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
+// API endpoint for user login
+app.post('/api/login', async (req, res) => {
+    const { UserName, Password, CompanyDB } = req.body;
+
+    try {
+        const response = await axiosInstance.post(
+            'https://192.168.54.185:50000/b1s/v1/Login',
+            {
+                UserName,
+                Password,
+                CompanyDB
+            }
+        );
+        res.json(response.data);
+    } catch (error) {
+        console.error('SAP Login Error:', error.response?.data || error.message);
+        res.status(error.response?.status || 500).json({
+            success: false,
+            error: 'SAP login failed',
+            details: error.response?.data || error.message
+        });
+    }
+});
+
 // Proxy middleware configuration
 const proxyOptions = {
-    target: 'https://10.21.22.11:50000',
+    target: 'https://192.168.54.185:50000',
     changeOrigin: true,
     secure: false, // SSL sertifikası doğrulamasını devre dışı bırak
     onProxyReq: (proxyReq, req, res) => {
@@ -361,6 +385,36 @@ app.options('/b1s/v1/*', (req, res) => {
 // Create the proxy middleware
 app.use('/b1s/v1/*', createProxyMiddleware(proxyOptions));
 
+// Get all tickets
+app.get('/api/tickets', async (req, res) => {
+    const { sessionId, whsCode } = req.query;
+
+    if (!sessionId || !whsCode) {
+        return res.status(400).json({ error: 'Session ID and Warehouse Code are required' });
+    }
+
+    try {
+        const response = await axiosInstance.get(
+            "https://192.168.54.185:50000/b1s/v1/SQLQueries('Ticket_List')/List",
+            {
+                params: {
+                    value1: `'${whsCode}'`
+                },
+                headers: {
+                    'Cookie': `B1SESSION=${sessionId}`
+                }
+            }
+        );
+        res.json(response.data);
+    } catch (error) {
+        console.error('Error fetching tickets:', error.response?.data || error.message);
+        res.status(error.response?.status || 500).json({ 
+            error: 'Failed to fetch tickets',
+            details: error.response?.data || error.message
+        });
+    }
+});
+
 function generateGUID() {
   return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function (c) {
     var r = (Math.random() * 16) | 0,
@@ -381,7 +435,7 @@ app.get('/test', async (req, res) => {
         
         // Initial request
         const initialResponse = await axiosInstance.get(
-            "https://10.21.22.11:50000/b1s/v1/SQLQueries('OWTQ_LIST')/List",
+            "https://192.168.54.185:50000/b1s/v1/SQLQueries('OWTQ_LIST')/List",
             {
                 params: {
                     value1: "'PROD'",
@@ -405,7 +459,7 @@ app.get('/test', async (req, res) => {
         while (nextLink) {
             console.log("Fetching next batch of data...");
             const nextResponse = await axiosInstance.get(
-                `https://10.21.22.11:50000/b1s/v1/${nextLink}`,
+                `https://192.168.54.185:50000/b1s/v1/${nextLink}`,
                 {
                     headers: {
                         Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
@@ -441,7 +495,7 @@ app.get('/api/owtq-list', async (req, res) => {
     
     try {
         const response = await axiosInstance.get(
-            "https://10.21.22.11:50000/b1s/v1/SQLQueries('OWTQ_LIST')/List",
+            "https://192.168.54.185:50000/b1s/v1/SQLQueries('OWTQ_LIST')/List",
             {
                 params: {
                     value1: "'PROD'",
@@ -478,7 +532,7 @@ app.get("/uretim-siparisleri-list", async (req, res) => {
   
   try {
     const response = await axiosInstance.get(
-      "https://10.21.22.11:50000/b1s/v1/SQLQueries('OWTQ_NEW')/List",
+      "https://192.168.54.185:50000/b1s/v1/SQLQueries('OWTQ_NEW')/List",
       {
         params: {
           value1: "'PROD'",
@@ -548,7 +602,7 @@ app.post("/api/production-orders", async (req, res) => {
         // Önce birleştirilmiş yeni endpoint'i deneyelim
         try {
             const response = await axiosInstance.post(
-                "https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_OWTQ_BULK",
+                "https://192.168.54.185:50000/b1s/v1/ASUDO_B2B_OWTQ_BULK",
                 bulkOrderData,
                 {
                     headers: {
@@ -589,7 +643,7 @@ app.post("/api/production-orders", async (req, res) => {
                 console.log("Sending individual data:", data);
 
                 const response = await axiosInstance.post(
-                    "https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_OWTQ",
+                    "https://192.168.54.185:50000/b1s/v1/ASUDO_B2B_OWTQ",
                     data,
                     {
                         headers: {
@@ -628,11 +682,11 @@ app.get("/api/production-order/:docNum", async (req, res) => {
     console.log("Getting order details for docNum:", docNum);
     console.log("Using sessionId:", sessionId);
 
-    // https://10.21.22.11:50000/b1s/v1/SQLQueries('OWTQ_DETAIL')/List?value1= 'PROD'&value2= 'DocNum'
+    // https://192.168.54.185:50000/b1s/v1/SQLQueries('OWTQ_DETAIL')/List?value1= 'PROD'&value2= 'DocNum'
 
     try {
         const response = await axiosInstance.get(
-            "https://10.21.22.11:50000/b1s/v1/SQLQueries('OWTQ_DETAIL')/List",
+            "https://192.168.54.185:50000/b1s/v1/SQLQueries('OWTQ_DETAIL')/List",
             {
                 params: {
                     value1: "'PROD'",
@@ -662,7 +716,7 @@ app.post('/api/production-order/:docNum/delivery', async (req, res) => {
     return res.status(400).json({ error: "Missing required parameters" });
   }
 
-  // https://10.21.22.11:50000/b1s/v1/SQLQueries('OWTR_LIST')/List?value1= 'PROD'&value2= 'DocNum'
+  // https://192.168.54.185:50000/b1s/v1/SQLQueries('OWTR_LIST')/List?value1= 'PROD'&value2= 'DocNum'
   
 
   console.log("Processing delivery for docNum:", docNum);
@@ -691,7 +745,7 @@ app.post('/api/production-order/:docNum/delivery', async (req, res) => {
     };
 
     const response = await axiosInstance.get(
-      "https://10.21.22.11:50000/b1s/v1/SQLQueries('OWTQ_NEW')/List",
+      "https://192.168.54.185:50000/b1s/v1/SQLQueries('OWTQ_NEW')/List",
       deliveryData,
       {
         headers: {
@@ -726,7 +780,7 @@ app.get('/api/delivery/:docNum', async (req, res) => {
 
     try {
         const response = await axiosInstance.get(
-            `https://10.21.22.11:50000/b1s/v1/SQLQueries('OWTR_NEW')/List`,
+            `https://192.168.54.185:50000/b1s/v1/SQLQueries('OWTR_NEW')/List`,
             {
                 params: {
                     value1: "'PROD'",
@@ -772,7 +826,7 @@ app.post('/api/delivery-submit/:docNum', upload.array('images'), async (req, res
         console.log('Received delivery data:', parsedDeliveryData);
 
         const response = await axiosInstance.post(
-            'https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_OWTR',
+            'https://192.168.54.185:50000/b1s/v1/ASUDO_B2B_OWTR',
             parsedDeliveryData,
             {
                 headers: {
@@ -825,7 +879,7 @@ app.get("/api/supply-orders", async (req, res) => {
     
     try {
         const response = await axiosInstance.get(
-            "https://10.21.22.11:50000/b1s/v1/SQLQueries('OPOR_LIST')/List",
+            "https://192.168.54.185:50000/b1s/v1/SQLQueries('OPOR_LIST')/List",
             {
                 params: {
                     value1: "'SUPPLY'",
@@ -854,7 +908,7 @@ app.get("/api/supply-orders", async (req, res) => {
 
 //     try {
 //         const response = await axiosInstance.post(
-//           "https://10.21.22.11:50000/b1s/v1/SQLQueries('OPOR_NEW')/List",
+//           "https://192.168.54.185:50000/b1s/v1/SQLQueries('OPOR_NEW')/List",
 //           orderData,
 //           {
 //             params: {
@@ -884,7 +938,7 @@ app.get("/api/supply-detail-order/:docNum", async (req, res) => {
 
   try {
     const response = await axiosInstance.get(
-      "https://10.21.22.11:50000/b1s/v1/SQLQueries('OPDN_NEW')/List",
+      "https://192.168.54.185:50000/b1s/v1/SQLQueries('OPDN_NEW')/List",
       {
         params: {
           value1: "'SUPPLY'",
@@ -919,7 +973,7 @@ app.get("/api/supply-order/:docNum", async (req, res) => {
 
 try {
   const response = await axiosInstance.get(
-    "https://10.21.22.11:50000/b1s/v1/SQLQueries('OPOR_DETAIL')/List",
+    "https://192.168.54.185:50000/b1s/v1/SQLQueries('OPOR_DETAIL')/List",
     {
       params: {
         value1: "'SUPPLY'",
@@ -948,7 +1002,7 @@ app.get("/api/supply-items", async (req, res) => {
     
     try {
         const response = await axiosInstance.get(
-            "https://10.21.22.11:50000/b1s/v1/SQLQueries('OPOR_NEW')/List",
+            "https://192.168.54.185:50000/b1s/v1/SQLQueries('OPOR_NEW')/List",
             {
                 params: {
                     value1: "'SUPPLY'",
@@ -979,7 +1033,7 @@ app.get("/api/supply-delivery/:docNum", async (req, res) => {
 
     try {
         const response = await axiosInstance.get(
-          "https://10.21.22.11:50000/b1s/v1/SQLQueries('ASUDO_B2B_OPDN')",
+          "https://192.168.54.185:50000/b1s/v1/SQLQueries('ASUDO_B2B_OPDN')",
           {
             params: {
               value1: "'SUPPLY'",
@@ -1020,7 +1074,7 @@ app.post("/api/supply-delivery/:docNum", upload.single('image'), async (req, res
         console.log('Received delivery data:', parsedDeliveryData);
 
         const response = await axiosInstance.post(
-            'https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_OPDN',
+            'https://192.168.54.185:50000/b1s/v1/ASUDO_B2B_OPDN',
             parsedDeliveryData,
             {
                 headers: {
@@ -1103,7 +1157,7 @@ app.post("/api/supply-delivery/:docNum", upload.single('image'), async (req, res
 //         // const responses = await Promise.all(
 //         //     deliveryRequests.map(data => 
 //         //         axiosInstance.post(
-//         //             "https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_OPDN",
+//         //             "https://192.168.54.185:50000/b1s/v1/ASUDO_B2B_OPDN",
 //         //             data,
 //         //             {
 //         //                 headers: {
@@ -1147,7 +1201,7 @@ app.get("/api/supply-items-list/:whsCode", async (req, res) => {
 
     try {
         const response = await axiosInstance.get(
-            `https://10.21.22.11:50000/b1s/v1/SQLQueries('OPOR_NEW')/List`,
+            `https://192.168.54.185:50000/b1s/v1/SQLQueries('OPOR_NEW')/List`,
             {
                 params: {
                     value1: "'SUPPLY'",
@@ -1189,7 +1243,7 @@ app.post("/api/supply-order", async (req, res) => {
         // Her ürün için sipariş oluştur
         for (const item of items) {
             const response = await axiosInstance.post(
-              "https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_OPOR",
+              "https://192.168.54.185:50000/b1s/v1/ASUDO_B2B_OPOR",
               {
                 U_Type: "SUPPLY",
                 U_WhsCode: item.U_WhsCode,
@@ -1247,11 +1301,11 @@ app.get("/api/transfer-list/:whsCode", async (req, res) => {
         return res.status(401).json({ error: 'Oturum bulunamadı' });
     }
 
-    // https://10.21.22.11:50000/b1s/v1/SQLQueries('OWTQ_T_LIST')/List?value1= 'TRANSFER'&value2= 'WhsCode'
+    // https://192.168.54.185:50000/b1s/v1/SQLQueries('OWTQ_T_LIST')/List?value1= 'TRANSFER'&value2= 'WhsCode'
 
     try {
         const response = await axiosInstance.get(
-            `https://10.21.22.11:50000/b1s/v1/SQLQueries('OWTQ_T_LIST')/List`,
+            `https://192.168.54.185:50000/b1s/v1/SQLQueries('OWTQ_T_LIST')/List`,
             {
                 params: {
                     value1: "'TRANSFER'",
@@ -1285,7 +1339,7 @@ app.get('/api/transfer/items', async (req, res) => {
   
     try {
       const response = await axiosInstance.get(
-        "https://10.21.22.11:50000/b1s/v1/SQLQueries('OWTQ_T_NEW')/List",
+        "https://192.168.54.185:50000/b1s/v1/SQLQueries('OWTQ_T_NEW')/List",
         {
           params: {
             value1: "'TRANSFER'",
@@ -1357,7 +1411,7 @@ app.post("/api/transfer/create", async (req, res) => {
         console.log("Sending data:", data);
 
         const response = await axiosInstance.post(
-          "https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_OWTQ",
+          "https://192.168.54.185:50000/b1s/v1/ASUDO_B2B_OWTQ",
           data,
           {
             headers: {
@@ -1393,7 +1447,7 @@ app.post('/api/transfer/approve/:docNum', async (req, res) => {
 
     try {
         const response = await axiosInstance.post(
-            "https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_OWTR",
+            "https://192.168.54.185:50000/b1s/v1/ASUDO_B2B_OWTR",
             {
                 U_Type: "TRANSFER",
                 U_DocNum: parseInt(docNum),
@@ -1448,7 +1502,7 @@ app.post('/api/transfer/deliver/:docNum', async (req, res) => {
 
     try {
         const response = await axiosInstance.post(
-            "https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_OWTR",
+            "https://192.168.54.185:50000/b1s/v1/ASUDO_B2B_OWTR",
             transferData,
             {
                 headers: {
@@ -1490,7 +1544,7 @@ app.get('/api/transfer/:docNum', async (req, res) => {
 
     try {
         const response = await axiosInstance.get(
-            `https://10.21.22.11:50000/b1s/v1/SQLQueries('OWTR_T_NEW')/List`,
+            `https://192.168.54.185:50000/b1s/v1/SQLQueries('OWTR_T_NEW')/List`,
             {
                 params: {
                 value1: "'TRANSFER'",
@@ -1534,10 +1588,10 @@ app.get('/api/checklist', async (req, res) => {
         });
     }
 
-    // https://10.21.22.11:50000/b1s/v1/SQLQueries('Check_List')/List?value1= 'WhsCode'
+    // https://192.168.54.185:50000/b1s/v1/SQLQueries('Check_List')/List?value1= 'WhsCode'
     try {
         const response = await axiosInstance.get(
-            `https://10.21.22.11:50000/b1s/v1/SQLQueries('Check_List')/List`,
+            `https://192.168.54.185:50000/b1s/v1/SQLQueries('Check_List')/List`,
             {
                 params: {
                     value1: whsCode
@@ -1605,7 +1659,7 @@ app.post('/api/checklist/update', async (req, res) => {
 
             try {
                 const response = await axiosInstance.post(
-                    'https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_CheckList',
+                    'https://192.168.54.185:50000/b1s/v1/ASUDO_B2B_CheckList',
                     checklistItem,
                     {
                         headers: {
@@ -1730,7 +1784,7 @@ app.get('/anadepo-siparisleri', async (req, res) => {
         
         // Initial request
         const initialResponse = await axiosInstance.get(
-            "https://10.21.22.11:50000/b1s/v1/SQLQueries('OWTQ_LIST')/List",
+            "https://192.168.54.185:50000/b1s/v1/SQLQueries('OWTQ_LIST')/List",
             {
                 params: {
                     value1: "'MAIN'",
@@ -1754,7 +1808,7 @@ app.get('/anadepo-siparisleri', async (req, res) => {
         while (nextLink) {
             console.log("Fetching next batch of data...");
             const nextResponse = await axiosInstance.get(
-                `https://10.21.22.11:50000/b1s/v1/${nextLink}`,
+                `https://192.168.54.185:50000/b1s/v1/${nextLink}`,
                 {
                     headers: {
                         Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
@@ -1790,7 +1844,7 @@ app.get("/anadepo-siparisleri-list", async (req, res) => {
   console.log("whsCode", whsCode); 
   try {
     const response = await axiosInstance.get(
-      "https://10.21.22.11:50000/b1s/v1/SQLQueries('OWTQ_NEW')/List",
+      "https://192.168.54.185:50000/b1s/v1/SQLQueries('OWTQ_NEW')/List",
       {
         params: {
           value1: "'MAIN'",
@@ -1846,7 +1900,7 @@ app.post("/api/anadepo-orders", async (req, res) => {
             console.log("Sending api/anadepo-orders data:", data);
             
             const response = await axiosInstance.post(
-                "https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_OWTQ",
+                "https://192.168.54.185:50000/b1s/v1/ASUDO_B2B_OWTQ",
                 data,
                 {
                     headers: {
@@ -1875,11 +1929,11 @@ app.get("/api/anadepo-order/:docNum", async (req, res) => {
     console.log("Getting order details for docNum:", docNum);
     console.log("Using sessionId:", sessionId);
 
-    // https://10.21.22.11:50000/b1s/v1/SQLQueries('OWTQ_DETAIL')/List?value1= 'PROD'&value2= 'DocNum'
+    // https://192.168.54.185:50000/b1s/v1/SQLQueries('OWTQ_DETAIL')/List?value1= 'PROD'&value2= 'DocNum'
 
     try {
         const response = await axiosInstance.get(
-            "https://10.21.22.11:50000/b1s/v1/SQLQueries('OWTQ_DETAIL')/List",
+            "https://192.168.54.185:50000/b1s/v1/SQLQueries('OWTQ_DETAIL')/List",
             {
                 params: {
                     value1: "'MAIN'",
@@ -1914,7 +1968,7 @@ app.get('/api/anadepo-delivery/:docNum', async (req, res) => {
 
     try {
         const response = await axiosInstance.get(
-            `https://10.21.22.11:50000/b1s/v1/SQLQueries('OWTR_NEW')/List`,
+            `https://192.168.54.185:50000/b1s/v1/SQLQueries('OWTR_NEW')/List`,
             {
                 params: {
                     value1: "'MAIN'",
@@ -1960,7 +2014,7 @@ app.post('/api/anadepo-delivery-submit/:docNum', upload.array('images'), async (
         console.log('Received delivery data:', parsedDeliveryData);
 
         const response = await axiosInstance.post(
-            'https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_OWTR',
+            'https://192.168.54.185:50000/b1s/v1/ASUDO_B2B_OWTR',
             parsedDeliveryData,
             {
                 headers: {
@@ -2018,7 +2072,7 @@ app.get('/api/lost-items', async (req, res) => {
 
     try {
         const response = await axiosInstance.get(
-            `https://10.21.22.11:50000/b1s/v1/SQLQueries('Lost_List')/List`,
+            `https://192.168.54.185:50000/b1s/v1/SQLQueries('Lost_List')/List`,
             {
                 params: {
                     value1: whsCode
@@ -2055,7 +2109,7 @@ app.get('/api/lost-items/new', async (req, res) => {
 
     try {
         const response = await axiosInstance.get(
-            `https://10.21.22.11:50000/b1s/v1/SQLQueries('Lost_New')/List`,
+            `https://192.168.54.185:50000/b1s/v1/SQLQueries('Lost_New')/List`,
             {
                 params: {
                     value1: whsCode
@@ -2130,7 +2184,7 @@ app.post('/api/lost-items/create', fireZayiUpload.array('image', 5000), async (r
                     console.log('Image Path:', imagePath);
                     console.log('Making API request for item:', item.itemCode);
                     const response = await axiosInstance.post(
-                        'https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_Lost',
+                        'https://192.168.54.185:50000/b1s/v1/ASUDO_B2B_Lost',
                         {
                             U_WhsCode: whsCode,
                             U_DocDate: currentDate,
@@ -2212,7 +2266,7 @@ app.get('/api/tickets', async (req, res) => {
         console.log('Using sessionId:', sessionId);
 
         const response = await axiosInstance.get(
-            `https://10.21.22.11:50000/b1s/v1/SQLQueries('Ticket_list')/List`,
+            `https://192.168.54.185:50000/b1s/v1/SQLQueries('Ticket_list')/List`,
             {
                 params: {
                     value1: whsCode,
@@ -2263,7 +2317,7 @@ app.delete('/api/tickets/:docNum', async (req, res) => {
         console.log('Using sessionId:', sessionId);
 
         const response = await axiosInstance.post(
-            'https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_Lost',
+            'https://192.168.54.185:50000/b1s/v1/ASUDO_B2B_Lost',
             {
                 DocNum: docNum,
                 Cancelled: 'Y'
@@ -2306,7 +2360,7 @@ app.get('/api/branches', async (req, res) => {
         }
 
         const response = await axiosInstance.get(
-            `https://10.21.22.11:50000/b1s/v1/SQLQueries('List_Whs')/List`,
+            `https://192.168.54.185:50000/b1s/v1/SQLQueries('List_Whs')/List`,
             {
                 headers: {
                     'Cookie': `B1SESSION=${sessionId}`,
@@ -2341,7 +2395,7 @@ app.get('/api/users', async (req, res) => {
         console.log('Fetching users with sessionId:', sessionId);
 
         const response = await axiosInstance.get(
-            `https://10.21.22.11:50000/b1s/v1/SQLQueries('List_Usr')/List`,
+            `https://192.168.54.185:50000/b1s/v1/SQLQueries('List_Usr')/List`,
             {
                 headers: {
                     'Cookie': `B1SESSION=${sessionId}`,
@@ -2404,6 +2458,8 @@ app.post('/api/tickets', multer({
         const ticketData = {
             U_WhsCode: req.body.U_WhsCode,
             U_FromWhsName: req.body.U_FromWhsName,
+            U_ToWhsCode: req.body.U_ToWhsCode,
+            U_ToWhsName: req.body.U_ToWhsName,
             U_DocDate: req.body.U_DocDate,
             U_UserName: req.body.U_UserName,
             U_Priority: req.body.U_Priority,
@@ -2418,7 +2474,7 @@ app.post('/api/tickets', multer({
         console.log('Creating ticket with data:', ticketData);
 
         const response = await axiosInstance.post(
-            'https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_Ticket',
+            'https://192.168.54.185:50000/b1s/v1/ASUDO_B2B_Ticket',
             ticketData,
             {
                 headers: {
@@ -2455,18 +2511,28 @@ app.get('/api/tickets/:docNum', async (req, res) => {
         }
 
         // Get ticket details using SQLQuery
-        const response = await axiosInstance.post(
-            `https://10.21.22.11:50000/b1s/v1/SQLQueries('Ticket_Detail')/List`,
-            {
-                value1: docNum
-            },
+        //const response = await axiosInstance.post(
+        //    `https://192.168.54.185:50000/b1s/v1/SQLQueries('Ticket_Detail')/List`,
+        //    {
+        //        value1: docNum
+        //    },
+        //    {
+        //        headers: {
+        //            'Cookie': `B1SESSION=${sessionId}`,
+        //            'Content-Type': 'application/json'
+        //        }
+        //    }
+        //);
+
+        const response = await axiosInstance.get(
+            `https://192.168.54.185:50000/b1s/v1/SQLQueries('Ticket_Detail')/List?value1='${docNum}'`,
             {
                 headers: {
-                    'Cookie': `B1SESSION=${sessionId}`,
-                    'Content-Type': 'application/json'
+                    'Cookie': `B1SESSION=${sessionId}`
                 }
             }
         );
+
 
         console.log('Ticket details response:' + docNum + "++>>>>>>", response);
         console.log('Ticket details responseData:' + docNum + "++>>>>>>", response.data);
@@ -2536,7 +2602,7 @@ app.post('/api/tickets/:docNum/reply', upload.single('image'), async (req, res) 
 
         // Add reply to SAP B1
         const response = await axiosInstance.patch(
-            `https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_Ticket(${docNum})`,
+            `https://192.168.54.185:50000/b1s/v1/ASUDO_B2B_Ticket(${docNum})`,
             replyData,
             {
                 headers: {
@@ -2599,7 +2665,7 @@ app.post('/api/tickets/:docNum/status', async (req, res) => {
 
         // Update ticket status in SAP B1
         const response = await axiosInstance.patch(
-            `https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_Ticket(${docNum})`,
+            `https://192.168.54.185:50000/b1s/v1/ASUDO_B2B_Ticket(${docNum})`,
             updateData,
             {
                 headers: {
@@ -2640,7 +2706,7 @@ app.get('/api/count-new-list', async (req, res) => {
         }
         // SAP B1 COUNT_NEW_LIST sorgusu
         const response = await axiosInstance.get(
-            `https://10.21.22.11:50000/b1s/v1/SQLQueries('COUNT_NEW')/List?value1= '${whsCode}'`,
+            `https://192.168.54.185:50000/b1s/v1/SQLQueries('COUNT_NEW')/List?value1= '${whsCode}'`,
             {
                 headers: {
                     'Cookie': `B1SESSION=${sessionId}`,
@@ -2676,7 +2742,7 @@ app.get('/api/count-list', async (req, res) => {
   
         // SAP B1 COUNT_LIST sorgusu
         const response = await axiosInstance.get(
-            `https://10.21.22.11:50000/b1s/v1/SQLQueries('COUNT_LIST')/List?value1= '${whsCode}'`,
+            `https://192.168.54.185:50000/b1s/v1/SQLQueries('COUNT_LIST')/List?value1= '${whsCode}'`,
             {
                 headers: {
                     'Cookie': `B1SESSION=${sessionId}`,
@@ -2699,7 +2765,7 @@ app.get('/api/count-list', async (req, res) => {
 // Çoklu veya tekli sayım kaydı
 app.post('/api/count', async (req, res) => {
     try {
-        const sessionId = req.query.sessionId;
+        const sessionId = req.query.sessionId || req.headers['x-session-id'];
         if (!sessionId) {
             return res.status(400).json({
                 success: false,
@@ -2720,143 +2786,111 @@ app.post('/api/count', async (req, res) => {
         
         console.log('Gelen sayım verisi:', counts.length, 'kalem');
         
-        // Veri formatını SAP B1 için uygun formata dönüştür
-        // SAP B1, verileri AS_B2B_COUNT_DETAILCollection altında bekliyor
-        // Her 25 öğeyi bir batch olarak gönder
-        const BATCH_SIZE = 25;
-        let results = [];
-        let batchCount = 0;
-        
-        // Kalem sayımlarını batches halinde grupla
-        for (let i = 0; i < counts.length; i += BATCH_SIZE) {
-            batchCount++;
-            const batchItems = counts.slice(i, i + BATCH_SIZE);
-            console.log(`Batch ${batchCount}: İşlenen ${batchItems.length} öğe`);
+        try {
+            // Tüm kalemler için tek bir payload hazırla
+            const items = counts.map(item => {
+                // Validasyon
+                if (!item.U_WhsCode || !item.U_ItemCode || !item.U_Quantity || !item.U_UomCode) {
+                    throw new Error(`Eksik veri: ${JSON.stringify(item)}`);
+                }
+                
+                return {
+                    U_ItemCode: item.U_ItemCode,
+                    U_ItemName: item.U_ItemName || "",
+                    U_Quantity: parseFloat(item.U_Quantity),
+                    U_UomCode: item.U_UomCode
+                };
+            });
             
-            try {
-                // Batch için payloadı hazırla
-                const currentBatch = batchItems.map(item => {
-                    // Validasyon
-                    if (!item.U_WhsCode || !item.U_ItemCode || !item.U_Quantity || !item.U_UomCode) {
-                        throw new Error(`Eksik veri: ${JSON.stringify(item)}`);
+            // Payloadı oluştur
+            const payload = {
+                U_WhsCode: counts[0].U_WhsCode,
+                U_RefDate: counts[0].U_RefDate || new Date().toISOString().split('T')[0],
+                U_DocDate: new Date().toISOString().replace(/\.\d+Z$/, 'Z'), // 2025-05-06T00:00:00Z formatında
+                U_DocStatus: "1", // Doküman durumu 1 olarak gönderiliyor
+                U_SessionID: counts[0].U_SessionID || sessionId,
+                U_GUID: counts[0].U_GUID || `${Date.now()}_${Math.floor(Math.random() * 100000)}`,
+                U_User: counts[0].U_User || "System",
+                AS_B2B_COUNT_DETAILCollection: items
+            };
+            
+            console.log(`API isteği gönderiliyor (Toplam ${counts.length} kalem)`);
+            console.log('Payload özeti:', {
+                WhsCode: payload.U_WhsCode,
+                RefDate: payload.U_RefDate,
+                ItemCount: payload.AS_B2B_COUNT_DETAILCollection.length,
+                FirstItem: payload.AS_B2B_COUNT_DETAILCollection[0],
+                LastItem: payload.AS_B2B_COUNT_DETAILCollection[payload.AS_B2B_COUNT_DETAILCollection.length - 1]
+            });
+            
+            // API çağrısı - tek seferde tüm kalemleri gönder
+            const response = await axiosInstance.post(
+                'https://192.168.54.185:50000/b1s/v1/ASUDO_B2B_COUNT',
+                payload,
+                {
+                    headers: {
+                        'Cookie': `B1SESSION=${sessionId}`,
+                        'Content-Type': 'application/json'
+                    },
+                    timeout: 60000, // 60 saniye timeout (büyük veri için)
+                    validateStatus: function (status) {
+                        // 200 dışındaki başarı kodlarını da kabul et
+                        return status < 500;
                     }
-                    
-                    return {
-                        U_ItemCode: item.U_ItemCode,
-                        U_ItemName: item.U_ItemName || "",
-                        U_Quantity: parseFloat(item.U_Quantity),
-                        U_UomCode: item.U_UomCode
-                    };
-                });
-                
-                // Payloadı oluştur
-                const payload = {
-                    U_WhsCode: batchItems[0].U_WhsCode,
-                    U_RefDate: batchItems[0].U_RefDate || new Date().toISOString().split('T')[0],
-                    U_DocDate: new Date().toISOString().replace(/\.\d+Z$/, 'Z'), // 2025-05-06T00:00:00Z formatında
-                    U_DocStatus: "1", // Doküman durumu 1 olarak gönderiliyor
-                    U_SessionID: batchItems[0].U_SessionID || sessionId,
-                    U_GUID: batchItems[0].U_GUID || `${Date.now()}_${Math.floor(Math.random() * 100000)}`,
-                    U_User: batchItems[0].U_User || "System",
-                    AS_B2B_COUNT_DETAILCollection: currentBatch
-                };
-                
-                console.log(`API isteği gönderiliyor (Batch ${batchCount})`);
-                console.log('Payload:', JSON.stringify(payload, null, 2));
-                
-                // API çağrısı
-                const response = await retryAxiosRequest(async () => {
-                    return axiosInstance.post(
-                        'https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_COUNT',
-                        payload,
-                        {
-                            headers: {
-                                'Cookie': `B1SESSION=${sessionId}`,
-                                'Content-Type': 'application/json'
-                            },
-                            timeout: 30000, // 30 saniye timeout
-                            validateStatus: function (status) {
-                                // 200 dışındaki başarı kodlarını da kabul et
-                                return status < 500;
-                            }
-                        }
-                    );
-                }, 3, 2000);
-                
-                // Başarılı yanıt
-                console.log(`Batch ${batchCount} başarıyla gönderildi:`, response.status);
-                if (response.data) {
-                    console.log('Yanıt verisi:', JSON.stringify(response.data, null, 2));
                 }
-                
-                // Başarılı sonuçları kaydet
-                batchItems.forEach(item => {
-                    results.push({
-                        success: true,
-                        itemCode: item.U_ItemCode,
-                        batch: batchCount,
-                        data: response.data
-                    });
-                });
-                
-            } catch (error) {
-                console.error(`Batch ${batchCount} işlenirken hata:`, error);
-                if (error.response) {
-                    console.error('Hata yanıtı:', error.response.status, JSON.stringify(error.response.data, null, 2));
-                }
-                
-                // Session hatası kontrolü için yardımcı fonksiyon
-                const hasSessionError = () => {
-                    if (error.response && error.response.status === 401) return true;
-                    if (error.response?.data?.error?.code === 301) return true;
-                    
-                    const errorMsg = error.response?.data?.error?.message;
-                    if (errorMsg && typeof errorMsg === 'string' && errorMsg.toLowerCase().includes('session')) {
-                        return true;
-                    }
-                    
-                    if (error.message && typeof error.message === 'string' && 
-                        error.message.includes('Oturum süresi dolmuş')) {
-                        return true;
-                    }
-                    
-                    return false;
-                };
-                
-                // Oturum hatası
-                if (hasSessionError()) {
-                    console.warn('Oturum hatası tespit edildi, istemci yönlendiriliyor');
-                    return res.status(401).json({
-                        success: false,
-                        error: 'Oturum süresi dolmuş, lütfen yeniden giriş yapın',
-                        sessionExpired: true
-                    });
-                }
-                
-                // Başarısız sonuçları kaydet
-                batchItems.forEach(item => {
-                    results.push({
-                        success: false,
-                        itemCode: item.U_ItemCode,
-                        batch: batchCount,
-                        error: error.message
-                    });
+            );
+            
+            // Başarılı yanıt
+            console.log(`Tüm kalemler başarıyla gönderildi:`, response.status);
+            console.log('Yanıt verisi:', JSON.stringify(response.data, null, 2));
+            
+            // Tüm sonuçları başarılı olarak işaretle
+            const results = counts.map(item => ({
+                success: true,
+                itemCode: item.U_ItemCode,
+                data: response.data
+            }));
+            
+            // Sonuçları döndür
+            return res.json({
+                success: true,
+                totalCount: counts.length,
+                successCount: counts.length,
+                failCount: 0,
+                results: results
+            });
+            
+        } catch (error) {
+            console.error(`İşlem sırasında hata:`, error);
+            if (error.response) {
+                console.error('Hata yanıtı:', error.response.status, JSON.stringify(error.response.data, null, 2));
+            }
+            
+            // Session hatası kontrolü
+            if (error.response && error.response.status === 401) {
+                return res.status(401).json({
+                    success: false,
+                    error: 'Oturum süresi dolmuş, lütfen yeniden giriş yapın',
+                    sessionExpired: true
                 });
             }
+            
+            // SAP yanıt hatası
+            if (error.response && error.response.data && error.response.data.error) {
+                return res.status(error.response.status || 500).json({
+                    success: false,
+                    error: error.response.data.error.message || 'SAP B1 işlem hatası',
+                    code: error.response.data.error.code,
+                    details: error.response.data
+                });
+            }
+            
+            // Genel hata
+            return res.status(500).json({
+                success: false,
+                error: error.message || 'Stok sayımı oluşturulurken hata oluştu'
+            });
         }
-        
-        // Başarı durumunu kontrol et
-        const failedItems = results.filter(r => !r.success);
-        const successCount = results.length - failedItems.length;
-        
-        // Sonuçları döndür
-        res.json({
-            success: true,
-            totalCount: counts.length,
-            successCount: successCount,
-            failCount: failedItems.length,
-            results: results
-        });
     } catch (error) {
         console.error('Stok sayımı oluşturma hatası:', error);
         
@@ -2917,7 +2951,7 @@ app.get('/api/count-detail/:docNum', async (req, res) => {
 
         // SAP B1'den detay çek
         const response = await axiosInstance.get(
-            `https://10.21.22.11:50000/b1s/v1/SQLQueries('COUNT_DETAIL')/List`,
+            `https://192.168.54.185:50000/b1s/v1/SQLQueries('COUNT_DETAIL')/List`,
             {
                 params: {
                     value1: `'${docNum}'`
@@ -2971,7 +3005,7 @@ app.get('/api/count-edit/:docNum', async (req, res) => {
 
         // SAP B1'den detay çek
         const response = await axiosInstance.get(
-            `https://10.21.22.11:50000/b1s/v1/SQLQueries('COUNT_UPDATE')/List`,
+            `https://192.168.54.185:50000/b1s/v1/SQLQueries('COUNT_UPDATE')/List`,
             {
                 params: {
                     value1: `'${docNum}'`
@@ -3106,7 +3140,7 @@ app.post('/api/count-update', async (req, res) => {
         }
         
         // SAP B1 servisi için URL ve veri
-        const serviceUrl = `https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_COUNT(${updateData.DocNum})`;
+        const serviceUrl = `https://192.168.54.185:50000/b1s/v1/ASUDO_B2B_COUNT(${updateData.DocNum})`;
         console.log('SAP API URL:', serviceUrl);
         
         console.log(`Stok sayımı güncelleniyor - DocNum: ${updateData.DocNum}, Items: ${updateData.AS_B2B_COUNT_DETAILCollection.length || 0}`);
@@ -3324,11 +3358,6 @@ const PORT = process.argv.includes('--port')
     ? parseInt(process.argv[process.argv.indexOf('--port') + 1]) 
     : process.env.PORT || 3000;
 
-app.listen(PORT, () => {
-    console.log(`Server running on http://localhost:${PORT}`);
-});
-
-// Transfer reddetme
 app.post('/api/transfer/reject/:docNum', async (req, res) => {
     const { docNum } = req.params;
     const { sessionId, note, transferData } = req.body;
@@ -3359,11 +3388,11 @@ app.post('/api/transfer/reject/:docNum', async (req, res) => {
         };
 
         console.log('SAP B1 API İsteği Gönderiliyor:');
-        console.log('Endpoint: https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_OWTR');
+        console.log('Endpoint: https://192.168.54.185:50000/b1s/v1/ASUDO_B2B_OWTR');
         console.log('Request Body:', JSON.stringify(requestData, null, 2));
 
         const response = await axiosInstance.post(
-            "https://10.21.22.11:50000/b1s/v1/ASUDO_B2B_OWTR",
+            "https://192.168.54.185:50000/b1s/v1/ASUDO_B2B_OWTR",
             requestData,
             {
                 headers: {
@@ -3407,21 +3436,16 @@ app.post('/api/transfer/reject/:docNum', async (req, res) => {
     }
 });
 
-// Near the top where constants are defined, add this:
 // Constants for logs page authentication
 const LOGS_ACCESS_TOKEN = "Cremma2023!"; // This should match the client-side password
 
-// Add this route before the catch-all route at the end of the file
 // Protected route to serve logs.html
 app.get('/logs.html', (req, res, next) => {
-    // Simply serve the file - authentication is handled client-side
-    // In a production environment, you would implement proper server-side authentication
     res.sendFile(path.join(__dirname, 'logs.html'));
 });
 
-// Add this endpoint for the logs page to use
+// Endpoint for the logs page to use
 app.get('/api/logs', (req, res) => {
-    // Check for auth header or token in query
     const token = req.headers['x-access-token'] || req.query.token;
     
     if (token !== LOGS_ACCESS_TOKEN) {
@@ -3431,6 +3455,9 @@ app.get('/api/logs', (req, res) => {
         });
     }
     
-    // Return logs (newest first)
     res.json(requestLogs);
+});
+
+app.listen(PORT, () => {
+    console.log(`Server running on http://localhost:${PORT}`);
 });

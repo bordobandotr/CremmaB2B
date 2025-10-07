@@ -6,10 +6,43 @@
     <title>CREMMA - Ticket</title>
     <link rel="icon" type="image/png" href="img/favicon.png">
     <script src="js/loadHeader.js"></script>
-    <script src="js/sidebar-toggle.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css" rel="stylesheet">
     <link href="css/style.css" rel="stylesheet">
     <link href="css/orientation.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/css/tom-select.bootstrap5.css" rel="stylesheet">
+    <style>
+        /* Force table-secondary background color for DataTables */
+        .table > tbody > tr.table-secondary,
+        .table > tbody > tr.table-secondary:hover {
+            --bs-table-bg: var(--bs-secondary-bg-subtle);
+            --bs-table-hover-bg: var(--bs-secondary-bg-subtle);
+            color: var(--bs-secondary-text-emphasis);
+        }
+
+        /* Make the unread filter switch larger */
+        #unreadFilter {
+            width: 3em;
+            height: 1.5em;
+            cursor: pointer;
+        }
+        label[for="unreadFilter"] {
+            cursor: pointer;
+            padding-left: 0.5rem; /* Adjust spacing */
+            font-size: 1rem; /* Reset to default size */
+            font-weight: bold; /* Keep the text bold */
+            padding-top: 0.3rem;
+        }
+
+        /* Set a minimum width for the responsible group filter */
+        #priorityFilter-ts-control {
+            min-width: 150px; /* Adjust as needed */
+        }
+
+
+        #statusFilter-ts-control {
+            min-width: 150px; /* Adjust as needed */
+        }        
+    </style>
     <style>
         .loading-screen {
             display: none;
@@ -106,14 +139,6 @@
     </style>
 </head>
 <body>
-    <!-- Loading Screen -->
-    <div class="loading-screen">
-        <div class="loading-content">
-            <div class="loading-spinner"></div>
-            <div class="loading-text">Yükleniyor...</div>
-        </div>
-    </div>
-
     <div class="d-flex">
         <!-- Sidebar -->
         <div class="sidebar">
@@ -133,12 +158,11 @@
                     <h5 class="mb-0">Ticket</h5>
                 </div>
                 <div class="d-flex align-items-center">
-                    <div class="me-3">
-                        <span id="userInfo" class="text-muted">
-                            <i class="bi bi-person-circle me-1"></i>
-                            Yükleniyor...
-                        </span>
-                    </div>
+
+                    <button type="button" class="btn btn-danger me-2" onclick="window.location.href='ticket-olustur.html'">
+                        <i class="bi bi-plus-lg me-2"></i>Yeni Ticket Oluştur
+                    </button>
+                    
                     <button class="btn btn-outline-secondary" onclick="logout()">
                         Çıkış Yap <i class="bi bi-box-arrow-right"></i>
                     </button>
@@ -151,16 +175,46 @@
                     <div class="col-12">
                         <div class="d-flex justify-content-between align-items-center">
                             <div class="btn-group" role="group">
-                                <button type="button" id="incomingBtn" class="btn btn-outline-primary active" onclick="loadTickets('1')">
-                                    <i class="bi bi-inbox me-2"></i>Gelen Ticket
+                                <button type="button" id="allBtn" class="btn btn-secondary">
+                                    <i class="bi bi-inbox me-2"></i><b>Tümü</b>
+                                    <span id="allCount" class="badge rounded-pill bg-body-secondary text-dark ms-2 border border-secondary">0</span>
                                 </button>
-                                <button type="button" id="outgoingBtn" class="btn btn-outline-primary" onclick="loadTickets('2')">
-                                    <i class="bi bi-send me-2"></i>Giden Ticket
+                                <button type="button" id="incomingBtn" class="btn btn-outline-secondary">
+                                    <i class="bi bi-box-arrow-in-down-left me-2"></i><b>Gelen</b>
+                                    <span id="incomingCount" class="badge rounded-pill bg-body-secondary text-dark ms-2 border border-secondary">0</span>
+                                </button>
+                                <button type="button" id="outgoingBtn" class="btn btn-outline-secondary">
+                                    <i class="bi bi-box-arrow-up-right me-2"></i><b>Giden</b>
+                                    <span id="outgoingCount" class="badge rounded-pill bg-body-secondary text-dark ms-2 border border-secondary">0</span>
                                 </button>
                             </div>
-                            <button type="button" class="btn btn-danger" onclick="window.location.href='ticket-olustur.html'">
-                                <i class="bi bi-plus-lg me-2"></i>Yeni Ticket Oluştur
-                            </button>
+
+                            <div class="d-flex align-items-center gap-3">
+                                <!-- Unread Filter -->
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" id="unreadFilter" onchange="filterAndDisplayTickets()">
+                                    <label class="form-check-label" for="unreadFilter">Okunmamış Ticketlar</label>
+                                </div>
+
+                                <!-- Priority Filter -->
+                                <div>
+                                    <select id="priorityFilter" class="form-select form-select-sm" multiple onchange="filterAndDisplayTickets()">
+                                        <option value="Yüksek">Yüksek</option>
+                                        <option value="Orta">Orta</option>
+                                        <option value="Düşük">Düşük</option>
+                                    </select>
+                                </div>
+
+                                <!-- Status Filter -->
+                                <div>
+                                    <select id="statusFilter" class="form-select form-select-sm" multiple onchange="filterAndDisplayTickets()">
+                                        <option value="Açık">Açık</option>
+                                        <option value="Kapalı">Kapalı</option>
+                                        <option value="Çözüldü">Çözüldü</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
                         </div>
                     </div>
                 </div>
@@ -173,6 +227,7 @@
                                     <table id="ticketsTable" class="table table-hover">
                                         <thead>
                                             <tr>
+                                                <th></th>
                                                 <th>Ticket ID</th>
                                                 <th>Şube</th>
                                                 <th>Açılış Tarihi</th>
@@ -214,44 +269,121 @@
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.3.1/dist/js/tom-select.complete.min.js"></script>
 
     <script>
         let ticketsTable;
-        let currentActivityType = 1; // Default to incoming tickets (1)
+        let currentActivityType = 0; // 0: All, 1: Incoming, 2: Outgoing
         let allTickets = []; // Store all tickets
+        let prioritySelect, statusSelect;
 
         $(document).ready(function() {
+            // Initialize Tom Select for filters
+            prioritySelect = new TomSelect('#priorityFilter', {
+                plugins: ['remove_button'],
+                placeholder: 'Öncelik Seç...',
+                onItemAdd: function() {
+                    this.setTextboxValue('');
+                    this.refreshOptions(false);
+                }
+            });
+
+            statusSelect = new TomSelect('#statusFilter', {
+                plugins: ['remove_button'],
+                placeholder: 'Durum Seç...',
+                onItemAdd: function() {
+                    this.setTextboxValue('');
+                    this.refreshOptions(false);
+                }
+            });
+
             loadTickets();
 
             // Activity type button handlers
-            $('#incomingBtn').click(function() {
-                $(this).addClass('active');
-                $('#outgoingBtn').removeClass('active');
-                currentActivityType = 1;
+            $('.btn-group .btn').click(function() {
+                $('.btn-group .btn').removeClass('btn-secondary').addClass('btn-outline-secondary');
+                $(this).removeClass('btn-outline-secondary').addClass('btn-secondary');
+
+                if ($(this).is('#allBtn')) {
+                    currentActivityType = 0;
+                } else if ($(this).is('#incomingBtn')) {
+                    currentActivityType = 1;
+                } else if ($(this).is('#outgoingBtn')) {
+                    currentActivityType = 2;
+                }
                 filterAndDisplayTickets();
             });
 
-            $('#outgoingBtn').click(function() {
-                $(this).addClass('active');
-                $('#incomingBtn').removeClass('active');
-                currentActivityType = 2;
-                filterAndDisplayTickets();
-            });
+            // Attach change listeners to other filters
+            $('#unreadFilter').on('change', filterAndDisplayTickets);
+            prioritySelect.on('change', filterAndDisplayTickets);
+            statusSelect.on('change', filterAndDisplayTickets);
         });
 
+        function updateCounts(tickets) {
+            const allCount = tickets.length;
+            const incomingCount = tickets.filter(t => t.ActivityType === 1).length;
+            const outgoingCount = tickets.filter(t => t.ActivityType === 2).length;
+
+            $('#allCount').text(allCount);
+            $('#incomingCount').text(incomingCount);
+            $('#outgoingCount').text(outgoingCount);
+        }
+
         function filterAndDisplayTickets() {
+            const isUnreadChecked = $('#unreadFilter').is(':checked');
+            const selectedPriorities = prioritySelect.getValue();
+            const selectedStatuses = statusSelect.getValue();
+
+            // First, filter by the main filters (priority, status, and a generic unread flag)
+            const baseFilteredTickets = allTickets.filter(ticket => {
+                // Determine if the ticket is unread based on its type
+                const isUnread = (ticket.ActivityType === 1 && ticket.GelenUnRead === 1) || 
+                                 (ticket.ActivityType === 2 && ticket.GidenUnRead === 1);
+
+                const unreadMatch = !isUnreadChecked || isUnread;
+                const priorityMatch = selectedPriorities.length === 0 || selectedPriorities.includes(ticket.PriorityText);
+                const statusMatch = selectedStatuses.length === 0 || selectedStatuses.includes(ticket.StatusText);
+                
+                return unreadMatch && priorityMatch && statusMatch;
+            });
+
+            // Update counts based on this base filter
+            updateCounts(baseFilteredTickets);
+
+            // Then, filter by the selected activity type for display
+            const displayTickets = baseFilteredTickets.filter(ticket => {
+                if (currentActivityType === 0) return true; // Show all
+                return ticket.ActivityType === currentActivityType;
+            });
+
             if (ticketsTable) {
-                ticketsTable.destroy();
+                ticketsTable.clear().rows.add(displayTickets).draw();
+            } else {
+                initializeDataTable(displayTickets);
             }
-
-            const filteredTickets = allTickets.filter(ticket => ticket.ActivityType === currentActivityType);
             
-            console.log(`Displaying ${filteredTickets.length} tickets for ActivityType: ${currentActivityType}`);
+            console.log(`Displaying ${displayTickets.length} tickets.`);
+        }
 
+        function initializeDataTable(initialData) {
             ticketsTable = $('#ticketsTable').DataTable({
-                data: filteredTickets,
+                data: initialData,
                 responsive: true,
                 columns: [
+                    {
+                        data: 'ActivityType',
+                        orderable: false,
+                        className: 'text-center',
+                        render: function(data) {
+                            if (data === 1) {
+                                return '<i class="bi bi-box-arrow-in-down-left text-primary"></i>';
+                            } else if (data === 2) {
+                                return '<i class="bi bi-box-arrow-up-right text-success"></i>';
+                            }
+                            return '';
+                        }
+                    },
                     { data: 'DocNum' },
                     { data: 'FromWhsName' },
                     { 
@@ -261,22 +393,23 @@
                         }
                     },
                     { data: 'UserName' },
-                    { 
-                        data: 'Priority',
-                        render: formatPriority
+                    {
+                        data: 'PriorityText',
+                        render: function(data) { return formatPriority(data); }
                     },
-                    { 
-                        data: 'DocStatus',
-                        render: formatStatus
+                    {
+                        data: 'StatusText',
+                        render: function(data) { return formatStatus(data); }
                     },
                     { data: 'FreeText' },
                     {
                         data: null,
+                        orderable: false,
                         render: function(data) {
                             return `
                                 <div class="btn-group">
                                     <button type="button" class="btn btn-sm btn-primary" onclick="window.location.href='ticket-detay.html?id=${data.DocNum}'">
-                                        <i class="bi bi-eye"></i>
+                                        <i class="bi bi-ticket-detailed"></i> Detay
                                     </button>
                                     <button type="button" class="btn btn-sm btn-danger" onclick="deleteTicket(${data.DocNum})">
                                         <i class="bi bi-trash"></i>
@@ -286,9 +419,19 @@
                         }
                     }
                 ],
-                order: [[0, 'desc']],
+                order: [[1, 'desc']], // Default sort by Ticket ID descending
                 language: {
                     url: '//cdn.datatables.net/plug-ins/1.13.7/i18n/tr.json'
+                },
+                createdRow: function(row, data, dataIndex) {
+                    // Gelen ve okunmamış ise (GelenUnRead = 1)
+                    if (data.ActivityType === 1 && data.GelenUnRead === 1) {
+                        $(row).addClass('fw-bold table-secondary');
+                    }
+                    // Giden ve okunmamış ise (GidenUnRead = 1)
+                    else if (data.ActivityType === 2 && data.GidenUnRead === 1) {
+                        $(row).addClass('fw-bold');
+                    }
                 }
             });
         }
@@ -311,8 +454,14 @@
                     throw new Error('Invalid data format received from server');
                 }
 
-                // Store all tickets globally
-                allTickets = data.value;
+                // Store all tickets globally and map text values
+                allTickets = data.value.map(ticket => {
+                    return {
+                        ...ticket,
+                        PriorityText: getPriorityText(ticket.Priority),
+                        StatusText: getStatusText(ticket.DocStatus)
+                    };
+                });
                 
                 // Display initial filtered view
                 filterAndDisplayTickets();
@@ -387,52 +536,46 @@
             $('.loading-screen').css('display', 'none');
         }
 
-        function formatPriority(priority) {
-            let color, text;
+        function getPriorityText(priority) {
             switch(priority) {
-                case 1:
-                    color = '#FF6B6B';
-                    text = 'Yüksek';
-                    break;
-                case 2:
-                    color = '#51CF66';
-                    text = 'Orta';
-                    break;
-                case 3:
-                    color = '#FFD43B';
-                    text = 'Düşük';
-                    break;
-                default:
-                    color = '#868E96';
-                    text = priority;
+                case 1: return 'Yüksek';
+                case 2: return 'Orta';
+                case 3: return 'Düşük';
+                default: return 'Bilinmiyor';
             }
-            return `<span class="badge" style="background-color: ${color}">${text}</span>`;
         }
 
-        function formatStatus(status) {
-            let color, text;
+        function getStatusText(status) {
             switch(status) {
-                case 1:
-                    color = '#51CF66';
-                    text = 'Açık';
-                    break;
-                case 2:
-                    color = '#339AF0';
-                    text = 'İnceleniyor';
-                    break;
-                case 3:
-                    color = '#20C997';
-                    text = 'Çözüldü';
-                    break;
-                case 4:
-                    color = '#868E96';
-                    text = 'Kapalı';
-                    break;
-                default:
-                    color = '#868E96';
-                    text = status;
+                case 1: return 'Açık';
+                case 2: return 'İnceleniyor';
+                case 3: return 'Çözüldü';
+                case 4: return 'Kapalı';
+                default: return 'Bilinmiyor';
             }
-            return `<span class="badge" style="background-color: ${color}">${text}</span>`;
+        }
+
+        function formatPriority(priorityText) {
+            let color;
+            switch(priorityText) {
+                case 'Yüksek': color = '#FF6B6B'; break;
+                case 'Orta': color = '#FFD43B'; break;
+                case 'Düşük': color = '#51CF66'; break;
+                default: color = '#868E96';
+            }
+            return `<span class="badge" style="background-color: ${color}">${priorityText}</span>`;
+        }
+
+        function formatStatus(statusText) {
+            let color;
+            switch(statusText) {
+                case 'Açık': color = '#51CF66'; break;
+                case 'İnceleniyor': color = '#339AF0'; break;
+                case 'Çözüldü': color = '#20C997'; break;
+                case 'Kapalı': color = '#868E96'; break;
+                default: color = '#868E96';
+            }
+            return `<span class="badge" style="background-color: ${color}">${statusText}</span>`;
         }
     </script>
     <script src="js/datatable-helper.js"></script>

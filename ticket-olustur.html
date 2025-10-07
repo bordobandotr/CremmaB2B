@@ -220,18 +220,29 @@
         <!-- Main Content -->
         <div class="main-content">
 
+            <!-- Header -->
+            <header class="d-flex justify-content-between p-3 bg-white">
+                <div class="d-flex align-items-center">
+                    <button id="sidebarToggle" class="btn btn-link d-md-none">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <h5 class="mb-0">Ticket Oluştur</h5>
+                </div>
+                <div class="d-flex align-items-center">
+                    <button class="btn btn-outline-secondary" onclick="window.location.href='ticket.html'">
+                        <i class="bi bi-arrow-left"></i> Geri
+                    </button>
+                </div>
+            </header>
             <!-- Main Content -->
             <div class="container mt-4">
                 <div class="card">
-                    <div class="card-header d-flex justify-content-between align-items-center">
-                        <h5 class="mb-0">Yeni Ticket Oluştur</h5>
-                    </div>
                     <div class="card-body">
                         <form id="ticketForm">
                             <div class="row">
                                 <div class="col-md-6 mb-3">
-                                    <label for="fromWhsCode" class="form-label">Şube</label>
-                                    <select class="form-select" id="fromWhsCode" name="fromWhsCode" required>
+                                    <label for="ToWhsCode" class="form-label">Şube</label>
+                                    <select class="form-select" id="ToWhsCode" name="ToWhsCode" required>
                                         <option value="">Şube Seçiniz</option>
                                     </select>
                                 </div>
@@ -312,7 +323,7 @@
                 });
                 const data = await response.json();
                 
-                const select = $('#fromWhsCode');
+                const select = $('#ToWhsCode');
                 data.forEach(branch => {
                     select.append(new Option(branch.Name, branch.Code));
                 });
@@ -420,21 +431,30 @@
                 showLoading();
                 
                 const sessionId = localStorage.getItem('sessionId');
-                const whsCode = localStorage.getItem('branchCode');
+                // GÖNDEREN BİLGİLERİ (Giriş yapan kullanıcıdan)
+                const fromWhsCode = localStorage.getItem('branchCode');
+                const fromWhsName = localStorage.getItem('branchName');
                 const currentUser = localStorage.getItem('userName');
 
-                // Create FormData from the form
+                // ALICI BİLGİLERİ (Formdaki dropdown'dan)
+                const selectedBranchOption = $('#ToWhsCode').find('option:selected');
+                const toWhsCode = selectedBranchOption.val();
+                const toWhsName = selectedBranchOption.text();
+
+                // Form verilerini oluştur
                 const formData = new FormData();
                 
-                // Add the file if selected
                 const imageInput = document.getElementById('image');
                 if (imageInput.files.length > 0) {
                     formData.append('image', imageInput.files[0]);
                 }
 
-                // Add other form data
-                formData.append('U_WhsCode', whsCode);
-                formData.append('U_FromWhsName', $('#fromWhsCode').val());
+                // Verileri istenen akışa göre sunucuya gönder
+                formData.append('U_WhsCode', fromWhsCode);       // Gönderen Kodu
+                formData.append('U_FromWhsName', fromWhsName);   // Gönderen Adı
+                formData.append('U_ToWhsCode', toWhsCode);       // Alıcı Kodu
+                formData.append('U_ToWhsName', toWhsName);       // Alıcı Adı
+                
                 formData.append('U_DocDate', new Date().toISOString().split('T')[0]);
                 formData.append('U_UserName', $('#userNameSelect').val());
                 formData.append('U_Priority', $('#priority').val());
@@ -443,19 +463,18 @@
                 formData.append('U_GUID', generateGUID());
                 formData.append('U_User', currentUser);
 
-                console.log('Submitting form with file:', imageInput.files[0]);
-
                 const response = await fetch('/api/tickets?sessionId=' + sessionId, {
                     method: 'POST',
                     body: formData
                 });
 
                 if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({}));
+                    console.error('Error response from server:', errorData);
                     throw new Error('Failed to create ticket');
                 }
 
                 const result = await response.json();
-
                 hideLoading();
 
                 await Swal.fire({
@@ -466,6 +485,7 @@
                 });
 
                 window.location.href = 'ticket.html';
+
             } catch (error) {
                 console.error('Error creating ticket:', error);
                 hideLoading();
