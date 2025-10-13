@@ -286,6 +286,7 @@
                 const response = await fetch('/anadepo-siparisleri?sessionId=' + sessionId + '&whsCode=' + whsCode, {
                     method: 'GET',
                     credentials: 'include',
+                    cache: 'no-cache',
                     headers: {
                         'Accept': '*/*',
                         'Content-Type': 'application/json',

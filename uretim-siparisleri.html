@@ -291,6 +291,7 @@
                 const response = await fetch('/test?sessionId=' + sessionId + '&whsCode=' + whsCode, {
                     method: 'GET',
                     credentials: 'include',
+                    cache: 'no-cache',
                     headers: {
                         'Accept': '*/*',
                         'Content-Type': 'application/json',

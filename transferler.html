@@ -990,9 +990,9 @@
 				const whsCode = localStorage.getItem("branchCode");
 				const sessionId = api.getSessionId();
 				
-				// Cache'i önlemek için timestamp ekle
-				const timestamp = new Date().getTime();
-				const response = await fetch(`/api/transfer-list/${whsCode}?sessionId=${sessionId}&_=${timestamp}`);
+				const response = await fetch(`/api/transfer-list/${whsCode}?sessionId=${sessionId}`, {
+					cache: 'no-cache' // Use the standard fetch API option to bypass cache
+				});
 				
 				if (!response.ok) {
 					throw new Error('Veriler yüklenirken bir hata oluştu');
