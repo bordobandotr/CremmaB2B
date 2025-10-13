@@ -189,6 +189,9 @@
     <script src="js/sidebar-toggle.js"></script>
     <script>
         let lostItemsTable;
+        let isDateFilterApplied = false; // YENİ EKLENDİ
+        $.fn.dataTable.ext.search.length = 0; // YENİ EKLENDİ
+        
         const imageModal = new bootstrap.Modal(document.getElementById('imageModal'));
 
         // Loading Screen Functions
@@ -323,56 +326,61 @@
             return d.toLocaleDateString('tr-TR');
         }
 
-        // Document Ready
+                // Document Ready
         $(document).ready(async function () {
-            initializeDataTable([]);
+            // Önceki DataTable örneğini tamamen yok et
+            if ($.fn.DataTable.isDataTable('#lostItemsTable')) {
+                $('#lostItemsTable').DataTable().destroy();
+            }
+            // Tabloyu yeniden çizerken eski tbody içeriğini temizle
+            $('#lostItemsTable tbody').empty();
+
             await loadLostItems();
 
-            // Status filter
-            $('#statusFilter').on('change', function () {
-                const status = $(this).val();
-                lostItemsTable.column(5).search(status).draw();
+            // --- Filtre Dinleyicileri ---
+            $('#statusFilter').off('change').on('change', function () {
+                if (lostItemsTable) lostItemsTable.column(5).search($(this).val()).draw();
             });
 
-            // Item code filter
-            $('#itemCodeFilter').on('input', function() {
-                const itemCode = $(this).val();
-                lostItemsTable.column(2).search(itemCode).draw();
+            $('#itemCodeFilter').off('input').on('input', function() {
+                if (lostItemsTable) lostItemsTable.column(2).search($(this).val()).draw();
+            });
+            
+            $('#startDate, #endDate').off('change').on('change', function() {
+                if (lostItemsTable) lostItemsTable.draw();
             });
 
-            // Date range filter
-            $.fn.dataTable.ext.search.push(
-                function(settings, data, dataIndex) {
-                    const startDate = $('#startDate').val();
-                    const endDate = $('#endDate').val();
-                    const date = data[1]; // Index 1 is the date column
+            // --- Global Tarih Aralığı Filtresi (Sadece BİR KEZ uygulanır) ---
+            if (!isDateFilterApplied) {
+                $.fn.dataTable.ext.search.push(
+                    function(settings, data, dataIndex) {
+                        if (settings.nTable.id !== 'lostItemsTable') return true;
+                        
+                        const startDate = $('#startDate').val();
+                        const endDate = $('#endDate').val();
+                        const dateStr = data[1];
 
-                    if (!startDate && !endDate) return true;
+                        if (!startDate && !endDate) return true;
 
-                    const rowDate = new Date(date.split('.').reverse().join('-'));
-                    const start = startDate ? new Date(startDate) : null;
-                    const end = endDate ? new Date(endDate) : null;
+                        try {
+                            const dateParts = dateStr.split('.');
+                            const rowDate = new Date(+dateParts[2], dateParts[1] - 1, +dateParts[0]);
+                            if (isNaN(rowDate)) return true; // Geçersiz tarih ise filtreleme
 
-                    if (start && end) {
-                        return rowDate >= start && rowDate <= end;
-                    } else if (start) {
-                        return rowDate >= start;
-                    } else if (end) {
-                        return rowDate <= end;
+                            const start = startDate ? new Date(startDate) : null;
+                            const end = endDate ? new Date(endDate) : null;
+
+                            if (start && !isNaN(start) && end && !isNaN(end)) return rowDate >= start && rowDate <= end;
+                            if (start && !isNaN(start)) return rowDate >= start;
+                            if (end && !isNaN(end)) return rowDate <= end;
+                        } catch (e) {
+                            return true;
+                        }
+                        return true;
                     }
-                    return true;
-                }
-            );
-
-            // Apply date filter when dates change
-            $('#startDate, #endDate').on('change', function() {
-                lostItemsTable.draw();
-            });
-        });
-
-        // Sidebar toggle for mobile
-        $('#sidebarToggle').click(function () {
-            $('body').toggleClass('show-sidebar');
+                );
+                isDateFilterApplied = true;
+            }
         });
     </script>
     <script src="js/datatable-helper.js"></script>

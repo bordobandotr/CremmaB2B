@@ -184,54 +184,53 @@
                         <div id="ticketDetails">
                             <div class="row mb-3">
                                 <div class="col-md-3">
-                                    <h6>Ticket ID</h6>
+                                    <h6 style="font-weight: bold;">Ticket No</h6>
                                     <p id="docNum" class="text-muted"></p>
                                 </div>
                                 <div class="col-md-3">
-                                    <h6>Açılış Tarihi</h6>
+                                    <h6 style="font-weight: bold;">Açılış Tarihi</h6>
                                     <p id="docDate" class="text-muted"></p>
                                 </div>
                                 <div class="col-md-3">
-                                    <h6>Öncelik</h6>
+                                    <h6 style="font-weight: bold;">Öncelik</h6>
                                     <span id="priority" class="priority-badge"></span>
-                                </div>
-                                <div class="col-md-3">
-                                    <h6>Durum</h6>
-                                    <span id="docStatus" class="status-badge"></span>
                                 </div>
                             </div>
                             <div class="row mb-3">
                                 <div class="col-md-6">
-                                    <h6>Gönderen Şube</h6>
+                                    <h6 style="font-weight: bold;">Gönderen Şube</h6>
                                     <p id="fromWhsName" class="text-muted"></p>
                                 </div>
                                 <div class="col-md-6">
-                                    <h6>Alıcı Şube</h6>
+                                    <h6 style="font-weight: bold;">Alıcı Şube</h6>
                                     <p id="toWhsName" class="text-muted"></p>
                                 </div>
                             </div>
                             <div class="row mb-4">
                                 <div class="col-md-6">
-                                    <h6>Kullanıcı (Alıcı)</h6>
-                                    <p id="userName" class="text-muted"></p>
+                                    <h6 style="font-weight: bold;">Birim</h6>
+                                    <p id="ticketUserName" class="text-muted"></p>
                                 </div>
                                 <div class="col-md-6">
-                                    <h6>Görsel</h6>
+                                    <h6 style="font-weight: bold;">Görsel</h6>
                                     <img id="image" class="ticket-image d-none" alt="Ticket Görseli">
                                 </div>
                             </div>
                             <div class="row">
                                 <div class="col-12">
-                                    <h6>Konu</h6>
+                                    <h6 style="font-weight: bold;">Konu</h6>
                                     <p id="freeText" class="text-muted"></p>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="d-flex justify-content-end gap-2 mt-4">
-                            <button id="btnInProgress" class="btn btn-warning">İnceleniyor</button>
-                            <button id="btnResolved" class="btn btn-success">Çözüldü</button>
-                            <button id="btnClose" class="btn btn-danger">Kapat</button>
+                        <div class="d-flex justify-content-end gap-2 mt-4" id="statusButtons">
+                            <div><h6 style="font-weight: bold;">Durum Seç</h6>
+                                <button id="btnOpen" class="btn btn-outline-primary">Açık</button>
+                                <button id="btnInProgress" class="btn btn-outline-warning">İnceleniyor</button>
+                                <button id="btnResolved" class="btn btn-outline-success">Çözüldü</button>
+                                <button id="btnClose" class="btn btn-outline-danger">Kapat</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -243,7 +242,7 @@
                         <div id="replyList" class="mb-4"></div>
                         
                         <!-- Reply Form -->
-                        <form id="replyForm" class="bg-light p-3 rounded border border-black>
+                        <form id="replyForm" class="bg-light p-3 rounded border border-primary-subtle">
                             <h6 class="mb-3">Yanıt Ekle</h6>
                             <div class="mb-3">
                                 <textarea class="form-control" id="replyText" rows="3" placeholder="Yanıtınızı buraya yazın..." required></textarea>
@@ -257,6 +256,10 @@
                                 <i class="bi bi-send"></i> Gönder
                             </button>
                         </form>
+                        <!-- Closed Ticket Warning -->
+                        <div id="closedTicketWarning" class="alert alert-warning text-center d-none" role="alert">
+                            Bu ticket kapatıldığı için yeni yorum eklenemez.
+                        </div>
                     </div>
                 </div>
                     </div>
@@ -301,12 +304,8 @@
 
         function formatDate(dateString) {
             if (!dateString) return '';
-            const date = new Date(dateString);
-            // Check if the date is valid
-            if (isNaN(date.getTime())) {
-                return ''; // Return empty for invalid dates
-            }
-            return date.toLocaleString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+            // Simplest solution: return the date as plain text, truncated to avoid parsing issues.
+            return dateString.substring(0, 16).replace('T', ' ');
         }
 
         function getPriorityBadgeClass(priority) {
@@ -354,7 +353,7 @@
                 const whsCode = localStorage.getItem('branchCode');
                 console.log("urlParams", urlParams);
                 console.log("docNum", docNum);
-                console.log("sessionId", sessionId);
+                console.log("sessionId", sessionId)
                 console.log("currentUser", currentUser);
                 console.log("whsCode", whsCode);
 
@@ -377,15 +376,26 @@
                 $('#fromWhsName').text(`${mainTicket.FromWhsName} (${mainTicket.WhsCode})`);
                 $('#toWhsName').text(`${mainTicket.ToWhsName} (${mainTicket.ToWhsCode})`);
                 $('#docDate').text(formatDate(mainTicket.DocDate));
-                $('#userName').text(mainTicket.UserName);
+                $('#ticketUserName').text(mainTicket.UserName);
                 
                 const prioritySpan = $('#priority');
                 prioritySpan.text(getPriorityText(mainTicket.Priority));
                 prioritySpan.addClass(getPriorityBadgeClass(mainTicket.Priority));
 
-                const statusSpan = $('#docStatus');
-                statusSpan.text(getStatusText(mainTicket.DocStatus));
-                statusSpan.addClass(getStatusBadgeClass(mainTicket.DocStatus));
+                // Update status buttons based on the current status
+                updateStatusButtonStyles(mainTicket.DocStatus);
+
+                // Show/hide reply form based on ticket status
+                const replyForm = $('#replyForm');
+                const closedWarning = $('#closedTicketWarning');
+
+                if (mainTicket.DocStatus == 3 || mainTicket.DocStatus == 4) { // 3: Çözüldü, 4: Kapatıldı
+                    replyForm.addClass('d-none');
+                    closedWarning.removeClass('d-none');
+                } else {
+                    replyForm.removeClass('d-none');
+                    closedWarning.addClass('d-none');
+                }
 
                 $('#freeText').text(mainTicket.FreeText);
 
@@ -445,6 +455,9 @@
             try {
                 let statusText = '';
                 switch (status) {
+                    case 1:
+                        statusText = 'Açık';
+                        break;
                     case 2:
                         statusText = 'İnceleniyor';
                         break;
@@ -598,9 +611,32 @@
             $('#imageModal').modal('show');
         });
 
+        function updateStatusButtonStyles(currentStatus) {
+            // Reset all buttons to their default outline style
+            $('#btnOpen').removeClass('btn-primary').addClass('btn-outline-primary');
+            $('#btnInProgress').removeClass('btn-warning').addClass('btn-outline-warning');
+            $('#btnResolved').removeClass('btn-success').addClass('btn-outline-success');
+            $('#btnClose').removeClass('btn-danger').addClass('btn-outline-danger');
+
+            // Apply the solid style to the active button
+            if (currentStatus == 1) {
+                $('#btnOpen').removeClass('btn-outline-primary').addClass('btn-primary');
+            } else if (currentStatus == 2) {
+                $('#btnInProgress').removeClass('btn-outline-warning').addClass('btn-warning');
+            } else if (currentStatus == 3) {
+                $('#btnResolved').removeClass('btn-outline-success').addClass('btn-success');
+            } else if (currentStatus == 4) {
+                $('#btnClose').removeClass('btn-outline-danger').addClass('btn-danger');
+            }
+        }
+
         // Status update button handlers
+        document.getElementById('btnOpen').addEventListener('click', () => {
+            updateTicketStatus(1);
+        });
+
         document.getElementById('btnInProgress').addEventListener('click', () => {
-            updateTicketStatus(2); // P for In Progress
+            updateTicketStatus(2);
         });
 
         document.getElementById('btnResolved').addEventListener('click', () => {

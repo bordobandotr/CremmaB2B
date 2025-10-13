@@ -242,18 +242,17 @@
                             <div class="row">
                                 <div class="col-md-6 mb-3">
                                     <label for="ToWhsCode" class="form-label">Şube</label>
-                                    <select class="form-select" id="ToWhsCode" name="ToWhsCode" required>
+                                    <select class="form-select" id="ToWhsCode" name="ToWhsCode">
                                         <option value="">Şube Seçiniz</option>
                                     </select>
                                 </div>
                                 <div class="col-md-6 mb-3">
-                                    <label for="userNameSelect" class="form-label">Ticket Alıcı</label>
-                                    <select class="form-select" id="userNameSelect" name="userName" required>
-                                        <option value="">Kullanıcı Seçiniz</option>
+                                    <label for="userNameSelect" class="form-label">Birim</label>
+                                    <select class="form-select" id="userNameSelect" name="userName">
+                                        <option value="">Birim Seçiniz</option>
                                     </select>
                                 </div>
                             </div>
-
                             <div class="mb-3">
                                 <label class="form-label">Ticket Öncelik</label>
                                 <div class="d-flex">
@@ -324,8 +323,11 @@
                 const data = await response.json();
                 
                 const select = $('#ToWhsCode');
+                const currentUserBranchCode = localStorage.getItem('branchCode');
                 data.forEach(branch => {
-                    select.append(new Option(branch.Name, branch.Code));
+                    if (branch.Code !== currentUserBranchCode) {
+                        select.append(new Option(branch.Name, branch.Code));
+                    }
                 });
                 
                 select.select2({
@@ -359,15 +361,13 @@
                 console.log('User data received:', data);
 
                 const select = $('#userNameSelect');
-                 
                 
                 // Add default placeholder option
-                select.append(new Option('Kullanıcı Seçiniz', '', true, true));
+                select.append(new Option('Birim Seçiniz', '', true, true));
 
                 // Add user options
                 if (Array.isArray(data)) {
                     data.forEach(user => {
-                        // Log each user object
                         console.log('Processing user:', user);
                         select.append(new Option(user.Name, user.Code));
                     });
@@ -376,7 +376,7 @@
                 // Initialize Select2
                 select.select2({
                     theme: 'bootstrap-5',
-                    placeholder: 'Kullanıcı Seçiniz',
+                    placeholder: 'Birim Seçiniz',
                     allowClear: true,
                     width: '100%'
                 });
@@ -416,6 +416,19 @@
         // Handle form submission
         $('#ticketForm').submit(async function(e) {
             e.preventDefault();
+
+            const toWhsCode = $('#ToWhsCode').val();
+            const userName = $('#userNameSelect').val();
+
+            if (!toWhsCode && !userName) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Uyarı',
+                    text: 'Lütfen bir Şube veya Birim seçiniz.',
+                    confirmButtonText: 'Tamam'
+                });
+                return;
+            }
             
             try {
                 if (!$('#priority').val()) {
@@ -429,19 +442,22 @@
                 }
 
                 showLoading();
-                
+
                 const sessionId = localStorage.getItem('sessionId');
-                // GÖNDEREN BİLGİLERİ (Giriş yapan kullanıcıdan)
                 const fromWhsCode = localStorage.getItem('branchCode');
                 const fromWhsName = localStorage.getItem('branchName');
                 const currentUser = localStorage.getItem('userName');
-
-                // ALICI BİLGİLERİ (Formdaki dropdown'dan)
+                
                 const selectedBranchOption = $('#ToWhsCode').find('option:selected');
-                const toWhsCode = selectedBranchOption.val();
-                const toWhsName = selectedBranchOption.text();
+                const toWhsCodeValue = selectedBranchOption.val();
+                // If a branch is selected (value is not empty), use its text. Otherwise, use an empty string.
+                const toWhsNameValue = toWhsCodeValue ? selectedBranchOption.text() : "";
 
-                // Form verilerini oluştur
+                const userCodeValue = $('#userNameSelect').val();
+                const selectedUserData = $('#userNameSelect').select2('data')[0];
+                // If a unit is selected, get its text from the Select2 data object.
+                const userNameValue = userCodeValue && selectedUserData ? selectedUserData.text : "";
+
                 const formData = new FormData();
                 
                 const imageInput = document.getElementById('image');
@@ -449,14 +465,14 @@
                     formData.append('image', imageInput.files[0]);
                 }
 
-                // Verileri istenen akışa göre sunucuya gönder
-                formData.append('U_WhsCode', fromWhsCode);       // Gönderen Kodu
-                formData.append('U_FromWhsName', fromWhsName);   // Gönderen Adı
-                formData.append('U_ToWhsCode', toWhsCode);       // Alıcı Kodu
-                formData.append('U_ToWhsName', toWhsName);       // Alıcı Adı
-                
+                formData.append('U_WhsCode', fromWhsCode);
+                formData.append('U_FromWhsName', fromWhsName);
+                formData.append('U_ToWhsCode', toWhsCodeValue);
+                formData.append('U_ToWhsName', toWhsNameValue);
                 formData.append('U_DocDate', new Date().toISOString().split('T')[0]);
-                formData.append('U_UserName', $('#userNameSelect').val());
+                formData.append('U_UserName', userCodeValue); 
+                formData.append('U_ToDeptCode', userCodeValue);
+                formData.append('U_ToDeptName', userNameValue);
                 formData.append('U_Priority', $('#priority').val());
                 formData.append('U_FreeText', $('#freeText').val());
                 formData.append('U_SessionID', sessionId);
@@ -474,7 +490,6 @@
                     throw new Error('Failed to create ticket');
                 }
 
-                const result = await response.json();
                 hideLoading();
 
                 await Swal.fire({
@@ -484,7 +499,7 @@
                     confirmButtonText: 'Tamam'
                 });
 
-                window.location.href = 'ticket.html';
+                window.location.href = `ticket.html?v=${Date.now()}`;
 
             } catch (error) {
                 console.error('Error creating ticket:', error);

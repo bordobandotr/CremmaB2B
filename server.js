@@ -381,12 +381,11 @@ app.options('/b1s/v1/*', (req, res) => {
     res.header('Access-Control-Allow-Headers', 'Content-Type, Cookie, Authorization');
     res.sendStatus(200);
 });
-
 // Create the proxy middleware
 app.use('/b1s/v1/*', createProxyMiddleware(proxyOptions));
 
 // Get all tickets
-app.get('/api/tickets', async (req, res) => {
+app.get('/api/tickets-view', async (req, res) => {
     const { sessionId, whsCode } = req.query;
 
     if (!sessionId || !whsCode) {
@@ -394,24 +393,21 @@ app.get('/api/tickets', async (req, res) => {
     }
 
     try {
-        const response = await axiosInstance.get(
-            "https://192.168.54.185:50000/b1s/v1/SQLQueries('Ticket_List')/List",
-            {
-                params: {
-                    value1: `'${whsCode}'`
-                },
-                headers: {
-                    'Cookie': `B1SESSION=${sessionId}`
-                }
+        const serviceLayerUrl = 'https://192.168.54.185:50000/b1s/v1';
+        const sapUrl = `${serviceLayerUrl}/view.svc/AS_B2B_TicketList_B1SLQuery?$filter=BranchCode eq '${whsCode}'`;
+        console.log('Fetching from correct SAP View URL:', sapUrl);
+
+        const sapResponse = await axiosInstance.get(sapUrl, {
+            headers: {
+                'Cookie': `B1SESSION=${sessionId}`
             }
-        );
-        res.json(response.data);
-    } catch (error) {
-        console.error('Error fetching tickets:', error.response?.data || error.message);
-        res.status(error.response?.status || 500).json({ 
-            error: 'Failed to fetch tickets',
-            details: error.response?.data || error.message
         });
+
+        res.json(sapResponse.data);
+    } catch (error) {
+        console.error('Error fetching from tickets-view:', error.message);
+        // Send empty array on error to prevent client crash
+        res.status(500).json({ value: [] }); 
     }
 });
 
@@ -2462,6 +2458,8 @@ app.post('/api/tickets', multer({
             U_ToWhsName: req.body.U_ToWhsName,
             U_DocDate: req.body.U_DocDate,
             U_UserName: req.body.U_UserName,
+            U_ToDeptCode: req.body.U_ToDeptCode,
+            U_ToDeptName: req.body.U_ToDeptName,
             U_Priority: req.body.U_Priority,
             U_FreeText: req.body.U_FreeText,
             U_User: req.body.U_User,
@@ -2714,11 +2712,9 @@ app.get('/api/count-new-list', async (req, res) => {
                 }
             }
         );
-
-        // Her zaman value ile dön
-        res.json({ value: response.data.value || response.data || [] });
+        res.json(response.data);
     } catch (error) {
-        console.error('Error getting count new list:', error);
+        console.error('Error getting items for count:', error);
         res.status(500).json({
             success: false,
             error: 'Stok sayımı için kullanılabilir ürünler alınamadı',
@@ -2727,31 +2723,34 @@ app.get('/api/count-new-list', async (req, res) => {
     }
 });
 
+
+
 // Get count list
 app.get('/api/count-list', async (req, res) => {
-    try {
-        const sessionId = req.query.sessionId;
-        const whsCode = req.query.whsCode;
+    const sessionId = req.query.sessionId;
+    const whsCode = req.query.whsCode;
 
-        if (!sessionId || !whsCode) {
-            return res.status(400).json({
-                success: false,
-                error: 'Eksik sessionId veya şube kodu!'
-            });
-        }
-  
-        // SAP B1 COUNT_LIST sorgusu
+    if (!sessionId || !whsCode) {
+        return res.status(400).json({
+            success: false,
+            error: 'Eksik sessionId veya şube kodu!'
+        });
+    }
+
+    try {
+        const serviceLayerUrl = 'https://192.168.54.185:50000/b1s/v1';
         const response = await axiosInstance.get(
-            `https://192.168.54.185:50000/b1s/v1/SQLQueries('COUNT_LIST')/List?value1= '${whsCode}'`,
+            `${serviceLayerUrl}/SQLQueries('COUNT_LIST')/List`,
             {
+                params: {
+                    value1: `'${whsCode}'`
+                },
                 headers: {
-                    'Cookie': `B1SESSION=${sessionId}`,
-                    'Content-Type': 'application/json'
+                    'Cookie': `B1SESSION=${sessionId}`
                 }
             }
         );
-        let data = response.data.value || response.data || [];
-        res.json({ value: data });
+        res.json(response.data);
     } catch (error) {
         console.error('Error getting count list:', error);
         res.status(500).json({

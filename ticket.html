@@ -228,10 +228,10 @@
                                         <thead>
                                             <tr>
                                                 <th></th>
-                                                <th>Ticket ID</th>
+                                                <th>No</th>
+                                                <th>Tarih</th>
                                                 <th>Şube</th>
-                                                <th>Açılış Tarihi</th>
-                                                <th>Kullanıcı</th>
+                                                <th>Birim</th>
                                                 <th>Öncelik</th>
                                                 <th>Durum</th>
                                                 <th>Konu</th>
@@ -357,11 +357,12 @@
                 return ticket.ActivityType === currentActivityType;
             });
 
-            if (ticketsTable) {
-                ticketsTable.clear().rows.add(displayTickets).draw();
-            } else {
-                initializeDataTable(displayTickets);
+            // Check if the table is already a DataTable and destroy it
+            if ($.fn.DataTable.isDataTable('#ticketsTable')) {
+                $('#ticketsTable').DataTable().destroy();
             }
+            // Always re-initialize the table with the new data
+            initializeDataTable(displayTickets);
             
             console.log(`Displaying ${displayTickets.length} tickets.`);
         }
@@ -385,13 +386,13 @@
                         }
                     },
                     { data: 'DocNum' },
-                    { data: 'FromWhsName' },
                     { 
                         data: 'DocDate',
                         render: function(data) {
                             return new Date(data).toLocaleDateString('tr-TR');
                         }
                     },
+                    { data: 'FromWhsName' },
                     { data: 'UserName' },
                     {
                         data: 'PriorityText',
@@ -445,7 +446,12 @@
 
                 console.log('Loading tickets with:', { sessionId, whsCode });
 
-                const response = await fetch(`/api/tickets?sessionId=${sessionId}&whsCode=${whsCode}`);
+                const response = await fetch(`/api/tickets-view?sessionId=${sessionId}&whsCode=${whsCode}`, {
+                    headers: {
+                        'Cache-Control': 'no-cache',
+                        'Pragma': 'no-cache'
+                    }
+                });
                 const data = await response.json();
 
                 console.log('Server response:', data);
@@ -569,10 +575,10 @@
         function formatStatus(statusText) {
             let color;
             switch(statusText) {
-                case 'Açık': color = '#51CF66'; break;
-                case 'İnceleniyor': color = '#339AF0'; break;
-                case 'Çözüldü': color = '#20C997'; break;
-                case 'Kapalı': color = '#868E96'; break;
+                case 'Açık': color = '#0d6efd'; break;
+                case 'İnceleniyor': color = '#ffc107'; break;
+                case 'Çözüldü': color = '#198754'; break;
+                case 'Kapalı': color = '#dc3545'; break;
                 default: color = '#868E96';
             }
             return `<span class="badge" style="background-color: ${color}">${statusText}</span>`;

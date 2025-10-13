@@ -100,11 +100,13 @@
         .quantity-control input::-webkit-outer-spin-button,
         .quantity-control input::-webkit-inner-spin-button {
             -webkit-appearance: none;
+            appearance: none;
             margin: 0;
         }
 
         .quantity-control input[type=number] {
             -moz-appearance: textfield;
+            appearance: textfield;
         }
 
         /* DataTable Styles */
@@ -318,7 +320,7 @@
                     <h5 class="modal-title fw-bold">Transfer Özeti</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
-                <div class="modal-body pt-2">
+                        <div class="modal-body pt-2">
                     <div id="transferSummaryList" class="mb-3">
                         <!-- Transfer özetleri buraya eklenecek -->
                     </div>
@@ -782,7 +784,7 @@
                     showTransferSummaryModal();
                 });
 
-                $('#confirmTransferBtn').click(async function() {
+                $('#confirmTransferBtn').on('click', async function() {
                     try {
                         showLoading('Transfer Oluşturuluyor...');
                         const sessionId = localStorage.getItem('sessionId');

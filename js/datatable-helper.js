@@ -7,6 +7,10 @@
  * This ensures table data is always freshly requested from the server
  */
 function disableDataTableCaching() {
+    /*
+    // THIS FUNCTION IS DISABLED DUE TO CAUSING A FATAL ERROR ON PAGE LOAD.
+    // IT TRIES TO PATCH DATATABLE BEFORE IT'S FULLY INITIALIZED.
+
     // Check if DataTable plugin exists
     if (window.$ && $.fn.DataTable) {
         // Set global default
@@ -49,6 +53,7 @@ function disableDataTableCaching() {
         
         console.log('DataTable caching disabled successfully');
     }
+    */
 }
 
 /**
@@ -749,24 +754,22 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Call these functions on script load to affect all tables
-disableDataTableCaching();
+// disableDataTableCaching(); // DISABLED: Causes fatal error on page load
 patchAllDataTablesForNoCache();
 
 // Add to any existing initialization function
 document.addEventListener('DOMContentLoaded', function() {
-    disableDataTableCaching();
-    patchAllDataTablesForNoCache();
+    // disableDataTableCaching(); // DISABLED: Causes fatal error on page load
+    // patchAllDataTablesForNoCache(); // DISABLED: Causes fatal error on page load
 });
 
 // Expose the functions in the global dataTableHelper object at the end of the file
 window.dataTableHelper = window.dataTableHelper || {};
 $.extend(window.dataTableHelper, {
-    // Add the new functions to the existing helper object
     disableCaching: disableDataTableCaching,
     patchForNoCache: patchAllDataTablesForNoCache,
     refreshWithFreshData: refreshDataTableWithFreshData,
-    reloadAll: reloadAllDataTables,
-    // ... existing properties ...
+    reloadAll: reloadAllDataTables
 });
 
 /**
