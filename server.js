@@ -6,6 +6,31 @@ const path = require('path');
 const multer = require('multer');
 const fs = require('fs');
 
+
+// ============================================
+// SAP SERVICE LAYER CONFIGURATION
+// ============================================
+// Tek bir yerden tüm SAP Service Layer ayarlarını yönetin
+const SAP_CONFIG = {
+    HOST: '192.168.54.185',           // Anadolu Sinerji CREMMA DEV SAP Service Layer IP adresi
+    //HOST: '10.21.22.11',           // CREMMA CANLI SAP Service Layer IP adresi
+    PORT: '50000',                  // SAP Service Layer portu
+    PROTOCOL: 'https',              // Protokol (https veya http)
+    
+    // Otomatik oluşturulan tam URL'ler
+    get BASE_URL() {
+        return `${this.PROTOCOL}://${this.HOST}:${this.PORT}`;
+    },
+    get SERVICE_LAYER_URL() {
+        return `${this.BASE_URL}/b1s/v1`;
+    }
+};
+
+// Kullanım: Artık tüm endpoint'lerde SAP_CONFIG.SERVICE_LAYER_URL kullanın
+// Örnek: `${SAP_CONFIG.SERVICE_LAYER_URL}/Login`
+// IP değiştirmek için sadece yukarıdaki HOST değerini güncelleyin!
+// ============================================
+
 const app = express();
 
 // Request logger system
@@ -318,7 +343,7 @@ app.post('/api/login', async (req, res) => {
 
     try {
         const response = await axiosInstance.post(
-            'https://192.168.54.185:50000/b1s/v1/Login',
+            `${SAP_CONFIG.SERVICE_LAYER_URL}/Login`,
             {
                 UserName,
                 Password,
@@ -338,7 +363,7 @@ app.post('/api/login', async (req, res) => {
 
 // Proxy middleware configuration
 const proxyOptions = {
-    target: 'https://192.168.54.185:50000',
+    target: SAP_CONFIG.BASE_URL,
     changeOrigin: true,
     secure: false, // SSL sertifikası doğrulamasını devre dışı bırak
     onProxyReq: (proxyReq, req, res) => {
@@ -393,7 +418,7 @@ app.get('/api/tickets-view', async (req, res) => {
     }
 
     try {
-        const serviceLayerUrl = 'https://192.168.54.185:50000/b1s/v1';
+        const serviceLayerUrl = `${SAP_CONFIG.SERVICE_LAYER_URL}`;
         const sapUrl = `${serviceLayerUrl}/view.svc/AS_B2B_TicketList_B1SLQuery?$filter=BranchCode eq '${whsCode}'`;
         console.log('Fetching from correct SAP View URL:', sapUrl);
 
@@ -431,7 +456,7 @@ app.get('/test', async (req, res) => {
         
         // Initial request
         const initialResponse = await axiosInstance.get(
-            "https://192.168.54.185:50000/b1s/v1/SQLQueries('OWTQ_LIST')/List",
+            `${SAP_CONFIG.SERVICE_LAYER_URL}/SQLQueries('OWTQ_LIST')/List`,
             {
                 params: {
                     value1: "'PROD'",
@@ -455,7 +480,7 @@ app.get('/test', async (req, res) => {
         while (nextLink) {
             console.log("Fetching next batch of data...");
             const nextResponse = await axiosInstance.get(
-                `https://192.168.54.185:50000/b1s/v1/${nextLink}`,
+                `${SAP_CONFIG.SERVICE_LAYER_URL}/${nextLink}`,
                 {
                     headers: {
                         Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
@@ -491,7 +516,7 @@ app.get('/api/owtq-list', async (req, res) => {
     
     try {
         const response = await axiosInstance.get(
-            "https://192.168.54.185:50000/b1s/v1/SQLQueries('OWTQ_LIST')/List",
+            `${SAP_CONFIG.SERVICE_LAYER_URL}/SQLQueries('OWTQ_LIST')/List`,
             {
                 params: {
                     value1: "'PROD'",
@@ -528,7 +553,7 @@ app.get("/uretim-siparisleri-list", async (req, res) => {
   
   try {
     const response = await axiosInstance.get(
-      "https://192.168.54.185:50000/b1s/v1/SQLQueries('OWTQ_NEW')/List",
+      `${SAP_CONFIG.SERVICE_LAYER_URL}/SQLQueries('OWTQ_NEW')/List`,
       {
         params: {
           value1: "'PROD'",
@@ -598,7 +623,7 @@ app.post("/api/production-orders", async (req, res) => {
         // Önce birleştirilmiş yeni endpoint'i deneyelim
         try {
             const response = await axiosInstance.post(
-                "https://192.168.54.185:50000/b1s/v1/ASUDO_B2B_OWTQ_BULK",
+                `${SAP_CONFIG.SERVICE_LAYER_URL}/ASUDO_B2B_OWTQ_BULK`,
                 bulkOrderData,
                 {
                     headers: {
@@ -639,7 +664,7 @@ app.post("/api/production-orders", async (req, res) => {
                 console.log("Sending individual data:", data);
 
                 const response = await axiosInstance.post(
-                    "https://192.168.54.185:50000/b1s/v1/ASUDO_B2B_OWTQ",
+                    `${SAP_CONFIG.SERVICE_LAYER_URL}/ASUDO_B2B_OWTQ`,
                     data,
                     {
                         headers: {
@@ -678,11 +703,11 @@ app.get("/api/production-order/:docNum", async (req, res) => {
     console.log("Getting order details for docNum:", docNum);
     console.log("Using sessionId:", sessionId);
 
-    // https://192.168.54.185:50000/b1s/v1/SQLQueries('OWTQ_DETAIL')/List?value1= 'PROD'&value2= 'DocNum'
+    // ${SAP_CONFIG.SERVICE_LAYER_URL}/SQLQueries('OWTQ_DETAIL')/List?value1= 'PROD'&value2= 'DocNum'
 
     try {
         const response = await axiosInstance.get(
-            "https://192.168.54.185:50000/b1s/v1/SQLQueries('OWTQ_DETAIL')/List",
+            `${SAP_CONFIG.SERVICE_LAYER_URL}/SQLQueries('OWTQ_DETAIL')/List`,
             {
                 params: {
                     value1: "'PROD'",
@@ -712,7 +737,7 @@ app.post('/api/production-order/:docNum/delivery', async (req, res) => {
     return res.status(400).json({ error: "Missing required parameters" });
   }
 
-  // https://192.168.54.185:50000/b1s/v1/SQLQueries('OWTR_LIST')/List?value1= 'PROD'&value2= 'DocNum'
+  // ${SAP_CONFIG.SERVICE_LAYER_URL}/SQLQueries('OWTR_LIST')/List?value1= 'PROD'&value2= 'DocNum'
   
 
   console.log("Processing delivery for docNum:", docNum);
@@ -741,7 +766,7 @@ app.post('/api/production-order/:docNum/delivery', async (req, res) => {
     };
 
     const response = await axiosInstance.get(
-      "https://192.168.54.185:50000/b1s/v1/SQLQueries('OWTQ_NEW')/List",
+      `${SAP_CONFIG.SERVICE_LAYER_URL}/SQLQueries('OWTQ_NEW')/List`,
       deliveryData,
       {
         headers: {
@@ -776,7 +801,7 @@ app.get('/api/delivery/:docNum', async (req, res) => {
 
     try {
         const response = await axiosInstance.get(
-            `https://192.168.54.185:50000/b1s/v1/SQLQueries('OWTR_NEW')/List`,
+            `${SAP_CONFIG.SERVICE_LAYER_URL}/SQLQueries('OWTR_NEW')/List`,
             {
                 params: {
                     value1: "'PROD'",
@@ -822,7 +847,7 @@ app.post('/api/delivery-submit/:docNum', upload.array('images'), async (req, res
         console.log('Received delivery data:', parsedDeliveryData);
 
         const response = await axiosInstance.post(
-            'https://192.168.54.185:50000/b1s/v1/ASUDO_B2B_OWTR',
+            `${SAP_CONFIG.SERVICE_LAYER_URL}/ASUDO_B2B_OWTR`,
             parsedDeliveryData,
             {
                 headers: {
@@ -875,7 +900,7 @@ app.get("/api/supply-orders", async (req, res) => {
     
     try {
         const response = await axiosInstance.get(
-            "https://192.168.54.185:50000/b1s/v1/SQLQueries('OPOR_LIST')/List",
+            `${SAP_CONFIG.SERVICE_LAYER_URL}/SQLQueries('OPOR_LIST')/List`,
             {
                 params: {
                     value1: "'SUPPLY'",
@@ -904,7 +929,7 @@ app.get("/api/supply-orders", async (req, res) => {
 
 //     try {
 //         const response = await axiosInstance.post(
-//           "https://192.168.54.185:50000/b1s/v1/SQLQueries('OPOR_NEW')/List",
+//           `${SAP_CONFIG.SERVICE_LAYER_URL}/SQLQueries('OPOR_NEW')/List`,
 //           orderData,
 //           {
 //             params: {
@@ -934,7 +959,7 @@ app.get("/api/supply-detail-order/:docNum", async (req, res) => {
 
   try {
     const response = await axiosInstance.get(
-      "https://192.168.54.185:50000/b1s/v1/SQLQueries('OPDN_NEW')/List",
+      `${SAP_CONFIG.SERVICE_LAYER_URL}/SQLQueries('OPDN_NEW')/List`,
       {
         params: {
           value1: "'SUPPLY'",
@@ -969,7 +994,7 @@ app.get("/api/supply-order/:docNum", async (req, res) => {
 
 try {
   const response = await axiosInstance.get(
-    "https://192.168.54.185:50000/b1s/v1/SQLQueries('OPOR_DETAIL')/List",
+    `${SAP_CONFIG.SERVICE_LAYER_URL}/SQLQueries('OPOR_DETAIL')/List`,
     {
       params: {
         value1: "'SUPPLY'",
@@ -998,7 +1023,7 @@ app.get("/api/supply-items", async (req, res) => {
     
     try {
         const response = await axiosInstance.get(
-            "https://192.168.54.185:50000/b1s/v1/SQLQueries('OPOR_NEW')/List",
+            `${SAP_CONFIG.SERVICE_LAYER_URL}/SQLQueries('OPOR_NEW')/List`,
             {
                 params: {
                     value1: "'SUPPLY'",
@@ -1029,7 +1054,7 @@ app.get("/api/supply-delivery/:docNum", async (req, res) => {
 
     try {
         const response = await axiosInstance.get(
-          "https://192.168.54.185:50000/b1s/v1/SQLQueries('ASUDO_B2B_OPDN')",
+          `${SAP_CONFIG.SERVICE_LAYER_URL}/SQLQueries('ASUDO_B2B_OPDN')`,
           {
             params: {
               value1: "'SUPPLY'",
@@ -1070,7 +1095,7 @@ app.post("/api/supply-delivery/:docNum", upload.single('image'), async (req, res
         console.log('Received delivery data:', parsedDeliveryData);
 
         const response = await axiosInstance.post(
-            'https://192.168.54.185:50000/b1s/v1/ASUDO_B2B_OPDN',
+            `${SAP_CONFIG.SERVICE_LAYER_URL}/ASUDO_B2B_OPDN`,
             parsedDeliveryData,
             {
                 headers: {
@@ -1112,78 +1137,7 @@ app.post("/api/supply-delivery/:docNum", upload.single('image'), async (req, res
     }
 });
 
-// app.post("/api/supply-delivery/:docNum", async (req, res) => {
-//     const { docNum } = req.params;
-//     const { sessionId, items } = req.body;
-
-//     console.log("Processing delivery for docNum:", docNum);
-//     console.log("Using sessionId:", sessionId);
-//     console.log("Items:", items); 
- 
-
-//     try {
-//         const guid = generateGUID(); // Tek bir GUID oluştur
-//         const deliveryRequests = items.map((item) => ({
-//           U_Type: "SUPPLY",
-//           U_WhsCode: item.U_WhsCode,
-//           U_CardName: item.U_CarName,
-//           U_DocDate: item.U_DocDate,
-//           U_DocNum: docNum,
-//           U_NumAtCard: item.U_NumAtCard,
-//           U_ItemCode: item.U_ItemCode,
-//           U_ItemName: item.U_ItemName,
-//           U_Quantity: item.U_Quantity,
-//           U_DeliveryQty: item.U_DeliveryQty,
-//           U_MissingQty: item.U_MissingQty,
-//           U_DefectiveQty: item.U_DefectiveQty,
-//           U_UomCode: item.U_UomCode,
-//           U_Comments: item.U_Comments,
-//           U_Image: "",
-//           U_SessionID: sessionId,
-//           U_GUID: guid, // Aynı GUID'i kullan
-//           U_User: item.U_User,
-//           U_LineNum: item.U_LineNum,
-//         }));
- 
-//         console.log("Delivery requests:", deliveryRequests);
-
-//         console.log("Sending delivery requests with GUID:", guid);
-
-//         // // Tüm istekleri paralel olarak gönder
-//         // const responses = await Promise.all(
-//         //     deliveryRequests.map(data => 
-//         //         axiosInstance.post(
-//         //             "https://192.168.54.185:50000/b1s/v1/ASUDO_B2B_OPDN",
-//         //             data,
-//         //             {
-//         //                 headers: {
-//         //                     Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
-//         //                     "Content-Type": "application/json",
-//         //                 },
-//         //             }
-//         //         )
-//         //     )
-//         // );
-
-//         // console.log(`Successfully processed ${responses.length} items with GUID: ${guid}`);
-
-//         // res.json({
-//         //     success: true,
-//         //     message: `Successfully processed ${responses.length} items`,
-//         //     guid: guid,
-//         //     results: responses.map(r => r.data)
-//         // });
-//     } catch (error) {
-//         console.error("Error processing delivery:", error);
-//         res.status(500).json({ 
-//             success: false,
-//             error: error.message,
-//             details: error.response?.data || 'Unknown error occurred'
-//         });
-//     }
-// });
-
-// Dış tedarik ürünlerini getir
+// Dış tedarik ürünlerini getir - View Service kullanarak
 app.get("/api/supply-items-list/:whsCode", async (req, res) => {
     const { whsCode } = req.params;
     const sessionId = req.query.sessionId;
@@ -1196,13 +1150,13 @@ app.get("/api/supply-items-list/:whsCode", async (req, res) => {
     }
 
     try {
+        // First try without filter to see the structure
+        const sapUrl = `${SAP_CONFIG.SERVICE_LAYER_URL}/view.svc/AS_B2B_OporNew_B1SLQuery`;
+        console.log('Fetching from SAP View URL:', sapUrl);
+
         const response = await axiosInstance.get(
-            `https://192.168.54.185:50000/b1s/v1/SQLQueries('OPOR_NEW')/List`,
+            sapUrl,
             {
-                params: {
-                    value1: "'SUPPLY'",
-                    value2: `'${whsCode}'`
-                },
                 headers: {
                     Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
                     "Content-Type": "application/json",
@@ -1210,11 +1164,25 @@ app.get("/api/supply-items-list/:whsCode", async (req, res) => {
             }
         );
 
-        console.log("Response for whsCode:", whsCode, response.data);
-        res.json(response.data);
+        console.log("Response received, total items:", response.data?.value?.length || 0);
+        
+        // Filter on server side by whsCode
+        const filteredData = response.data.value.filter(item => 
+            item.BranchCode === whsCode || item.WhsCode === whsCode || item.U_WhsCode === whsCode
+        );
+        
+        console.log("Filtered items for whsCode:", whsCode, "count:", filteredData.length);
+        
+        res.json({
+            value: filteredData
+        });
     } catch (error) {
-        console.error("Error fetching supply items:", error);
-        res.status(500).json({ error: error.message });
+        console.error("Error fetching supply items:", error.message);
+        res.status(500).json({ 
+            success: false,
+            error: 'Failed to fetch supply items',
+            details: error.message 
+        });
     }
 });
 
@@ -1239,7 +1207,7 @@ app.post("/api/supply-order", async (req, res) => {
         // Her ürün için sipariş oluştur
         for (const item of items) {
             const response = await axiosInstance.post(
-              "https://192.168.54.185:50000/b1s/v1/ASUDO_B2B_OPOR",
+              `${SAP_CONFIG.SERVICE_LAYER_URL}/ASUDO_B2B_OPOR`,
               {
                 U_Type: "SUPPLY",
                 U_WhsCode: item.U_WhsCode,
@@ -1297,11 +1265,11 @@ app.get("/api/transfer-list/:whsCode", async (req, res) => {
         return res.status(401).json({ error: 'Oturum bulunamadı' });
     }
 
-    // https://192.168.54.185:50000/b1s/v1/SQLQueries('OWTQ_T_LIST')/List?value1= 'TRANSFER'&value2= 'WhsCode'
+    // ${SAP_CONFIG.SERVICE_LAYER_URL}/SQLQueries('OWTQ_T_LIST')/List?value1= 'TRANSFER'&value2= 'WhsCode'
 
     try {
         const response = await axiosInstance.get(
-            `https://192.168.54.185:50000/b1s/v1/SQLQueries('OWTQ_T_LIST')/List`,
+            `${SAP_CONFIG.SERVICE_LAYER_URL}/SQLQueries('OWTQ_T_LIST')/List`,
             {
                 params: {
                     value1: "'TRANSFER'",
@@ -1335,7 +1303,7 @@ app.get('/api/transfer/items', async (req, res) => {
   
     try {
       const response = await axiosInstance.get(
-        "https://192.168.54.185:50000/b1s/v1/SQLQueries('OWTQ_T_NEW')/List",
+        `${SAP_CONFIG.SERVICE_LAYER_URL}/SQLQueries('OWTQ_T_NEW')/List`,
         {
           params: {
             value1: "'TRANSFER'",
@@ -1407,7 +1375,7 @@ app.post("/api/transfer/create", async (req, res) => {
         console.log("Sending data:", data);
 
         const response = await axiosInstance.post(
-          "https://192.168.54.185:50000/b1s/v1/ASUDO_B2B_OWTQ",
+          `${SAP_CONFIG.SERVICE_LAYER_URL}/ASUDO_B2B_OWTQ`,
           data,
           {
             headers: {
@@ -1443,7 +1411,7 @@ app.post('/api/transfer/approve/:docNum', async (req, res) => {
 
     try {
         const response = await axiosInstance.post(
-            "https://192.168.54.185:50000/b1s/v1/ASUDO_B2B_OWTR",
+            `${SAP_CONFIG.SERVICE_LAYER_URL}/ASUDO_B2B_OWTR`,
             {
                 U_Type: "TRANSFER",
                 U_DocNum: parseInt(docNum),
@@ -1498,7 +1466,7 @@ app.post('/api/transfer/deliver/:docNum', async (req, res) => {
 
     try {
         const response = await axiosInstance.post(
-            "https://192.168.54.185:50000/b1s/v1/ASUDO_B2B_OWTR",
+            `${SAP_CONFIG.SERVICE_LAYER_URL}/ASUDO_B2B_OWTR`,
             transferData,
             {
                 headers: {
@@ -1540,7 +1508,7 @@ app.get('/api/transfer/:docNum', async (req, res) => {
 
     try {
         const response = await axiosInstance.get(
-            `https://192.168.54.185:50000/b1s/v1/SQLQueries('OWTR_T_NEW')/List`,
+            `${SAP_CONFIG.SERVICE_LAYER_URL}/SQLQueries('OWTR_T_NEW')/List`,
             {
                 params: {
                 value1: "'TRANSFER'",
@@ -1570,7 +1538,7 @@ app.get('/api/transfer/:docNum', async (req, res) => {
     }
 });
 
-// Checklist endpoints
+// Checklist endpoints - Using SAP B1 View Service
 app.get('/api/checklist', async (req, res) => {
     const { sessionId, whsCode } = req.query;
 
@@ -1584,30 +1552,32 @@ app.get('/api/checklist', async (req, res) => {
         });
     }
 
-    // https://192.168.54.185:50000/b1s/v1/SQLQueries('Check_List')/List?value1= 'WhsCode'
     try {
-        const response = await axiosInstance.get(
-            `https://192.168.54.185:50000/b1s/v1/SQLQueries('Check_List')/List`,
-            {
-                params: {
-                    value1: whsCode
-                },
-                headers: {
-                    'Cookie': `B1SESSION=${sessionId}`,
-                    'Content-Type': 'application/json'
-                }
-            }
-        );
+        // First try without filter to see the structure
+        const sapUrl = `${SAP_CONFIG.SERVICE_LAYER_URL}/view.svc/AS_B2B_CheckList_B1SLQuery`;
+        console.log('Fetching from SAP View URL:', sapUrl);
 
-        console.log('Response for whsCode:', response);
-        console.log('Response for whsCode:',  response.data);
+        const response = await axiosInstance.get(sapUrl, {
+            headers: {
+                'Cookie': `B1SESSION=${sessionId}`
+            }
+        });
+
+        console.log('Checklist response received, items count:', response.data?.value?.length || 0);
+        
+        // Filter on server side by whsCode
+        const filteredData = response.data.value.filter(item => 
+            item.BranchCode === whsCode || item.WhsCode === whsCode || item.U_WhsCode === whsCode
+        );
+        
+        console.log('Filtered items count:', filteredData.length);
 
         res.json({
             success: true,
-            data: response.data.value
+            data: filteredData
         });
     } catch (error) {
-        console.error('Error fetching checklist:', error);
+        console.error('Error fetching checklist:', error.message);
         res.status(500).json({
             success: false,
             error: 'Failed to fetch checklist',
@@ -1655,7 +1625,7 @@ app.post('/api/checklist/update', async (req, res) => {
 
             try {
                 const response = await axiosInstance.post(
-                    'https://192.168.54.185:50000/b1s/v1/ASUDO_B2B_CheckList',
+                    `${SAP_CONFIG.SERVICE_LAYER_URL}/ASUDO_B2B_CheckList`,
                     checklistItem,
                     {
                         headers: {
@@ -1780,7 +1750,7 @@ app.get('/anadepo-siparisleri', async (req, res) => {
         
         // Initial request
         const initialResponse = await axiosInstance.get(
-            "https://192.168.54.185:50000/b1s/v1/SQLQueries('OWTQ_LIST')/List",
+            `${SAP_CONFIG.SERVICE_LAYER_URL}/SQLQueries('OWTQ_LIST')/List`,
             {
                 params: {
                     value1: "'MAIN'",
@@ -1804,7 +1774,7 @@ app.get('/anadepo-siparisleri', async (req, res) => {
         while (nextLink) {
             console.log("Fetching next batch of data...");
             const nextResponse = await axiosInstance.get(
-                `https://192.168.54.185:50000/b1s/v1/${nextLink}`,
+                `${SAP_CONFIG.SERVICE_LAYER_URL}/${nextLink}`,
                 {
                     headers: {
                         Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
@@ -1840,7 +1810,7 @@ app.get("/anadepo-siparisleri-list", async (req, res) => {
   console.log("whsCode", whsCode); 
   try {
     const response = await axiosInstance.get(
-      "https://192.168.54.185:50000/b1s/v1/SQLQueries('OWTQ_NEW')/List",
+      `${SAP_CONFIG.SERVICE_LAYER_URL}/SQLQueries('OWTQ_NEW')/List`,
       {
         params: {
           value1: "'MAIN'",
@@ -1896,7 +1866,7 @@ app.post("/api/anadepo-orders", async (req, res) => {
             console.log("Sending api/anadepo-orders data:", data);
             
             const response = await axiosInstance.post(
-                "https://192.168.54.185:50000/b1s/v1/ASUDO_B2B_OWTQ",
+                `${SAP_CONFIG.SERVICE_LAYER_URL}/ASUDO_B2B_OWTQ`,
                 data,
                 {
                     headers: {
@@ -1925,11 +1895,11 @@ app.get("/api/anadepo-order/:docNum", async (req, res) => {
     console.log("Getting order details for docNum:", docNum);
     console.log("Using sessionId:", sessionId);
 
-    // https://192.168.54.185:50000/b1s/v1/SQLQueries('OWTQ_DETAIL')/List?value1= 'PROD'&value2= 'DocNum'
+    // ${SAP_CONFIG.SERVICE_LAYER_URL}/SQLQueries('OWTQ_DETAIL')/List?value1= 'PROD'&value2= 'DocNum'
 
     try {
         const response = await axiosInstance.get(
-            "https://192.168.54.185:50000/b1s/v1/SQLQueries('OWTQ_DETAIL')/List",
+            `${SAP_CONFIG.SERVICE_LAYER_URL}/SQLQueries('OWTQ_DETAIL')/List`,
             {
                 params: {
                     value1: "'MAIN'",
@@ -1964,7 +1934,7 @@ app.get('/api/anadepo-delivery/:docNum', async (req, res) => {
 
     try {
         const response = await axiosInstance.get(
-            `https://192.168.54.185:50000/b1s/v1/SQLQueries('OWTR_NEW')/List`,
+            `${SAP_CONFIG.SERVICE_LAYER_URL}/SQLQueries('OWTR_NEW')/List`,
             {
                 params: {
                     value1: "'MAIN'",
@@ -2010,7 +1980,7 @@ app.post('/api/anadepo-delivery-submit/:docNum', upload.array('images'), async (
         console.log('Received delivery data:', parsedDeliveryData);
 
         const response = await axiosInstance.post(
-            'https://192.168.54.185:50000/b1s/v1/ASUDO_B2B_OWTR',
+            `${SAP_CONFIG.SERVICE_LAYER_URL}/ASUDO_B2B_OWTR`,
             parsedDeliveryData,
             {
                 headers: {
@@ -2068,7 +2038,7 @@ app.get('/api/lost-items', async (req, res) => {
 
     try {
         const response = await axiosInstance.get(
-            `https://192.168.54.185:50000/b1s/v1/SQLQueries('Lost_List')/List`,
+            `${SAP_CONFIG.SERVICE_LAYER_URL}/SQLQueries('Lost_List')/List`,
             {
                 params: {
                     value1: whsCode
@@ -2105,7 +2075,7 @@ app.get('/api/lost-items/new', async (req, res) => {
 
     try {
         const response = await axiosInstance.get(
-            `https://192.168.54.185:50000/b1s/v1/SQLQueries('Lost_New')/List`,
+            `${SAP_CONFIG.SERVICE_LAYER_URL}/SQLQueries('Lost_New')/List`,
             {
                 params: {
                     value1: whsCode
@@ -2180,7 +2150,7 @@ app.post('/api/lost-items/create', fireZayiUpload.array('image', 5000), async (r
                     console.log('Image Path:', imagePath);
                     console.log('Making API request for item:', item.itemCode);
                     const response = await axiosInstance.post(
-                        'https://192.168.54.185:50000/b1s/v1/ASUDO_B2B_Lost',
+                        `${SAP_CONFIG.SERVICE_LAYER_URL}/ASUDO_B2B_Lost`,
                         {
                             U_WhsCode: whsCode,
                             U_DocDate: currentDate,
@@ -2262,7 +2232,7 @@ app.get('/api/tickets', async (req, res) => {
         console.log('Using sessionId:', sessionId);
 
         const response = await axiosInstance.get(
-            `https://192.168.54.185:50000/b1s/v1/SQLQueries('Ticket_list')/List`,
+            `${SAP_CONFIG.SERVICE_LAYER_URL}/SQLQueries('Ticket_list')/List`,
             {
                 params: {
                     value1: whsCode,
@@ -2313,7 +2283,7 @@ app.delete('/api/tickets/:docNum', async (req, res) => {
         console.log('Using sessionId:', sessionId);
 
         const response = await axiosInstance.post(
-            'https://192.168.54.185:50000/b1s/v1/ASUDO_B2B_Lost',
+            `${SAP_CONFIG.SERVICE_LAYER_URL}/ASUDO_B2B_Lost`,
             {
                 DocNum: docNum,
                 Cancelled: 'Y'
@@ -2356,7 +2326,7 @@ app.get('/api/branches', async (req, res) => {
         }
 
         const response = await axiosInstance.get(
-            `https://192.168.54.185:50000/b1s/v1/SQLQueries('List_Whs')/List`,
+            `${SAP_CONFIG.SERVICE_LAYER_URL}/SQLQueries('List_Whs')/List`,
             {
                 headers: {
                     'Cookie': `B1SESSION=${sessionId}`,
@@ -2391,7 +2361,7 @@ app.get('/api/users', async (req, res) => {
         console.log('Fetching users with sessionId:', sessionId);
 
         const response = await axiosInstance.get(
-            `https://192.168.54.185:50000/b1s/v1/SQLQueries('List_Usr')/List`,
+            `${SAP_CONFIG.SERVICE_LAYER_URL}/SQLQueries('List_Usr')/List`,
             {
                 headers: {
                     'Cookie': `B1SESSION=${sessionId}`,
@@ -2472,7 +2442,7 @@ app.post('/api/tickets', multer({
         console.log('Creating ticket with data:', ticketData);
 
         const response = await axiosInstance.post(
-            'https://192.168.54.185:50000/b1s/v1/ASUDO_B2B_Ticket',
+            `${SAP_CONFIG.SERVICE_LAYER_URL}/ASUDO_B2B_Ticket`,
             ticketData,
             {
                 headers: {
@@ -2510,7 +2480,7 @@ app.get('/api/tickets/:docNum', async (req, res) => {
 
         // Get ticket details using SQLQuery
         //const response = await axiosInstance.post(
-        //    `https://192.168.54.185:50000/b1s/v1/SQLQueries('Ticket_Detail')/List`,
+        //    `${SAP_CONFIG.SERVICE_LAYER_URL}/SQLQueries('Ticket_Detail')/List`,
         //    {
         //        value1: docNum
         //    },
@@ -2523,7 +2493,7 @@ app.get('/api/tickets/:docNum', async (req, res) => {
         //);
 
         const response = await axiosInstance.get(
-            `https://192.168.54.185:50000/b1s/v1/SQLQueries('Ticket_Detail')/List?value1='${docNum}'`,
+            `${SAP_CONFIG.SERVICE_LAYER_URL}/SQLQueries('Ticket_Detail')/List?value1='${docNum}'`,
             {
                 headers: {
                     'Cookie': `B1SESSION=${sessionId}`
@@ -2600,7 +2570,7 @@ app.post('/api/tickets/:docNum/reply', upload.single('image'), async (req, res) 
 
         // Add reply to SAP B1
         const response = await axiosInstance.patch(
-            `https://192.168.54.185:50000/b1s/v1/ASUDO_B2B_Ticket(${docNum})`,
+            `${SAP_CONFIG.SERVICE_LAYER_URL}/ASUDO_B2B_Ticket(${docNum})`,
             replyData,
             {
                 headers: {
@@ -2663,7 +2633,7 @@ app.post('/api/tickets/:docNum/status', async (req, res) => {
 
         // Update ticket status in SAP B1
         const response = await axiosInstance.patch(
-            `https://192.168.54.185:50000/b1s/v1/ASUDO_B2B_Ticket(${docNum})`,
+            `${SAP_CONFIG.SERVICE_LAYER_URL}/ASUDO_B2B_Ticket(${docNum})`,
             updateData,
             {
                 headers: {
@@ -2704,7 +2674,7 @@ app.get('/api/count-new-list', async (req, res) => {
         }
         // SAP B1 COUNT_NEW_LIST sorgusu
         const response = await axiosInstance.get(
-            `https://192.168.54.185:50000/b1s/v1/SQLQueries('COUNT_NEW')/List?value1= '${whsCode}'`,
+            `${SAP_CONFIG.SERVICE_LAYER_URL}/SQLQueries('COUNT_NEW')/List?value1= '${whsCode}'`,
             {
                 headers: {
                     'Cookie': `B1SESSION=${sessionId}`,
@@ -2738,7 +2708,7 @@ app.get('/api/count-list', async (req, res) => {
     }
 
     try {
-        const serviceLayerUrl = 'https://192.168.54.185:50000/b1s/v1';
+        const serviceLayerUrl = `${SAP_CONFIG.SERVICE_LAYER_URL}`;
         const response = await axiosInstance.get(
             `${serviceLayerUrl}/SQLQueries('COUNT_LIST')/List`,
             {
@@ -2824,7 +2794,7 @@ app.post('/api/count', async (req, res) => {
             
             // API çağrısı - tek seferde tüm kalemleri gönder
             const response = await axiosInstance.post(
-                'https://192.168.54.185:50000/b1s/v1/ASUDO_B2B_COUNT',
+                `${SAP_CONFIG.SERVICE_LAYER_URL}/ASUDO_B2B_COUNT`,
                 payload,
                 {
                     headers: {
@@ -2950,7 +2920,7 @@ app.get('/api/count-detail/:docNum', async (req, res) => {
 
         // SAP B1'den detay çek
         const response = await axiosInstance.get(
-            `https://192.168.54.185:50000/b1s/v1/SQLQueries('COUNT_DETAIL')/List`,
+            `${SAP_CONFIG.SERVICE_LAYER_URL}/SQLQueries('COUNT_DETAIL')/List`,
             {
                 params: {
                     value1: `'${docNum}'`
@@ -3004,7 +2974,7 @@ app.get('/api/count-edit/:docNum', async (req, res) => {
 
         // SAP B1'den detay çek
         const response = await axiosInstance.get(
-            `https://192.168.54.185:50000/b1s/v1/SQLQueries('COUNT_UPDATE')/List`,
+            `${SAP_CONFIG.SERVICE_LAYER_URL}/SQLQueries('COUNT_UPDATE')/List`,
             {
                 params: {
                     value1: `'${docNum}'`
@@ -3139,7 +3109,7 @@ app.post('/api/count-update', async (req, res) => {
         }
         
         // SAP B1 servisi için URL ve veri
-        const serviceUrl = `https://192.168.54.185:50000/b1s/v1/ASUDO_B2B_COUNT(${updateData.DocNum})`;
+        const serviceUrl = `${SAP_CONFIG.SERVICE_LAYER_URL}/ASUDO_B2B_COUNT(${updateData.DocNum})`;
         console.log('SAP API URL:', serviceUrl);
         
         console.log(`Stok sayımı güncelleniyor - DocNum: ${updateData.DocNum}, Items: ${updateData.AS_B2B_COUNT_DETAILCollection.length || 0}`);
@@ -3387,11 +3357,11 @@ app.post('/api/transfer/reject/:docNum', async (req, res) => {
         };
 
         console.log('SAP B1 API İsteği Gönderiliyor:');
-        console.log('Endpoint: https://192.168.54.185:50000/b1s/v1/ASUDO_B2B_OWTR');
+        console.log('Endpoint:', `${SAP_CONFIG.SERVICE_LAYER_URL}/ASUDO_B2B_OWTR`);
         console.log('Request Body:', JSON.stringify(requestData, null, 2));
 
         const response = await axiosInstance.post(
-            "https://192.168.54.185:50000/b1s/v1/ASUDO_B2B_OWTR",
+            `${SAP_CONFIG.SERVICE_LAYER_URL}/ASUDO_B2B_OWTR`,
             requestData,
             {
                 headers: {

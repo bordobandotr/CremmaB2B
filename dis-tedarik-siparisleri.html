@@ -169,7 +169,7 @@
                             
                             buttons.push(`<div class="d-flex flex-column gap-1">
                                 <a href="dis-tedarik-siparisi-detay.html?docNum=${data.DocNum}" 
-                                    class="btn btn-sm btn-primary">
+                                    class="btn btn-sm btn-outline-primary">
                                     <i class="bi bi-eye"></i> Detay
                                 </a>
                                 ${data.DocStatus === '3' ? 
@@ -212,6 +212,13 @@
             // Load initial data
             await loadOrders();
 
+            // Reload data when page becomes visible (after creating new order)
+            document.addEventListener('visibilitychange', function() {
+                if (!document.hidden) {
+                    loadOrders();
+                }
+            });
+
             // Handle filter changes
             $('#statusFilter').on('change', function() {
                 ordersTable.column(4).search(this.value).draw();
@@ -247,7 +254,9 @@
                     whsCode: whsCode
                 });
 
-                const response = await fetch(`/api/supply-orders?${queryParams}`);
+                const response = await fetch(`/api/supply-orders?${queryParams}`, {
+                    cache: 'no-cache'
+                });
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }

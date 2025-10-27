@@ -299,6 +299,13 @@
 
             loadTickets();
 
+            // Reload data when page becomes visible (after creating/updating ticket)
+            document.addEventListener('visibilitychange', function() {
+                if (!document.hidden) {
+                    loadTickets();
+                }
+            });
+
             // Activity type button handlers
             $('.btn-group .btn').click(function() {
                 $('.btn-group .btn').removeClass('btn-secondary').addClass('btn-outline-secondary');
@@ -447,6 +454,7 @@
                 console.log('Loading tickets with:', { sessionId, whsCode });
 
                 const response = await fetch(`/api/tickets-view?sessionId=${sessionId}&whsCode=${whsCode}`, {
+                    cache: 'no-cache',
                     headers: {
                         'Cache-Control': 'no-cache',
                         'Pragma': 'no-cache'

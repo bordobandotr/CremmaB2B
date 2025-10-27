@@ -489,7 +489,7 @@
                                 order.ItemCode,
                                 order.ItemName,
                                 order.ItemGroup,
-                                order.OnHand,
+                                parseFloat(order.OnHand) > 0 ? 'Var' : 'Yok',
                                 order.OnHand,
                                 order.MinQty,
                                 `<div class="input-group">
