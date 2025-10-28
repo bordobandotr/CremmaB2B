@@ -599,7 +599,16 @@
         // Function to load order details
         async function loadOrderDetails(docNum) {
             try {
-                const response = await fetch(`/api/supply-detail-order/${docNum}?sessionId=${api.getSessionId()}`);
+                // CardCode URL parametresinden gelebilir (optional)
+                const urlParams = new URLSearchParams(window.location.search);
+                const cardCode = urlParams.get('cardCode');
+                
+                let url = `/api/supply-detail-order/${docNum}?sessionId=${api.getSessionId()}`;
+                if (cardCode) {
+                    url += `&cardCode=${cardCode}`;
+                }
+                
+                const response = await fetch(url);
                 if (!response.ok) {
                     throw new Error('Network response was not ok');
                 }

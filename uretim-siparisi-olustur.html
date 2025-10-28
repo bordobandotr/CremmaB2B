@@ -70,23 +70,6 @@
             border-radius: 0.375rem !important;
         }
 
-        .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice {
-            /* background-color: #e9ecef !important;
-            border: 1px solid #dee2e6 !important;
-            border-radius: 0.25rem !important;
-            padding: 2px 8px !important;
-            margin: 2px !important;
-            font-size: 0.875rem !important; */
-        }
-
-        .select2-container--bootstrap-5 .select2-selection--multiple .select2-selection__choice__remove {
-            /* border: none !important;
-            background: none !important;
-            padding: 0 4px !important;
-            float: right !important;
-            margin-left: 5px !important; */
-        }
-
         .select2-container--bootstrap-5 .select2-dropdown {
             border-color: #ced4da !important;
         }
@@ -138,6 +121,97 @@
 
         #selectedFilters:empty, #selectedTanimFilters:empty {
             display: none;
+        }
+
+        /* DataTable Styles */
+        #orderTable th, #orderTable td {
+            white-space: nowrap !important;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            vertical-align: middle !important;
+            font-size: 0.85rem !important;
+        }
+
+        /* Column widths */
+        #orderTable th:nth-child(1) { /* Kalem Kodu */
+            min-width: 80px !important;
+            max-width: 100px !important;
+        }
+        #orderTable th:nth-child(2) { /* Kalem Tanımı */
+            min-width: 150px !important;
+            max-width: 200px !important;
+        }
+        #orderTable th:nth-child(3) { /* Kalem Grubu */
+            min-width: 120px !important;
+            max-width: 150px !important;
+        }
+        #orderTable th:nth-child(4) { /* Stokta */
+            min-width: 40px !important;
+            max-width: 40px !important;
+        }
+        #orderTable th:nth-child(5) { /* Stoktaki Miktar */
+            min-width: 70px !important;
+            max-width: 70px !important;
+        }
+        #orderTable th:nth-child(6) { /* Minimum Miktar */
+            min-width: 70px !important;
+            max-width: 70px !important;
+        }
+        #orderTable th:nth-child(7) { /* Sipariş Miktarı */
+            min-width: 140px !important;
+            max-width: 160px !important;
+        }
+        #orderTable th:nth-child(8) { /* Ölçü Birimi */
+            min-width: 60px !important;
+            max-width: 80px !important;
+        }
+        #orderTable th:nth-child(9) { /* Birim Çevirimi */
+            min-width: 80px !important;
+            max-width: 100px !important;
+        }
+
+        /* Multi-line columns */
+        #orderTable td:nth-child(2),
+        #orderTable td:nth-child(3) {
+            white-space: normal !important;
+            word-wrap: break-word !important;
+            line-height: 1.1 !important;
+            padding-top: 2px !important;
+            padding-bottom: 2px !important;
+            font-size: 0.85rem !important;
+        }
+
+        /* Ölçü Birimi column - red and bold */
+        #orderTable td:nth-child(8) {
+            color: #dc3545 !important;
+            font-weight: bold !important;
+        }
+
+        /* DataTable scrollX kaydırma barını her zaman görünür yap */
+        .dataTables_scrollBody {
+            overflow-x: scroll !important;  /* auto yerine scroll - her zaman görünür */
+            padding-bottom: 5px !important;  /* Kaydırma barının üstünde boşluk */
+        }
+        
+        .dataTables_scrollBody::-webkit-scrollbar {
+            height: 14px;
+            -webkit-appearance: none;
+        }
+        
+        .dataTables_scrollBody::-webkit-scrollbar-thumb {
+            background-color: rgba(0, 0, 0, 0.4);
+            border-radius: 7px;
+            border: 2px solid #f1f1f1;
+        }
+        
+        .dataTables_scrollBody::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(0, 0, 0, 0.6);
+        }
+        
+        .dataTables_scrollBody::-webkit-scrollbar-track {
+            background-color: #f1f1f1;
+            border-radius: 7px;
+            border: 1px solid #dee2e6;
         }
 
         .modal-backdrop.show {
@@ -287,10 +361,11 @@
                                         <th>Kalem Tanımı</th>
                                         <th>Kalem Grubu</th>
                                         <th>Stokta</th>
-                                        <th>Stoktaki Miktar</th>
-                                        <th>Minimum Miktar</th>
+                                        <th>Stok Miktar</th>
+                                        <th>Min. Miktar</th>
                                         <th>Sipariş Miktarı</th>
                                         <th>Ölçü Birimi</th>
+                                        <th>Birim Çevirimi</th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -369,25 +444,12 @@
 
                 // Initialize DataTables with empty data first
                 const ordersTable = $('#orderTable').DataTable({
-                    responsive: true,
+                    responsive: false,
+                    scrollX: true,
                     pageLength: 25,
                     lengthMenu: [[25, 50, 100], [25, 50, 100]],
                     language: {
-                        "emptyTable": "Tabloda veri bulunmuyor",
-                        "info": "_TOTAL_ kayıttan _START_ - _END_ arası gösteriliyor",
-                        "infoEmpty": "Kayıt yok",
-                        "infoFiltered": "(_MAX_ kayıt içerisinden bulunan)",
-                        "lengthMenu": "Sayfada _MENU_ kayıt göster",
-                        "loadingRecords": "Yükleniyor...",
-                        "processing": "İşleniyor...",
-                        "search": "Ara:",
-                        "zeroRecords": "Eşleşen kayıt bulunamadı",
-                        "paginate": {
-                            "first": "İlk",
-                            "last": "Son",
-                            "next": "Sonraki",
-                            "previous": "Önceki"
-                        }
+                        url: 'js/datatables-tr.json'
                     },
                     order: [ 
                         [0, 'asc']
@@ -428,14 +490,8 @@
                     }
 
                     // Stokta filter
-                    if (stokta) {
-                        const stoktaMiktar = parseFloat(data[4]) || 0;
-                        if (stokta === 'Var' && stoktaMiktar <= 0) {
-                            pass = false;
-                        }
-                        if (stokta === 'Yok' && stoktaMiktar > 0) {
-                            pass = false;
-                        }
+                    if (stokta && data[3] !== stokta) {
+                        pass = false;
                     }
 
                     return pass;
@@ -445,11 +501,10 @@
                 // Function to load orders
                 async function loadOrders() {
                     try {
-                        // Cache-busting parameter ekle
-                        const timestamp = new Date().getTime();
-                        const response = await fetch(`/uretim-siparisleri-list?sessionId=${sessionId}&whsCode=${whsCode}&_=${timestamp}`, {
+                        const response = await fetch(`/uretim-siparisi-olustur-list?sessionId=${sessionId}&whsCode=${whsCode}`, {
                             method: 'GET',
                             credentials: 'include',
+                            cache: 'no-cache',
                             headers: {
                                 'Accept': '*/*',
                                 'Content-Type': 'application/json',
@@ -492,9 +547,9 @@
                                 order.ItemCode,
                                 order.ItemName,
                                 order.ItemGroup,
-                                order.OnHand,
-                                order.OnHand,
-                                order.MinQty,
+                                order.OnHand === 0 ? 'Yok' : 'Var',
+                                order.OnHandQty || 0,
+                                order.MinQty || 0,
                                 `<div class="input-group">
                                     <button class="btn btn-dark decrease-qty" type="button">-</button>
                                     <input type="number" class="form-control text-center order-qty" 
@@ -505,7 +560,8 @@
                                         style="min-width: 60px;">
                                     <button class="btn btn-dark increase-qty" type="button">+</button>
                                 </div>`,
-                                order.UomCode
+                                order.UomCode,
+                                order.UomConvert || '-'
                             ]);
                         });
 

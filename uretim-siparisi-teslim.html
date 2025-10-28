@@ -15,12 +15,14 @@
     <link href="css/orientation.css" rel="stylesheet">
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.2/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
 
     <script src="js/loadHeader.js"></script>
-    <script src="js/nav-menu.js"></script>
     <script src="js/orientation.js"></script>
     <script src="js/sidebar-toggle.js"></script>
-    
+    <script src="js/api.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
     <style>
         /* Loading Screen Styles */
         .loading-screen {
@@ -72,7 +74,7 @@
         }
 
         .quantity-input {
-            width: 80px !important;
+            width: 120px !important;
         }
 
         .input-group .form-control {
@@ -85,6 +87,203 @@
 
         .input-group .btn i {
             font-size: 0.875rem;
+        }
+
+        .input-group .btn-quantity {
+            background-color: #000;
+            color: #fff;
+            border-color: #000;
+        }
+
+        .input-group .btn-quantity:hover {
+            background-color: #333;
+            border-color: #333;
+            color: #fff;
+        }
+
+        .unit-label {
+            font-size: 1rem;
+            color: #c00000;
+            font-weight: bold;
+            margin-left: 4px;
+        }
+
+        .file-upload-container {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .file-upload-container label {
+            font-size: 0.875rem;
+            color: #666;
+            margin-bottom: 0;
+        }
+
+        .quantity-label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            font-size: 0.875rem;
+            margin-bottom: 4px;
+        }
+
+        /* DataTable Column Widths - Responsive için optimize edildi */
+        #deliveryItems {
+            width: 100% !important;
+        }
+        
+        #deliveryItems th:nth-child(1) { /* Sıra */
+            width: 20px !important;
+        }
+        #deliveryItems th:nth-child(2) { /* Kodu */
+            text-align: center !important;
+            width: 70px !important;
+        }
+        #deliveryItems th:nth-child(3) { /* Tanım */
+            width: fit-content !important;
+        }
+        #deliveryItems td:nth-child(3) { /* Tanım Veri */
+            font-size: 0.85rem !important;
+        }
+        #deliveryItems th:nth-child(4) { /* Sipariş Miktarı */
+            width: 150px !important;
+        }
+        #deliveryItems td:nth-child(4) { /* Sipariş Miktarı Veri */
+            text-align: center !important;
+        }
+        #deliveryItems th:nth-child(5) { /* Teslimat Miktarı */
+            text-align: center !important;
+            width: 150px !important;
+        }
+        #deliveryItems td:nth-child(5) input.delivery-qty { /* Teslimat Miktarı Input */
+            min-width: 120px !important;
+            width: 120px !important;
+            max-width: 120px !important;
+        }
+        #deliveryItems th:nth-child(6),
+        #deliveryItems th:nth-child(7) { /* Eksik Miktar, Kusurlu Miktar */
+            text-align: center !important;
+            width: 150px !important;
+        }
+        #deliveryItems th:nth-child(8) { /* Not */
+            width: 160px !important;
+        }
+        #deliveryItems td:nth-child(8) { /* Not Veri */
+            text-align: center !important;
+        }
+        
+        /* Font size and compact padding */
+        #deliveryItems th,
+        #deliveryItems td {
+            font-size: 1rem !important;
+            vertical-align: middle !important;
+            line-height: 1.2 !important;
+        }
+        
+        /* Compact table rows */
+        #deliveryItems tbody tr {
+            height: auto !important;
+        }
+        
+        /* Compact buttons */
+        #deliveryItems .btn {
+            padding: 0.25rem 0.5rem !important;
+            font-size: 0.8rem !important;
+        }
+        
+        /* Compact inputs */
+        #deliveryItems input[type="number"] {
+            padding: 0.25rem 0.4rem !important;
+            font-size: 0.85rem !important;
+        }
+        
+        /* Invalid input styling */
+        .is-invalid {
+            border-color: #dc3545 !important;
+            padding-right: calc(1.5em + 0.75rem) !important;
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e") !important;
+            background-repeat: no-repeat !important;
+            background-position: right calc(0.375em + 0.1875rem) center !important;
+            background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem) !important;
+        }
+        
+        .invalid-feedback {
+            display: block;
+            margin-top: 0.25rem;
+            font-size: 0.875em;
+            color: #dc3545;
+        }
+
+        /* Quantity Control Container */
+        .quantity-control {
+            min-width: 150px !important;
+            width: 150px !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 2px !important;
+            flex-wrap: nowrap !important;
+        }
+
+        .quantity-control .btn {
+            flex: 0 0 30px !important;
+            min-width: 30px !important;
+            width: 30px !important;
+            padding: 0.25rem 0.5rem !important;
+        }
+
+        .quantity-control .form-control {
+            flex: 1 !important;
+            min-width: 60px !important;
+            width: 60px !important;
+            text-align: center !important;
+        }
+
+        /* Teslimat Miktarı için özel genişlik - ANA DEPO: BUTONLAR YOK */
+        .quantity-control input.delivery-qty {
+            min-width: 120px !important;
+            width: 120px !important;
+            max-width: 120px !important;
+        }
+
+        /* Teslimat Miktarı container genişliği - ANA DEPO: SADECE INPUT */
+        .quantity-control.delivery-control {
+            min-width: 120px !important;
+            width: 120px !important;
+            max-width: 120px !important;
+        }
+
+        /* DataTable scrollX kaydırma barını her zaman görünür yap */
+        .dataTables_scrollBody {
+            overflow-x: scroll !important;
+            padding-bottom: 5px !important;
+        }
+        
+        .dataTables_scrollBody::-webkit-scrollbar {
+            height: 14px;
+            -webkit-appearance: none;
+        }
+        
+        .dataTables_scrollBody::-webkit-scrollbar-thumb {
+            background-color: rgba(0, 0, 0, 0.4);
+            border-radius: 7px;
+            border: 2px solid #f1f1f1;
+        }
+        
+        .dataTables_scrollBody::-webkit-scrollbar-thumb:hover {
+            background-color: rgba(0, 0, 0, 0.6);
+        }
+        
+        .dataTables_scrollBody::-webkit-scrollbar-track {
+            background-color: #f1f1f1;
+            border-radius: 7px;
+            border: 1px solid #dee2e6;
+        }
+
+        /* DataTables yenileme butonunu gizle */
+        .dataTables_wrapper .dt-buttons,
+        .dataTables_wrapper button.dt-button {
+            display: none !important;
         }
 
         @media (max-width: 768px) {
@@ -103,8 +302,50 @@
 
             .input-group.quantity-control .form-control {
                 margin: 2px 0;
-                text-align: center;
             }
+        }
+
+        .note-input {
+            width: 150px;
+        }
+        
+        .btn-dark {
+            background-color: black;
+            color: white;
+        }
+
+        /* Modal Buttons */
+        .note-btn, .image-btn {
+            font-size: 0.85rem;
+            padding: 0.4rem 0.6rem !important;
+            white-space: nowrap;
+        }
+
+        .note-btn.btn-success,
+        .image-btn.btn-success {
+            background-color: #198754 !important;
+            border-color: #198754 !important;
+        }
+
+        .note-btn.btn-success:hover,
+        .image-btn.btn-success:hover {
+            background-color: #157347 !important;
+        }
+
+        /* Modal Styles */
+        #noteModal .modal-body textarea {
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+        }
+
+        #imageModal .modal-body {
+            text-align: center;
+        }
+
+        #imagePreview {
+            border: 1px solid #dee2e6;
+            border-radius: 0.375rem;
+            padding: 0.5rem;
         }
     </style>
 </head>
@@ -123,7 +364,7 @@
             <div id="sidebar-user">
                 <!-- User information will be loaded here -->
             </div>
-            
+
         </div>
 
         <!-- Main Content -->
@@ -134,462 +375,731 @@
                     <button id="sidebarToggle" class="btn btn-link d-md-none">
                         <i class="bi bi-list"></i>
                     </button>
-                    <h5 class="mb-0">Teslim Al ve Onayla</h5>
+                    <h5 class="mb-0">Üretim Siparişi Teslim Al</h5>
                 </div>
                 <div class="d-flex align-items-center">
-                    <div class="me-3">
-                        <span id="userInfo" class="text-muted">
-                            <i class="bi bi-person-circle me-1"></i>
-                            Yükleniyor...
-                        </span>
-                    </div>
-                    <button class="btn btn-outline-secondary" onclick="logout()">
-                        Çıkış Yap <i class="bi bi-box-arrow-right"></i>
-                    </button>
+                    <a href="uretim-siparisleri.html" class="btn btn-secondary me-2">
+                        <i class="bi bi-arrow-left"></i> Geri
+                    </a>
                 </div>
             </header>
 
             <!-- Content -->
             <div class="container-fluid p-4">
+                <!-- Order Info -->
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Sipariş No</label>
+                                <div class="fw-bold" id="orderNumber"></div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Şube Kodu</label>
+                                <div class="fw-bold" id="whsCode"></div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Sipariş Tarihi</label>
+                                <div id="orderDate"></div>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label class="form-label">Durum</label>
+                                <div id="status"></div>
+                            </div>
+                        </div>
+                        <div class="row mt-3">
+                            <div class="col-md-6">
+                                <label class="form-label">Teslimat Belge No</label>
+                                <input type="text" class="form-control" id="deliveryDocNum" required>
+                                <div class="invalid-feedback">
+                                    Teslimat belge numarası zorunludur.
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <label class="form-label">Teslimat Tarihi</label>
+                                <input type="date" class="form-control" id="deliveryDate" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Order Items -->
                 <div class="card">
                     <div class="card-body">
-                        <form id="deliveryForm">
-                            <div class="row mb-3">
-                                <div class="col-md-3">
-                                    <label class="form-label">Şube Kodu (WhsCode)</label>
-                                    <input type="text" class="form-control" id="whsCode" readonly
-                                        style="background-color: #e9ecef;">
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label">Sipariş Tarihi (DocDate)</label>
-                                    <input type="text" class="form-control" id="docDate" readonly
-                                        style="background-color: #e9ecef;">
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label">Sipariş No (DocNum)</label>
-                                    <input type="text" class="form-control" id="docNum" readonly
-                                        style="background-color: #e9ecef;">
-                                </div>
-                                <div class="col-md-3">
-                                    <label class="form-label">Teslimat Belge No</label>
-                                    <input type="text" class="form-control" id="numAtCard" required>
-                                </div>
-                            </div>
-
-                            <div class="table-responsive">
-                                <table class="table table-hover" id="itemsTable">
-                                    <thead>
-                                        <tr>
-                                            <th>Kalem Kodu</th>
-                                            <th>Kalem Tanımı</th>
-                                            <th>Sipariş Miktarı</th>
-                                            <th>Teslimat Miktarı</th>
-                                            <th>Eksik Miktar</th>
-                                            <th>Kusurlu Miktar</th>
-                                            <th>Not</th>
-                                            <th>Görsel</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="itemsTableBody">
-                                    </tbody>
-                                </table>
-                            </div>
-
-                            <div class="mt-4 text-end">
-                                <button type="button" class="btn btn-secondary me-2" onclick="window.history.back()">
-                                    <i class="bi bi-arrow-left"></i> Geri Dön
-                                </button>
-                                <button type="submit" class="btn btn-success" id="submitBtn">
-                                    <i class="bi bi-check-lg"></i> Teslim Al ve Onayla
-                                </button>
-                            </div>
-                        </form>
+                        <div class="table-responsive">
+                            <table id="deliveryItems" class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Kodu</th>
+                                    <th>Tanımı</th>
+                                    <th>Sip.Miktarı</th>
+                                    <th>Teslimat Miktarı</th>
+                                    <th>Eksik Miktarı</th>
+                                    <th>Kusurlu Miktar</th>
+                                    <th>Not</th>
+                                </tr>
+                            </thead>
+                            <tbody></tbody>
+                        </table>
+                        </div>
+                    </div>
+                    <div class="card-footer d-flex justify-content-end align-items-center gap-3">
+                        <div id="defectiveWarning" class="text-danger fw-bold" style="display: none;">
+                            <i class="bi bi-exclamation-triangle-fill fs-5"></i> 
+                            <span class="ms-2">Defolu ürün girişi yapılan tüm kalemler için görsel yüklemeniz zorunludur!</span>
+                        </div>
+                        <button type="submit" class="btn btn-success" id="submitBtn" onclick="submitDelivery()">
+                            <i class="bi bi-check-lg"></i> Teslim Al ve Onayla
+                        </button>
                     </div>
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Note Modal -->
+    <div class="modal fade" id="noteModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Not Ekle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <textarea id="noteText" class="form-control" rows="4" placeholder="Notunuzu yazınız..."></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="button" class="btn btn-primary" onclick="saveNote()">Kaydet</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image Modal -->
+    <div class="modal fade" id="imageModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Görsel Ekle</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Görsel Seçin</label>
+                        <input type="file" id="imageInput" class="form-control" accept="image/*">
+                    </div>
+                    <div id="imagePreviewContainer" class="mt-3">
+                        <img id="imagePreview" src="" alt="Önizleme" style="max-width: 100%; display: none;">
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">İptal</button>
+                    <button type="button" class="btn btn-primary" onclick="saveImage()">Kaydet</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Loading Screen -->
-    <div class="loading-screen d-none">
+    <div class="loading-screen">
         <div class="loading-content">
             <div class="loading-spinner"></div>
-            <div class="loading-text">Yükleniyor...</div>
+            <div class="loading-text">Lütfen bekleyin...</div>
         </div>
     </div>
 
     <!-- Scripts -->
     <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.7/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.13.7/js/dataTables.bootstrap5.min.js"></script>
     <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
     <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="js/nav-menu.js"></script>
     <script>
-        // Loading Screen Functions
-        function showLoading(message = 'Yükleniyor...') {
-            const loadingScreen = document.querySelector('.loading-screen');
-            const loadingText = loadingScreen.querySelector('.loading-text');
-            loadingText.textContent = message;
-            loadingScreen.classList.remove('d-none');
-            loadingScreen.style.display = 'flex';
-        }
-
-        function hideLoading() {
-            const loadingScreen = document.querySelector('.loading-screen');
-            loadingScreen.style.display = 'none';
-        }
-
-        $(document).ready(async function () {
+        $(document).ready(async function() {
+            // Get order number from URL
             const urlParams = new URLSearchParams(window.location.search);
             const docNum = urlParams.get('docNum');
-
+            
             if (!docNum) {
-                alert('Sipariş numarası bulunamadı');
-                window.history.back();
+                alert('Sipariş numarası bulunamadı!');
+                window.location.href = 'uretim-siparisleri.html';
                 return;
             }
+            // Set today as default delivery date
+            $('#deliveryDate').val(new Date().toISOString().split('T')[0]);
+            // Initialize DataTable
+            const deliveryItemsTable = $('#deliveryItems').DataTable({
+                responsive: false,
+                scrollX: true,
+                pageLength: 25,
+                lengthMenu: [[25, 50, 100], [25, 50, 100]],
+                language: {
+                    url: 'js/datatables-tr.json'
+                },
+                columns: [
+                    {
+                        data: 'LineNum',
+                        render: function(data) {
+                            return parseInt(data);
+                        }
+                    },
+                    { data: 'ItemCode' },
+                    { data: 'ItemName' },
+                    { 
+                        data: 'Quantity',
+                        render: function(data, type, row) {
+                            if (type === 'display') {
+                                const numValue = parseFloat(data);
+                                const displayValue = numValue % 1 === 0 ? Math.floor(numValue) : numValue.toFixed(2);
+                                return `${displayValue} <span class="unit-label">${row.UomCode}</span>`;
+                            }
+                            return parseFloat(data);
+                        }
+                    },
+                    { 
+                        data: null,
+                        render: function(data, type, row) {
+                            if (!row) return '';
+                            if (type === 'display') {
+                                return `
+                                    <div class="input-group quantity-control delivery-control">
+                                        <input type="number" class="form-control delivery-qty" 
+                                            value="${row.Quantity}" 
+                                            step="1" 
+                                            min="0"
+                                            onchange="handleDeliveryQtyChange(this)"
+                                            data-original-qty="${row.Quantity}">
+                                    </div>`;
+                            }
+                            return data;
+                        }
+                    },
+                    {
+                        width: '150px',
+                        data: null,
+                        render: function(data, type, row) {
+                            if (!row) return '';
+                            return `
+                                <div class="input-group quantity-control">
+                                    <button type="button" class="btn btn-dark decrease-qty btn-quantity" onclick="decrementMissingQty(this)">
+                                        <i class="bi bi-dash"></i>
+                                    </button>
+                                    <input type="number" class="form-control missing-qty quantity-input" 
+                                           value="0" min="0"
+                                           max="${row.Quantity || 0}"
+                                           onchange="handleMissingQtyChange(this)" 
+                                           oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                                    <button type="button" class="btn btn-dark increase-qty btn-quantity" onclick="incrementMissingQty(this)">
+                                        <i class="bi bi-plus"></i>
+                                    </button>
+                                </div>`;
+                        }
+                    },
+                    {
+                        width: '150px',
+                        data: null,
+                        render: function(data, type, row) {
+                            if (!row) return '';
+                            return `
+                                <div class="input-group quantity-control">
+                                    <button type="button" class="btn btn-dark decrease-qty btn-quantity" onclick="decrementDefectiveQty(this)">
+                                        <i class="bi bi-dash"></i>
+                                    </button>
+                                    <input type="number" class="form-control defective-qty quantity-input" 
+                                           value="0" min="0"
+                                           onchange="handleDefectiveQtyChange(this)" 
+                                           oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                                    <button type="button" class="btn btn-dark increase-qty btn-quantity" onclick="incrementDefectiveQty(this)">
+                                        <i class="bi bi-plus"></i>
+                                    </button>
+                                </div>`;
+                        }
+                    },
+                    {
+                        data: null,
+                        render: function(data, type, row) {
+                            if (!row || row.LineNum === undefined || row.LineNum === null) return '';
+                            return `
+                                <div class="d-flex gap-2">
+                                    <button type="button" class="btn btn-sm btn-info note-btn" onclick="openNoteModal(${row.LineNum})">
+                                        <i class="bi bi-pencil"></i> <span class="note-status">Not</span>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-secondary image-btn" onclick="openImageModal(${row.LineNum})" data-line-num="${row.LineNum}">
+                                        <i class="bi bi-image"></i> <span class="image-status">Görsel</span>
+                                    </button>
+                                </div>
+                                <input type="hidden" class="note-input" value="">
+                                <input type="hidden" class="defective-image-data" data-line-num="${row.LineNum}" value="">`;
+                        }
+                    }
+                ],
+                order: [[0, 'asc']],
+            });
 
-            const sessionId = localStorage.getItem('sessionId');
-            if (!sessionId) {
-                alert('Oturum bilgisi bulunamadı. Lütfen tekrar giriş yapın.');
-                window.location.href = '/login.html';
-                return;
-            }
+            // Load order details
+            await loadOrderDetails(docNum);
 
+            // Handle delivery document number changes
+            $('#deliveryDocNum').on('input', function() {
+                validateDelivery();
+            });
+        });
+
+        // Function to load order details
+        async function loadOrderDetails(docNum) {
             try {
-                showLoading('Sipariş Detayları Yükleniyor...');
-                const response = await fetch(`/api/delivery/${docNum}?sessionId=${sessionId}`);
+                const branchCode = localStorage.getItem('branchCode');
+                const response = await fetch(`/api/uretim-delivery/${docNum}?sessionId=${api.getSessionId()}&whsCode=${branchCode}`);
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
                 const data = await response.json();
-
+                
                 if (!data.value || data.value.length === 0) {
-                    throw new Error('Sipariş bulunamadı');
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Hata',
+                        text: 'Sipariş detayları bulunamadı!',
+                        confirmButtonText: 'Tamam'
+                    }).then(() => {
+                        window.location.href = 'uretim-siparisleri.html';
+                    });
+                    return;
                 }
-
-                // Fill header information
-                const firstItem = data.value[0];
-                $('#whsCode').val(firstItem.WhsCode);
-                $('#docDate').val(formatDate(firstItem.DocDate));
-                $('#docNum').val(docNum);
-                // Only set NumAtCard if it exists
-                if (firstItem.NumAtCard) {
-                    $('#numAtCard').val(firstItem.NumAtCard);
+                const order = data.value[0];
+                console.log("order", order);
+                
+                // Update order info
+                $('#orderNumber').text(order.DocNum);
+                $('#whsCode').text(order.WhsCode);
+                $('#orderDate').text(formatDate(order.DocDate));
+                $('#status').html(getStatusBadge(order.DocStatus));
+                
+                // LineNum'a göre sırala
+                data.value.sort((a, b) => parseInt(a.LineNum) - parseInt(b.LineNum));
+                
+                // Update items table
+                $('#deliveryItems').DataTable().clear().rows.add(data.value).draw();
+                
+                // Load existing delivery info if any
+                if (order.NumAtCard) {
+                    $('#deliveryDocNum').val(order.NumAtCard);
                 }
-
-                // Fill the table with order items
-                const tableBody = $('#itemsTableBody');
-                data.value.forEach(item => {
-                    tableBody.append(`
-                        <tr data-item-code="${item.ItemCode}" data-line-num="${item.LineNum}">
-                            <td>${item.ItemCode}</td>
-                            <td>${item.ItemName}</td>
-                            <td>${item.Quantity}</td>
-                            <td>
-                                <div class="input-group quantity-control">
-                                    <input type="number" class="form-control form-control-sm delivery-qty" 
-                                           value="${item.DeliveryQty}" min="0" max="${item.DeliveryQty}" step="1">
-                                </div>
-                            </td>
-                            <td>
-                                <div class="input-group quantity-control">
-                                    <button type="button" class="btn btn-dark btn-sm" onclick="decrementValue(this, 'missing-qty')">
-                                        <i class="bi bi-dash"></i>
-                                    </button>
-                                    <input type="number" class="form-control form-control-sm missing-qty" 
-                                           value="0" min="0" step="1">
-                                    <button type="button" class="btn btn-dark btn-sm" onclick="incrementValue(this, 'missing-qty')">
-                                        <i class="bi bi-plus"></i>
-                                    </button>
-                                </div>
-                            </td>
-                            <td>
-                                <div class="input-group quantity-control">
-                                    <button type="button" class="btn btn-dark btn-sm" onclick="decrementValue(this, 'defective-qty')">
-                                        <i class="bi bi-dash"></i>
-                                    </button>
-                                    <input type="number" class="form-control form-control-sm defective-qty" 
-                                           value="0" min="0" step="1">
-                                    <button type="button" class="btn btn-dark btn-sm" onclick="incrementValue(this, 'defective-qty')">
-                                        <i class="bi bi-plus"></i>
-                                    </button>
-                                </div>
-                            </td>
-                            <td>
-                                <input type="text" class="form-control form-control-sm item-note" 
-                                       placeholder="Not...">
-                            </td>
-                            <td>
-                                <input type="file" class="form-control form-control-sm item-image" 
-                                    accept="image/*" 
-                                    capture="environment"
-                                    aria-label="Fotoğraf Çek">
-                            </td>
-                            <td style="display:none;">
-                                <input type="hidden" class="uom-code" value="${item.UomCode}">
-                                <input type="hidden" class="initial-delivery-qty" value="${item.DeliveryQty}">
-                            </td>
-                        </tr>
-                    `);
-                });
-
-                // Add event listeners for quantity inputs
-                $('.missing-qty, .defective-qty').on('input', function() {
-                    updateDeliveryQuantity($(this).closest('tr'));
-                });
-
-                $('.delivery-qty').on('input', function() {
-                    validateDeliveryQuantity($(this).closest('tr'));
-                });
-
-                // Handle form submission
-                $('#deliveryForm').on('submit', async function (e) {
-                    e.preventDefault();
-                    await submitDelivery();
-                });
-
-                // Add change event listener for file inputs
-                $(document).on('change', '.item-image', function() {
-                    validateSubmitButton();
-                });
-
             } catch (error) {
-                console.error('Error loading order:', error);
-                alert('Sipariş detayları yüklenirken bir hata oluştu.');
-            } finally {
-                hideLoading();
+                console.error('Sipariş detayları yüklenirken hata:', error);
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Hata',
+                    text: 'Sipariş detayları yüklenirken bir hata oluştu. Lütfen daha sonra tekrar deneyin.',
+                    confirmButtonText: 'Tamam'
+                });
+            }
+        }
+
+        function handleDeliveryQtyChange(input) {
+            const tr = $(input).closest('tr');
+            let val = parseFloat(input.value);
+            if (val < 0) {
+                val = 0;
+                input.value = val;
+            }
+            updateDeliveryQuantity(tr);
+        }
+
+        function decrementMissingQty(btn) {
+            const input = $(btn).siblings('.missing-qty');
+            let val = parseInt(input.val()) || 0;
+            if (val > 0) {
+                input.val(val - 1);
+                handleMissingQtyChange(input[0]);
+            }
+        }
+
+        function incrementMissingQty(btn) {
+            const input = $(btn).siblings('.missing-qty');
+            let val = parseInt(input.val()) || 0;
+            input.val(val + 1);
+            handleMissingQtyChange(input[0]);
+        }
+
+        function handleMissingQtyChange(input) {
+            const tr = $(input).closest('tr');
+            let val = parseInt(input.value) || 0;
+            if (val < 0) {
+                val = 0;
+                input.value = val;
+            }
+            updateDeliveryQuantity(tr);
+        }
+
+        function decrementDefectiveQty(btn) {
+            const input = $(btn).siblings('.defective-qty');
+            let val = parseInt(input.val()) || 0;
+            if (val > 0) {
+                input.val(val - 1);
+                handleDefectiveQtyChange(input[0]);
+            }
+        }
+
+        function incrementDefectiveQty(btn) {
+            const input = $(btn).siblings('.defective-qty');
+            let val = parseInt(input.val()) || 0;
+            input.val(val + 1);
+            handleDefectiveQtyChange(input[0]);
+        }
+
+        function handleDefectiveQtyChange(input) {
+            const tr = $(input).closest('tr');
+            let val = parseInt(input.value) || 0;
+            if (val < 0) {
+                val = 0;
+                input.value = val;
+            }
+            updateDeliveryQuantity(tr);
+        }
+
+        let currentLineNum = null;
+
+        function openNoteModal(lineNum) {
+            currentLineNum = lineNum;
+            const row = $(`#deliveryItems tbody tr`).filter(function() {
+                return $(this).find('.note-input').length > 0;
+            }).eq(lineNum);
+            const currentNote = row.find('.note-input').val();
+            $('#noteText').val(currentNote);
+            new bootstrap.Modal(document.getElementById('noteModal')).show();
+        }
+
+        function saveNote() {
+            const noteText = $('#noteText').val();
+            const row = $(`#deliveryItems tbody tr`).eq(currentLineNum);
+            row.find('.note-input').val(noteText);
+            
+            if (noteText) {
+                row.find('.note-status').text('✓ Not');
+                row.find('.note-btn').removeClass('btn-info').addClass('btn-success');
+            } else {
+                row.find('.note-status').text('Not');
+                row.find('.note-btn').removeClass('btn-success').addClass('btn-info');
+            }
+            
+            bootstrap.Modal.getInstance(document.getElementById('noteModal')).hide();
+        }
+
+        function openImageModal(lineNum) {
+            currentLineNum = lineNum;
+            $('#imageInput').val('');
+            $('#imagePreview').hide();
+            new bootstrap.Modal(document.getElementById('imageModal')).show();
+        }
+
+        $('#imageInput').on('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    $('#imagePreview').attr('src', e.target.result).show();
+                };
+                reader.readAsDataURL(file);
             }
         });
 
-        function updateDeliveryQuantity(row) {
-            const initialDeliveryQty = parseInt(row.find('.initial-delivery-qty').val()) || 0;
-            const missingQty = parseInt(row.find('.missing-qty').val()) || 0;
-            const defectiveQty = parseInt(row.find('.defective-qty').val()) || 0;
-            
-            // Calculate new delivery quantity
-            let newDeliveryQty = initialDeliveryQty - (missingQty + defectiveQty);
-            
-            // Ensure delivery quantity doesn't go below 0
-            newDeliveryQty = Math.max(0, newDeliveryQty);
-            
-            // Update delivery quantity input
-            row.find('.delivery-qty').val(newDeliveryQty);
-        }
-
-        function validateDeliveryQuantity(row) {
-            const initialDeliveryQty = parseInt(row.find('.initial-delivery-qty').val()) || 0;
-            const deliveryQty = parseInt(row.find('.delivery-qty').val()) || 0;
-            const missingQty = parseInt(row.find('.missing-qty').val()) || 0;
-            const defectiveQty = parseInt(row.find('.defective-qty').val()) || 0;
-
-            // Ensure the delivery quantity doesn't exceed the initial delivery quantity
-            if (deliveryQty > initialDeliveryQty) {
-                row.find('.delivery-qty').val(initialDeliveryQty);
-                alert('Teslimat miktarı başlangıç miktarını aşamaz!');
+        function saveImage() {
+            const file = $('#imageInput')[0].files[0];
+            if (!file) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Uyarı',
+                    text: 'Lütfen bir görsel seçin!',
+                    confirmButtonText: 'Tamam'
+                });
                 return;
             }
-
-            // Calculate the remaining quantity that can be allocated to missing/defective
-            const remainingQty = initialDeliveryQty - deliveryQty;
             
-            // If the current missing + defective quantities exceed the remaining quantity,
-            // reset them to 0
-            if (missingQty + defectiveQty > remainingQty) {
-                row.find('.missing-qty').val(0);
-                row.find('.defective-qty').val(0);
-            }
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const row = $(`#deliveryItems tbody tr`).eq(currentLineNum);
+                row.find('.defective-image-data').val(e.target.result);
+                row.find('.image-status').text('✓ Görsel');
+                row.find('.image-btn').removeClass('btn-secondary').addClass('btn-success');
+                
+                bootstrap.Modal.getInstance(document.getElementById('imageModal')).hide();
+                validateDelivery();
+            };
+            reader.readAsDataURL(file);
         }
 
-        function validateSubmitButton() {
-            let canSubmit = true;
-            $('#itemsTableBody tr').each(function() {
+        function updateDeliveryQuantity(row) {
+            const orderQty = parseFloat(row.find('.delivery-qty').attr('data-original-qty')) || 0;
+            const missingQty = parseFloat(row.find('.missing-qty').val()) || 0;
+            const defectiveQty = parseFloat(row.find('.defective-qty').val()) || 0;
+            
+            // Teslimat miktarını hesapla: Sipariş - Eksik - Kusurlu
+            const newDeliveryQty = orderQty - missingQty - defectiveQty;
+            
+            // Negatif olamaz
+            if (newDeliveryQty >= 0) {
+                row.find('.delivery-qty').val(newDeliveryQty);
+            } else {
+                // Eğer negatif olacaksa, eksik ve kusurlu miktarları düzelt
+                const totalReduction = missingQty + defectiveQty;
+                if (totalReduction > orderQty) {
+                    // Orantılı olarak azalt
+                    const ratio = orderQty / totalReduction;
+                    row.find('.missing-qty').val(Math.floor(missingQty * ratio));
+                    row.find('.defective-qty').val(Math.floor(defectiveQty * ratio));
+                    row.find('.delivery-qty').val(0);
+                }
+            }
+            
+            validateDelivery();
+        }
+
+        function validateDelivery() {
+            let isValid = true;
+            let hasDefectiveWithoutImage = false;
+            let hasNegativeQuantity = false;
+            let hasExcessMissingQty = false;
+            const warningDiv = document.getElementById('defectiveWarning');
+
+            $('#deliveryItems tbody tr').each(function() {
+                const orderQty = parseFloat($(this).find('.delivery-qty').attr('data-original-qty')) || 0;
                 const defectiveQty = parseInt($(this).find('.defective-qty').val()) || 0;
-                const hasImage = $(this).find('.item-image')[0].files.length > 0;
+                const missingQty = parseInt($(this).find('.missing-qty').val()) || 0;
+                const deliveryQty = parseInt($(this).find('.delivery-qty').val()) || 0;
                 
+                const imageData = $(this).find('.defective-image-data').val();
+                const hasImage = imageData && imageData.trim() !== '';
+
                 if (defectiveQty > 0 && !hasImage) {
-                    canSubmit = false;
-                    return false; // break the loop
+                    hasDefectiveWithoutImage = true;
+                    return false;
+                }
+                
+                if (defectiveQty < 0 || missingQty < 0 || deliveryQty < 0) {
+                    hasNegativeQuantity = true;
+                    return false;
+                }
+                
+                if (missingQty > orderQty) {
+                    hasExcessMissingQty = true;
+                    return false;
                 }
             });
-            
-            $('#submitBtn').prop('disabled', !canSubmit);
-            return canSubmit;
-        }
 
-        function incrementValue(button, className) {
-            const input = $(button).siblings('input.' + className);
-            const currentValue = parseInt(input.val()) || 0;
-            const row = $(button).closest('tr');
-            const initialDeliveryQty = parseInt(row.find('td:eq(2)').text());
-            
-            if (currentValue < initialDeliveryQty) {
-                input.val(currentValue + 1);
-                updateDeliveryQuantity(row);
-                if (className === 'defective-qty') {
-                    validateSubmitButton();
-                }
+            if (hasDefectiveWithoutImage) {
+                warningDiv.style.display = 'block';
+                isValid = false;
+            } else {
+                warningDiv.style.display = 'none';
             }
-        }
+            
+            if (hasNegativeQuantity) {
+                isValid = false;
+            }
+            
+            if (hasExcessMissingQty) {
+                isValid = false;
+            }
 
-        function decrementValue(button, className) {
-            const input = $(button).siblings('input.' + className);
-            const currentValue = parseInt(input.val()) || 0;
-            
-            if (currentValue > 0) {
-                input.val(currentValue - 1);
-                const row = $(button).closest('tr');
-                updateDeliveryQuantity(row);
-                if (className === 'defective-qty') {
-                    validateSubmitButton();
-                }
-            }
+            $('#submitBtn').prop('disabled', !isValid);
+            return isValid;
         }
 
         async function submitDelivery() {
-            if (!validateSubmitButton()) {
-                alert('Lütfen kusurlu ürün girilen her satır için fotoğraf yükleyin.');
+            const deliveryDocNum = document.getElementById('deliveryDocNum').value.trim();
+                
+            if (!deliveryDocNum) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Teslimat Belge No Eksik',
+                    text: 'Teslimatı tamamlamak için teslimat belge numarası girmelisiniz.',
+                    confirmButtonText: 'Tamam',
+                    confirmButtonColor: '#3085d6'
+                });
+                document.getElementById('deliveryDocNum').classList.add('is-invalid');
+                return;
+            }
+
+            document.getElementById('deliveryDocNum').classList.remove('is-invalid');
+
+            if (!validateDelivery()) {
+                // Hata nedenine göre mesaj göster
+                if (document.getElementById('defectiveWarning').style.display === 'block') {
+                    Swal.fire({
+                        icon: 'warning',
+                        title: 'Görsel Gerekli',
+                        text: 'Lütfen defolu ürün girilen her satır için fotoğraf yükleyin.',
+                        confirmButtonText: 'Tamam'
+                    });
+                }
                 return;
             }
 
             try {
-                showLoading('Teslimat Kaydediliyor...');
                 const sessionId = localStorage.getItem('sessionId');
                 const localStorageUserName = localStorage.getItem("userName");
+                const localStorageBranchCode = localStorage.getItem("branchCode");
                 const docNum = new URLSearchParams(window.location.search).get('docNum');
                 const guid = generateGUID();
-                const totalLines = $('#itemsTableBody tr').length;
 
                 // Process each item
-                for (const row of $('#itemsTableBody tr')) {
-                    const $row = $(row);
-                    const imageInput = $row.find('.item-image')[0];
+                const table = $('#deliveryItems').DataTable();
+                const rowsData = table.rows().data();
+                
+                // Rows veri dizisini oluştur
+                const rowsArray = [];
+                for (let i = 0; i < rowsData.length; i++) {
+                    rowsArray.push(rowsData[i]);
+                }
+                
+                // Satırları LineNum'a göre sırala
+                const sortedRows = rowsArray.sort((a, b) => parseInt(a.LineNum) - parseInt(b.LineNum));
 
+                for (let i = 0; i < sortedRows.length; i++) {
+                    const row = sortedRows[i];
+                    const $tr = $(table.row(function(idx, data) {
+                        return data.LineNum === row.LineNum;
+                    }).node());
                     
                     const deliveryData = {
                         U_Type: "PROD",
-                        U_WhsCode: $('#whsCode').val(),
+                        U_CardName: $('#whsCode').text(),
+                        U_WhsCode: localStorageBranchCode,
                         U_DocDate: new Date().toISOString().split('T')[0],
                         U_DocNum: parseInt(docNum),
-                        U_NumAtCard: $('#numAtCard').val(),
-                        U_ItemCode: $row.data('item-code'),
-                        U_ItemName: $row.find('td:eq(1)').text(),
-                        U_Quantity: parseInt($row.find('td:eq(2)').text()),
-                        U_DeliveryQty: parseInt($row.find('.delivery-qty').val()) || 0,
-                        U_MissingQty: parseInt($row.find('.missing-qty').val()) || 0,
-                        U_DefectiveQty: parseInt($row.find('.defective-qty').val()) || 0,
-                        U_UomCode: $row.find('.uom-code').val(),
-                        U_Comments: $row.find('.item-note').val() || "",
-                        U_SessionID: totalLines,
+                        U_NumAtCard: $('#deliveryDocNum').val(),
+                        U_ItemCode: row.ItemCode,
+                        U_ItemName: row.ItemName,
+                        U_Quantity: parseInt(row.Quantity),
+                        U_MissingQty: parseInt($tr.find('.missing-qty').val()) || 0,
+                        U_DeliveryQty: parseInt($tr.find('.delivery-qty').val()) || 0,
+                        U_DefectiveQty: parseInt($tr.find('.defective-qty').val()) || 0,
+                        U_UomCode: row.UomCode,
+                        U_Comments: $tr.find('.note-input').val() || "",
+                        U_SessionID: sortedRows.length,
                         U_GUID: guid,
                         U_User: localStorageUserName,
-                        U_LineNum: $row.data('line-num')
+                        U_LineNum: parseInt(row.LineNum)
                     };
 
-                    // Create FormData and append the delivery data and image
+                    console.log('Delivery data:', deliveryData);
+                    console.log('Posting to:', `/api/uretim-delivery/${docNum}`);
+                  
+                    // Create FormData and append the delivery data
                     const formData = new FormData();
                     formData.append('deliveryData', JSON.stringify(deliveryData));
                     formData.append('sessionId', sessionId);
                     
-                    if (imageInput.files.length > 0) {
-                        const imageFile = imageInput.files[0];
-                        // Create a new file with the line number as the name
-                        const renamedFile = new File([imageFile], `${deliveryData.U_LineNum}.jpg`, {
-                            type: imageFile.type
-                        });
-                        formData.append('images', renamedFile);
+                    console.log('FormData prepared for LineNum:', row.LineNum);
+                    
+                    // Add image if exists (Base64 from modal)
+                    const imageData = $tr.find('.defective-image-data').val();
+                    if (imageData) {
+                        // Base64 veriyi Blob'a çevir ve dosya olarak ekle
+                        const byteString = atob(imageData.split(',')[1]);
+                        const ab = new ArrayBuffer(byteString.length);
+                        const ia = new Uint8Array(ab);
+                        for (let i = 0; i < byteString.length; i++) {
+                            ia[i] = byteString.charCodeAt(i);
+                        }
+                        const blob = new Blob([ab], { type: 'image/jpeg' });
+                        formData.append('image', blob, `defective_${row.LineNum}.jpg`);
                     }
 
-                    const response = await fetch(`/api/delivery-submit/${docNum}`, {
+                    const response = await fetch(`/api/uretim-delivery/${docNum}`, {
                         method: 'POST',
                         body: formData
                     });
 
                     if (!response.ok) {
-                        const responseData = await response.json();
-                        throw new Error(`Teslimat işlemi başarısız oldu: ${responseData.details || responseData.error || 'Bilinmeyen hata'}`);
+                        let errorMessage = 'Bilinmeyen hata';
+                        try {
+                            const responseData = await response.json();
+                            errorMessage = responseData.details || responseData.error || errorMessage;
+                        } catch (e) {
+                            // JSON parse hatası - HTML response gelmiş olabilir
+                            const textResponse = await response.text();
+                            console.error('Non-JSON response:', textResponse);
+                            errorMessage = `HTTP ${response.status}: ${response.statusText}`;
+                        }
+                        throw new Error(`Teslimat işlemi başarısız oldu: ${errorMessage}`);
                     }
                 }
 
-                alert('Teslimat başarıyla kaydedildi');
-                window.location.href = 'uretim-siparisleri.html';
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Başarılı',
+                    text: 'Teslimat başarıyla kaydedildi',
+                    confirmButtonText: 'Tamam'
+                }).then(() => {
+                    window.location.href = 'uretim-siparisleri.html';
+                });
             } catch (error) {
                 console.error('Error submitting delivery:', error);
-                alert('Teslimat kaydedilirken bir hata oluştu: ' + error.message);
-            } finally {
-                hideLoading();
-            }
-        }
-
-        async function compressImage(file) {
-            return new Promise((resolve) => {
-                const reader = new FileReader();
-                reader.readAsDataURL(file);
-                reader.onload = function(event) {
-                    const img = new Image();
-                    img.src = event.target.result;
-                    img.onload = function() {
-                        const canvas = document.createElement('canvas');
-                        const ctx = canvas.getContext('2d');
-                        
-                        // Calculate new dimensions (max 800px width/height)
-                        let width = img.width;
-                        let height = img.height;
-                        if (width > height) {
-                            if (width > 800) {
-                                height *= 800 / width;
-                                width = 800;
-                            }
-                        } else {
-                            if (height > 800) {
-                                width *= 800 / height;
-                                height = 800;
-                            }
-                        }
-                        
-                        canvas.width = width;
-                        canvas.height = height;
-                        
-                        // Draw and compress image
-                        ctx.drawImage(img, 0, 0, width, height);
-                        const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.7);
-                        
-                        resolve(compressedDataUrl);
-                    };
-                };
-            });
-        }
-
-        async function convertImageToBase64(file) {
-            try {
-                // Compress image before converting to base64
-                const compressedDataUrl = await compressImage(file);
-                return compressedDataUrl.split(',')[1]; // Remove data:image/jpeg;base64, prefix
-            } catch (error) {
-                console.error('Error compressing image:', error);
-                return '';
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Hata',
+                    text: 'Teslimat kaydedilirken bir hata oluştu: ' + error.message,
+                    confirmButtonText: 'Tamam'
+                });
             }
         }
 
         function generateGUID() {
             return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
                 var r = Math.random() * 16 | 0,
-                    v = c == 'x' ? r : (r & 0x3 | 0x8);
+                v = c == 'x' ? r : (r & 0x3 | 0x8);
                 return v.toString(16);
             });
         }
 
-        function formatDate(date) {
-            if (!date) return '';
-
-            // Tarihi 'yyyyMMdd' formatından 'yyyy-MM-dd' formatına dönüştür
-            const formattedDate = date.toString().replace(/^(\d{4})(\d{2})(\d{2})$/, '$1-$2-$3');
-
-            const d = new Date(formattedDate);
-            return d.toLocaleDateString('tr-TR');
+        function formatDate(dateString) {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('tr-TR');
         }
 
-    </script>
-    <script src="js/datatable-helper.js"></script>
-</body>
+        function getStatusBadge(status) {
+            let badgeClass = '';
+            let statusText = '';
+            
+            switch(status) {
+                case '1':
+                    badgeClass = 'bg-warning';
+                    statusText = 'Onay Bekliyor';
+                    break;
+                case '2':
+                    badgeClass = 'bg-orange';
+                    statusText = 'Hazırlanıyor';
+                    break;
+                case '3':
+                    badgeClass = 'bg-primary';
+                    statusText = 'Sevk Edildi';
+                    break;
+                case '4':
+                    badgeClass = 'bg-success';
+                    statusText = 'Tamamlandı';
+                    break;
+                case '5':
+                    badgeClass = 'bg-danger';
+                    statusText = 'İptal Edildi';
+                    break;
+                default:
+                    badgeClass = 'bg-secondary';
+                    statusText = 'Bilinmiyor';
+            }
+            
+            return `<span class="badge ${badgeClass}">${statusText}</span>`;
+        }
 
+        function logout() {
+            localStorage.removeItem('sessionId');
+            window.location.href = 'login.html';
+        }
+    </script>
+</body>
 </html>

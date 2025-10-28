@@ -58,6 +58,44 @@
             font-size: 1.1rem;
             margin-top: 1rem;
         }
+
+        /* Sticky Header Styles */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        header.scrolled {
+            padding: 0.5rem 1rem !important;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        header.scrolled h5 {
+            font-size: 1.1rem;
+            transition: font-size 0.3s ease;
+        }
+
+        header.scrolled .btn {
+            padding: 0.375rem 0.75rem;
+            font-size: 0.875rem;
+            transition: all 0.3s ease;
+        }
+
+        header.scrolled .btn i {
+            font-size: 0.875rem;
+        }
+
+        /* Normal header buton boyutları */
+        header .btn {
+            transition: all 0.3s ease;
+        }
+
+        header h5 {
+            transition: font-size 0.3s ease;
+        }
     </style>
 </head>
 
@@ -288,7 +326,7 @@
                 // Reset retry count on successful call
                 retryCount = 0;
 
-                const response = await fetch('/test?sessionId=' + sessionId + '&whsCode=' + whsCode, {
+                const response = await fetch('/uretim-siparisleri-list?sessionId=' + sessionId + '&whsCode=' + whsCode, {
                     method: 'GET',
                     credentials: 'include',
                     cache: 'no-cache',
@@ -432,6 +470,22 @@
                 $('body').removeClass('show-sidebar');
             }
         });
+
+        // Sticky Header Scroll Effect
+        let lastScrollTop = 0;
+        const header = document.querySelector('header');
+        
+        window.addEventListener('scroll', function() {
+            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+            
+            if (scrollTop > 50) {
+                header.classList.add('scrolled');
+            } else {
+                header.classList.remove('scrolled');
+            }
+            
+            lastScrollTop = scrollTop;
+        }, false);
  
     </script>
     <script src="js/datatable-helper.js"></script>

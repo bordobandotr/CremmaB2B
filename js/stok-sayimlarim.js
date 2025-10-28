@@ -92,6 +92,8 @@ $(document).ready(function () {
         countTable = $('#sayimListesiTable').DataTable({
             responsive: true,
             destroy: true,
+            pageLength: 25,
+            lengthMenu: [[25, 50, 100], [25, 50, 100]],
             language: {
                 url: 'i18n/tr.json'
             },

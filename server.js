@@ -541,41 +541,144 @@ app.get("/uretim-siparisleri-list", async (req, res) => {
   const sessionId = req.query.sessionId;
   const whsCode = req.query.whsCode;
 
-  // Cache kontrolü için header ekle
-  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
-  res.setHeader('Pragma', 'no-cache');
-  res.setHeader('Expires', '0');
-  res.setHeader('Surrogate-Control', 'no-store');
-
-  console.log("Üretim siparişleri listesi istendi:", new Date().toISOString());
-  console.log("Session ID:", sessionId);
-  console.log("WhsCode:", whsCode);
+  console.log("sessionId", sessionId);
+  console.log("whsCode", whsCode);
   
   try {
-    const response = await axiosInstance.get(
-      `${SAP_CONFIG.SERVICE_LAYER_URL}/SQLQueries('OWTQ_NEW')/List`,
-      {
-        params: {
-          value1: "'PROD'",
-          value2: "'"+whsCode+"'",
-          // Cache-busting random parameter
-          _: Date.now()
-        },
-        headers: {
-          Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
-          "Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
-          // SAP B1 API'ye de cache kontrolü için header ekle
-          "Cache-Control": "no-cache, no-store"
-        },
-      }
-    );
+    // View Service ile OData $filter kullanarak filtreleme
+    const serviceLayerUrl = `${SAP_CONFIG.SERVICE_LAYER_URL}`;
+    const sapUrl = `${serviceLayerUrl}/view.svc/AS_B2B_OwtqList_B1SLQuery?$filter=Type eq 'PROD' and WhsCode eq '${whsCode}'`;
     
-    console.log("Veri başarıyla alındı, satır sayısı:", response.data?.value?.length || 0);
+    console.log('Fetching from SAP View URL:', sapUrl);
+
+    const response = await axiosInstance.get(sapUrl, {
+      headers: {
+        Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+        "Content-Type": "application/json",
+      },
+    });
+
+    console.log(`View returned ${response.data.value?.length || 0} items for WhsCode: ${whsCode}`);
+
     res.json(response.data);
   } catch (error) {
-    console.error("Error:", error);
-    console.error("Error:", error.message);
-    res.status(500).json({ error: error.message });
+    console.error("Error fetching uretim siparisleri:", error);
+    console.error("Error message:", error.message);
+    if (error.response) {
+      console.error("Error response status:", error.response.status);
+      console.error("Error response data:", error.response.data);
+    }
+    
+    // Eğer OData filter hatası alırsak, server-side filtrelemeye geri dön
+    if (error.response && error.response.status === 400) {
+      console.log("OData filter failed, falling back to server-side filtering");
+      try {
+        const fallbackResponse = await axiosInstance.get(
+          `${serviceLayerUrl}/view.svc/AS_B2B_OwtqList_B1SLQuery`,
+          {
+            headers: {
+              Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        // Server-side filtreleme
+        const filteredData = fallbackResponse.data.value.filter(item => 
+          item.Type === 'PROD' && item.WhsCode === whsCode
+        );
+
+        console.log(`Fallback: Filtered ${filteredData.length} items from ${fallbackResponse.data.value.length} total items`);
+
+        res.json({
+          value: filteredData
+        });
+      } catch (fallbackError) {
+        console.error("Fallback also failed:", fallbackError);
+        res.status(500).json({ 
+          value: [],
+          error: "Failed to fetch data from SAP" 
+        });
+      }
+    } else {
+      res.status(500).json({ 
+        value: [],
+        error: error.message 
+      });
+    }
+  }
+});
+
+// Üretim siparişi oluşturma sayfası için endpoint (OwtqNew view)
+app.get("/uretim-siparisi-olustur-list", async (req, res) => {
+  const sessionId = req.query.sessionId;
+  const whsCode = req.query.whsCode;
+
+  console.log("sessionId", sessionId);
+  console.log("whsCode", whsCode);
+  
+  try {
+    // View Service ile OData $filter kullanarak filtreleme
+    const serviceLayerUrl = `${SAP_CONFIG.SERVICE_LAYER_URL}`;
+    const sapUrl = `${serviceLayerUrl}/view.svc/AS_B2B_OwtqNew_B1SLQuery?$filter=Type eq 'PROD' and WhsCode eq '${whsCode}'`;
+    
+    console.log('Fetching from SAP View URL:', sapUrl);
+
+    const response = await axiosInstance.get(sapUrl, {
+      headers: {
+        Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+        "Content-Type": "application/json",
+      },
+    });
+
+    console.log(`View returned ${response.data.value?.length || 0} items for WhsCode: ${whsCode}`);
+
+    res.json(response.data);
+  } catch (error) {
+    console.error("Error fetching uretim siparisi olustur items:", error);
+    console.error("Error message:", error.message);
+    if (error.response) {
+      console.error("Error response status:", error.response.status);
+      console.error("Error response data:", error.response.data);
+    }
+    
+    // Eğer OData filter hatası alırsak, server-side filtrelemeye geri dön
+    if (error.response && error.response.status === 400) {
+      console.log("OData filter failed, falling back to server-side filtering");
+      try {
+        const fallbackResponse = await axiosInstance.get(
+          `${serviceLayerUrl}/view.svc/AS_B2B_OwtqNew_B1SLQuery`,
+          {
+            headers: {
+              Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+              "Content-Type": "application/json",
+            },
+          }
+        );
+
+        // Server-side filtreleme
+        const filteredData = fallbackResponse.data.value.filter(item => 
+          item.Type === 'PROD' && item.WhsCode === whsCode
+        );
+
+        console.log(`Fallback: Filtered ${filteredData.length} items from ${fallbackResponse.data.value.length} total items`);
+
+        res.json({
+          value: filteredData
+        });
+      } catch (fallbackError) {
+        console.error("Fallback also failed:", fallbackError);
+        res.status(500).json({ 
+          value: [],
+          error: "Failed to fetch data from SAP" 
+        });
+      }
+    } else {
+      res.status(500).json({ 
+        value: [],
+        error: error.message 
+      });
+    }
   }
 });
 
@@ -982,37 +1085,89 @@ app.get("/api/supply-orders", async (req, res) => {
 
 
 app.get("/api/supply-detail-order/:docNum", async (req, res) => {
-  console.log("ewqeqweqw");
-  const sessionId = req.query.sessionId;
-  const docNum = req.params.docNum;
+    const { docNum } = req.params;
+    const { sessionId, cardCode } = req.query;
 
-  console.log("sessionId:", sessionId);
-  console.log("docNum:", docNum);
+    if (!sessionId || !docNum) {
+        return res.status(400).json({ error: 'Missing required parameters' });
+    }
 
-  try {
-    const response = await axiosInstance.get(
-      `${SAP_CONFIG.SERVICE_LAYER_URL}/SQLQueries('OPDN_NEW')/List`,
-      {
-        params: {
-          value1: "'SUPPLY'",
-          value2: `'${docNum}'`,
-        },
-        headers: {
-          Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
-          "Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
-        },
-      }
-    );
+    console.log("Getting supply delivery details for docNum:", docNum);
+    console.log("Using sessionId:", sessionId);
+    console.log("Using cardCode:", cardCode);
 
-    console.log("Response:supply-detail-order/:docNum::::::>>>>>>", response);
+    try {
+        // View Service ile OData $filter kullanarak filtreleme
+        const serviceLayerUrl = `${SAP_CONFIG.SERVICE_LAYER_URL}`;
+        
+        // CardCode varsa filtrele, yoksa sadece DocNum ile filtrele
+        let filterQuery = `Type eq 'SUPPLY' and DocNum eq ${docNum}`;
+        if (cardCode) {
+            filterQuery += ` and CardCode eq '${cardCode}'`;
+        }
+        
+        const sapUrl = `${serviceLayerUrl}/view.svc/AS_B2B_OpdnNew_B1SLQuery?$filter=${filterQuery}`;
+        
+        console.log('Fetching from SAP View URL:', sapUrl);
 
-    console.log("Response for docNum:", docNum, response.data);
+        const response = await axiosInstance.get(sapUrl, {
+            headers: {
+                Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+                "Content-Type": "application/json",
+            },
+        });
 
-    res.json(response.data);
-  } catch (error) {
-    console.error("Error:", error.message);
-    res.status(500).json({ error: error.message });
-  }
+        console.log(`View returned ${response.data.value?.length || 0} items for DocNum: ${docNum}`);
+        res.json(response.data);
+    } catch (error) {
+        console.error("Error fetching supply delivery details:", error);
+        console.error("Error message:", error.message);
+        if (error.response) {
+            console.error("Error response status:", error.response.status);
+            console.error("Error response data:", error.response.data);
+        }
+        
+        // Eğer OData filter hatası alırsak, server-side filtrelemeye geri dön
+        if (error.response && error.response.status === 400) {
+            console.log("OData filter failed, falling back to server-side filtering");
+            try {
+                const fallbackResponse = await axiosInstance.get(
+                    `${serviceLayerUrl}/view.svc/AS_B2B_OpdnNew_B1SLQuery`,
+                    {
+                        headers: {
+                            Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+                            "Content-Type": "application/json",
+                        },
+                    }
+                );
+
+                // Server-side filtreleme
+                const filteredData = fallbackResponse.data.value.filter(item => {
+                    const matchesType = item.Type === 'SUPPLY';
+                    const matchesDocNum = item.DocNum == docNum;
+                    const matchesCardCode = cardCode ? item.CardCode === cardCode : true;
+                    return matchesType && matchesDocNum && matchesCardCode;
+                });
+
+                console.log(`Fallback: Filtered ${filteredData.length} items from ${fallbackResponse.data.value.length} total items`);
+
+                res.json({
+                    value: filteredData
+                });
+            } catch (fallbackError) {
+                console.error("Fallback also failed:", fallbackError);
+                res.status(500).json({ 
+                    value: [],
+                    error: "Failed to fetch data from SAP" 
+                });
+            }
+        } else {
+            res.status(500).json({ 
+                value: [],
+                error: error.message 
+            });
+        }
+    }
 });
 
 app.get("/api/supply-order/:docNum", async (req, res) => {
@@ -1759,63 +1914,71 @@ app.get('/anadepo-siparisleri', async (req, res) => {
     const sessionId = req.query.sessionId;
     const whsCode = req.query.whsCode;
 
-    console.log("test", sessionId);
+    console.log("sessionId", sessionId);
+    console.log("whsCode", whsCode);
+    
     try {
-        let allData = [];
-        let nextLink = null;
+        // View Service ile OData $filter kullanarak filtreleme
+        const serviceLayerUrl = `${SAP_CONFIG.SERVICE_LAYER_URL}`;
+        const sapUrl = `${serviceLayerUrl}/view.svc/AS_B2B_OwtqList_B1SLQuery?$filter=Type eq 'MAIN' and WhsCode eq '${whsCode}'`;
         
-        // Initial request
-        const initialResponse = await axiosInstance.get(
-            `${SAP_CONFIG.SERVICE_LAYER_URL}/SQLQueries('OWTQ_LIST')/List`,
-            {
-                params: {
-                    value1: "'MAIN'",
-                    value2: "'" + whsCode + "'",
-                },
-                headers: {
-                    Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
-                    "Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
-                },
-            }
-        );
+        console.log('Fetching from SAP View URL:', sapUrl);
 
-        console.log("Initial response:", initialResponse);
-        console.log("Initial response data:", initialResponse.data);
-
-        // Add initial data
-        allData = [...initialResponse.data.value];
-        nextLink = initialResponse.data["odata.nextLink"];
-
-        // Continue fetching if there's more data
-        while (nextLink) {
-            console.log("Fetching next batch of data...");
-            const nextResponse = await axiosInstance.get(
-                `${SAP_CONFIG.SERVICE_LAYER_URL}/${nextLink}`,
-                {
-                    headers: {
-                        Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
-                        "Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
-                    },
-                }
-            );
-            console.log("Next response:", nextResponse);
-            console.log("Next response:", nextResponse.data);
-            // Add next batch of data
-            allData = [...allData, ...nextResponse.data.value];
-            nextLink = nextResponse.data["odata.nextLink"];
-        }
-
-        console.log("All data:", allData);
-        console.log("Total count:", allData.length);
-
-        res.json({
-            value: allData,
-            totalCount: allData.length
+        const response = await axiosInstance.get(sapUrl, {
+            headers: {
+                Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+                "Content-Type": "application/json",
+            },
         });
+
+        console.log(`View returned ${response.data.value?.length || 0} items for WhsCode: ${whsCode}`);
+
+        res.json(response.data);
     } catch (error) {
-        console.error('Error:', error);
-        console.error("Error:", error.message);
-        res.status(500).json({ error: error.message });
+        console.error("Error fetching anadepo siparisleri:", error);
+        console.error("Error message:", error.message);
+        if (error.response) {
+            console.error("Error response status:", error.response.status);
+            console.error("Error response data:", error.response.data);
+        }
+        
+        // Eğer OData filter hatası alırsak, server-side filtrelemeye geri dön
+        if (error.response && error.response.status === 400) {
+            console.log("OData filter failed, falling back to server-side filtering");
+            try {
+                const fallbackResponse = await axiosInstance.get(
+                    `${serviceLayerUrl}/view.svc/AS_B2B_OwtqList_B1SLQuery`,
+                    {
+                        headers: {
+                            Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+                            "Content-Type": "application/json",
+                        },
+                    }
+                );
+
+                // Server-side filtreleme
+                const filteredData = fallbackResponse.data.value.filter(item => 
+                    item.Type === 'MAIN' && item.WhsCode === whsCode
+                );
+
+                console.log(`Fallback: Filtered ${filteredData.length} items from ${fallbackResponse.data.value.length} total items`);
+
+                res.json({
+                    value: filteredData
+                });
+            } catch (fallbackError) {
+                console.error("Fallback also failed:", fallbackError);
+                res.status(500).json({ 
+                    value: [],
+                    error: "Failed to fetch data from SAP" 
+                });
+            }
+        } else {
+            res.status(500).json({ 
+                value: [],
+                error: error.message 
+            });
+        }
     }
 });
 
@@ -1966,7 +2129,7 @@ app.get("/api/anadepo-order/:docNum", async (req, res) => {
 // Get delivery details
 app.get('/api/anadepo-delivery/:docNum', async (req, res) => {
     const { docNum } = req.params;
-    const { sessionId } = req.query;
+    const { sessionId, whsCode } = req.query;
 
     if (!sessionId || !docNum) {
         return res.status(400).json({ error: 'Missing required parameters' });
@@ -1974,34 +2137,292 @@ app.get('/api/anadepo-delivery/:docNum', async (req, res) => {
 
     console.log("Getting delivery details for docNum:", docNum);
     console.log("Using sessionId:", sessionId);
+    console.log("Using whsCode:", whsCode);
 
     try {
-        const response = await axiosInstance.get(
-            `${SAP_CONFIG.SERVICE_LAYER_URL}/SQLQueries('OWTR_NEW')/List`,
+        // View Service ile OData $filter kullanarak filtreleme
+        const serviceLayerUrl = `${SAP_CONFIG.SERVICE_LAYER_URL}`;
+        
+        // WhsCode varsa filtrele, yoksa sadece DocNum ile filtrele
+        let filterQuery = `Type eq 'MAIN' and DocNum eq ${docNum}`;
+        if (whsCode) {
+            filterQuery += ` and WhsCode eq '${whsCode}'`;
+        }
+        
+        const sapUrl = `${serviceLayerUrl}/view.svc/AS_B2B_OwtrNew_B1SLQuery?$filter=${filterQuery}`;
+        
+        console.log('Fetching from SAP View URL:', sapUrl);
+
+        const response = await axiosInstance.get(sapUrl, {
+            headers: {
+                Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+                "Content-Type": "application/json",
+            },
+        });
+
+        console.log(`View returned ${response.data.value?.length || 0} items for DocNum: ${docNum}`);
+        res.json(response.data);
+    } catch (error) {
+        console.error("Error fetching anadepo delivery details:", error);
+        console.error("Error message:", error.message);
+        if (error.response) {
+            console.error("Error response status:", error.response.status);
+            console.error("Error response data:", error.response.data);
+        }
+        
+        // Eğer OData filter hatası alırsak, server-side filtrelemeye geri dön
+        if (error.response && error.response.status === 400) {
+            console.log("OData filter failed, falling back to server-side filtering");
+            try {
+                const fallbackResponse = await axiosInstance.get(
+                    `${serviceLayerUrl}/view.svc/AS_B2B_OwtrNew_B1SLQuery`,
+                    {
+                        headers: {
+                            Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+                            "Content-Type": "application/json",
+                        },
+                    }
+                );
+
+                // Server-side filtreleme
+                const filteredData = fallbackResponse.data.value.filter(item => {
+                    const matchesType = item.Type === 'MAIN';
+                    const matchesDocNum = item.DocNum == docNum;
+                    const matchesWhsCode = whsCode ? item.WhsCode === whsCode : true;
+                    return matchesType && matchesDocNum && matchesWhsCode;
+                });
+
+                console.log(`Fallback: Filtered ${filteredData.length} items from ${fallbackResponse.data.value.length} total items`);
+
+                res.json({
+                    value: filteredData
+                });
+            } catch (fallbackError) {
+                console.error("Fallback also failed:", fallbackError);
+                res.status(500).json({ 
+                    value: [],
+                    error: "Failed to fetch data from SAP" 
+                });
+            }
+        } else {
+            res.status(500).json({ 
+                value: [],
+                error: error.message 
+            });
+        }
+    }
+});
+
+// Handle delivery submissions (Ana Depo)
+app.post('/api/anadepo-delivery/:docNum', upload.single('image'), async (req, res) => {
+    console.log("Processing ana depo delivery for docNum:", req.params.docNum);
+    console.log("Using sessionId:", req.body.sessionId);
+    try {
+        const docNum = req.params.docNum;
+        const { deliveryData, sessionId } = req.body;
+        
+        // Parse deliveryData from string to object
+        const parsedDeliveryData = typeof deliveryData === 'string' ? JSON.parse(deliveryData) : deliveryData;
+        
+        // Add image path to delivery data if file was uploaded
+        if (req.file) {
+            console.log('Uploaded file:', req.file);
+            const imagePath = '/uploads/' + req.file.filename;
+            parsedDeliveryData.U_Image = imagePath;
+            console.log('Image path:', imagePath);
+        }
+
+        console.log('Received ana depo delivery data:', parsedDeliveryData);
+
+        // Ana depo için U_CardCode ve U_CardName alanlarını kaldır (gerekli değil)
+        if (parsedDeliveryData.U_CardCode) {
+            delete parsedDeliveryData.U_CardCode;
+            console.log('Removed U_CardCode for ana depo delivery');
+        }
+        if (parsedDeliveryData.U_CardName) {
+            delete parsedDeliveryData.U_CardName;
+            console.log('Removed U_CardName for ana depo delivery');
+        }
+
+        const response = await axiosInstance.post(
+            `${SAP_CONFIG.SERVICE_LAYER_URL}/ASUDO_B2B_OWTR`,
+            parsedDeliveryData,
             {
-                params: {
-                    value1: "'MAIN'",
-                    value2: docNum
-                },
                 headers: {
-                    'Cookie': `B1SESSION=${encodeURIComponent(sessionId)}`,
+                    'Cookie': `B1SESSION=${sessionId}`,
                     'Content-Type': 'application/json'
                 }
             }
         );
 
-        console.log('Delivery API Response:', response.data);
-        res.json(response.data);
+        console.log('Ana Depo Delivery API Response:', response.data);
+
+        res.json({
+            success: true,
+            data: response.data
+        });
     } catch (error) {
-        console.error('Error fetching delivery details:', error);
-        res.status(500).json({ 
-            error: 'Failed to fetch delivery details',
-            details: error.message 
+        console.error('Error in ana depo delivery submit:', error);
+        if (error.response) {
+            console.error('SAP Error Response:', error.response.data);
+        }
+        res.status(500).json({
+            success: false,
+            error: 'Ana depo delivery submission failed',
+            details: error.response?.data?.error?.message?.value || error.message
         });
     }
 });
 
-// Handle delivery submissions
+// Get delivery details (Üretim)
+app.get('/api/uretim-delivery/:docNum', async (req, res) => {
+    const { docNum } = req.params;
+    const { sessionId, whsCode } = req.query;
+
+    if (!sessionId || !docNum) {
+        return res.status(400).json({ error: 'Missing required parameters' });
+    }
+
+    console.log("Getting uretim delivery details for docNum:", docNum);
+    console.log("Using sessionId:", sessionId);
+    console.log("Using whsCode:", whsCode);
+
+    try {
+        // View Service ile OData $filter kullanarak filtreleme
+        const serviceLayerUrl = `${SAP_CONFIG.SERVICE_LAYER_URL}`;
+        
+        // WhsCode varsa filtrele, yoksa sadece DocNum ile filtrele
+        let filterQuery = `Type eq 'PROD' and DocNum eq ${docNum}`;
+        if (whsCode) {
+            filterQuery += ` and WhsCode eq '${whsCode}'`;
+        }
+        
+        const sapUrl = `${serviceLayerUrl}/view.svc/AS_B2B_OwtrNew_B1SLQuery?$filter=${filterQuery}`;
+        
+        console.log('Fetching from SAP View URL:', sapUrl);
+
+        const response = await axiosInstance.get(sapUrl, {
+            headers: {
+                Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+                "Content-Type": "application/json",
+            },
+        });
+
+        console.log(`View returned ${response.data.value?.length || 0} items for DocNum: ${docNum}`);
+        res.json(response.data);
+    } catch (error) {
+        console.error("Error fetching uretim delivery details:", error);
+        console.error("Error message:", error.message);
+        if (error.response) {
+            console.error("Error response status:", error.response.status);
+            console.error("Error response data:", error.response.data);
+        }
+        
+        // Eğer OData filter hatası alırsak, server-side filtrelemeye geri dön
+        if (error.response && error.response.status === 400) {
+            console.log("OData filter failed, falling back to server-side filtering");
+            try {
+                const fallbackResponse = await axiosInstance.get(
+                    `${serviceLayerUrl}/view.svc/AS_B2B_OwtrNew_B1SLQuery`,
+                    {
+                        headers: {
+                            Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+                            "Content-Type": "application/json",
+                        },
+                    }
+                );
+
+                // Server-side filtreleme
+                const filteredData = fallbackResponse.data.value.filter(item => {
+                    const matchesType = item.Type === 'PROD';
+                    const matchesDocNum = item.DocNum == docNum;
+                    const matchesWhsCode = whsCode ? item.WhsCode === whsCode : true;
+                    return matchesType && matchesDocNum && matchesWhsCode;
+                });
+
+                console.log(`Fallback: Filtered ${filteredData.length} items from ${fallbackResponse.data.value.length} total items`);
+
+                res.json({
+                    value: filteredData
+                });
+            } catch (fallbackError) {
+                console.error("Fallback also failed:", fallbackError);
+                res.status(500).json({ 
+                    value: [],
+                    error: "Failed to fetch data from SAP" 
+                });
+            }
+        } else {
+            res.status(500).json({ 
+                value: [],
+                error: error.message 
+            });
+        }
+    }
+});
+
+// Handle delivery submissions (Üretim)
+app.post('/api/uretim-delivery/:docNum', upload.single('image'), async (req, res) => {
+    console.log("Processing uretim delivery for docNum:", req.params.docNum);
+    console.log("Using sessionId:", req.body.sessionId);
+    try {
+        const docNum = req.params.docNum;
+        const { deliveryData, sessionId } = req.body;
+        
+        // Parse deliveryData from string to object
+        const parsedDeliveryData = typeof deliveryData === 'string' ? JSON.parse(deliveryData) : deliveryData;
+        
+        // Add image path to delivery data if file was uploaded
+        if (req.file) {
+            console.log('Uploaded file:', req.file);
+            const imagePath = '/uploads/' + req.file.filename;
+            parsedDeliveryData.U_Image = imagePath;
+            console.log('Image path:', imagePath);
+        }
+
+        console.log('Received uretim delivery data:', parsedDeliveryData);
+
+        // Üretim için U_CardCode ve U_CardName alanlarını kaldır (gerekli değil)
+        if (parsedDeliveryData.U_CardCode) {
+            delete parsedDeliveryData.U_CardCode;
+            console.log('Removed U_CardCode for uretim delivery');
+        }
+        if (parsedDeliveryData.U_CardName) {
+            delete parsedDeliveryData.U_CardName;
+            console.log('Removed U_CardName for uretim delivery');
+        }
+
+        const response = await axiosInstance.post(
+            `${SAP_CONFIG.SERVICE_LAYER_URL}/ASUDO_B2B_OWTR`,
+            parsedDeliveryData,
+            {
+                headers: {
+                    'Cookie': `B1SESSION=${sessionId}`,
+                    'Content-Type': 'application/json'
+                }
+            }
+        );
+
+        console.log('Uretim Delivery API Response:', response.data);
+
+        res.json({
+            success: true,
+            data: response.data
+        });
+    } catch (error) {
+        console.error('Error in uretim delivery submit:', error);
+        if (error.response) {
+            console.error('SAP Error Response:', error.response.data);
+        }
+        res.status(500).json({
+            success: false,
+            error: 'Uretim delivery submission failed',
+            details: error.response?.data?.error?.message?.value || error.message
+        });
+    }
+});
+
+// Handle delivery submissions (Old endpoint - kept for compatibility)
 app.post('/api/anadepo-delivery-submit/:docNum', upload.array('images'), async (req, res) => {
     try {
         const docNum = req.params.docNum;
