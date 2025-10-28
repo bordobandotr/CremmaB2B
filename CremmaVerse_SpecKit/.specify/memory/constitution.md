@@ -105,14 +105,17 @@ Sync Impact Report:
 ## Technology Stack
 
 ### Frontend Technologies (MANDATORY)
-- **HTML5** - Semantic markup, modern web standards
-- **CSS3** - Responsive design, Flexbox, Grid layouts
-- **JavaScript ES6+** - Modern features, async/await, modules
-- **Bootstrap 5.3.2** - UI framework, responsive grid
-- **jQuery 3.7.0** - DOM manipulation, AJAX
-- **DataTables 1.13.7** - Table management
-- **Bootstrap Icons 1.11.2** - Icon library
-- **Select2** - Enhanced dropdowns
+- **HTML5** - Semantic markup, modern web standards, accessibility features
+- **CSS3** - Responsive design, Flexbox, Grid layouts, animations, transitions
+- **JavaScript ES6+** - Modern features, async/await, modules, arrow functions, destructuring
+- **Bootstrap 5.3.2** - UI framework, responsive grid system, utility classes
+- **jQuery 3.7.0** - DOM manipulation, AJAX, event handling
+- **DataTables 1.13.7** - Advanced table management, sorting, filtering, pagination
+- **DataTables Responsive 2.5.0** - Mobile-optimized table display
+- **Bootstrap Icons 1.11.2** - Comprehensive icon library (1,800+ icons)
+- **Select2 4.1.0** - Enhanced multi-select dropdowns with search
+- **SweetAlert2 11.x** - Beautiful, responsive alert/modal dialogs
+- **Tom Select** - Advanced select boxes for checklists
 
 ### Backend Technologies (MANDATORY)
 - **Node.js** - Server-side runtime
@@ -125,6 +128,354 @@ Sync Impact Report:
 - **SAP Business One Service Layer** - ERP integration
 - **SAP B1 Custom Views** - Optimized views (AS_B2B_*)
 - **OData Protocol** - Data querying
+
+---
+
+## Frontend Capabilities & Features
+
+### Advanced UI Components
+
+#### 1. DataTables (Enterprise-Grade)
+**Features:**
+- Client-side & server-side pagination
+- Multi-column sorting with custom comparators
+- Real-time search with debouncing (300ms)
+- Column-specific filtering
+- Responsive design with horizontal scrolling
+- Custom cell rendering (badges, buttons, icons)
+- Row selection and bulk actions
+- Export capabilities (planned)
+- State persistence (planned)
+
+**Styling:**
+- Zebra striping for readability
+- Hover effects for row highlighting
+- Always-visible custom scrollbars (14px, styled)
+- Font size: 0.85rem (optimized for data density)
+- Red+bold UOM columns for emphasis
+- Status badges with color coding
+
+**Performance:**
+- Optimized rendering for 1000+ rows
+- Virtual scrolling (planned for v2.0)
+- Lazy loading for large datasets
+- Debounced search inputs
+
+#### 2. Modal System (SweetAlert2)
+**Capabilities:**
+- Confirmation dialogs with custom actions
+- Success/error/warning/info notifications
+- Input prompts with validation
+- Image preview modals
+- Custom HTML content support
+- Promise-based API
+- Keyboard navigation (ESC, Enter)
+- Backdrop click handling
+
+**Use Cases:**
+- Delivery confirmations
+- Order submissions
+- Error notifications
+- Image uploads (defective items)
+- Note taking
+- Deletion confirmations
+
+#### 3. Form Controls
+
+**Select2 Dropdowns:**
+- Multi-select with search
+- AJAX data loading
+- Custom templates
+- Tag creation
+- Placeholder support
+- Clear button
+- Bootstrap 5 theme integration
+
+**Tom Select (Checklists):**
+- Advanced filtering
+- Grouping support
+- Custom rendering
+- Keyboard navigation
+- Accessibility compliant
+
+**Standard Inputs:**
+- Real-time validation
+- Error state styling (`is-invalid`)
+- Success state styling (`is-valid`)
+- Required field indicators (red asterisk)
+- Placeholder text
+- Input masking (planned)
+
+#### 4. Sticky Header System (v1.9.0)
+**Features:**
+- Position: sticky with top: 0
+- Scroll-triggered size reduction (50px threshold)
+- Smooth transitions (0.3s ease)
+- Responsive to sidebar toggle
+- Z-index management (1000)
+
+**Behavior:**
+- Normal state: Full padding (1rem 3rem), font-size (1.25rem)
+- Scrolled state: Reduced padding (0.5rem 1rem), font-size (1.1rem)
+- Button size reduction in scrolled state
+- Shadow enhancement on scroll
+
+**Pages Implemented:**
+- All list pages (8 pages total)
+- Maintains context during scrolling
+- Improves navigation efficiency
+
+#### 5. Responsive Design System
+
+**Breakpoints (Bootstrap 5):**
+- xs: <576px (Mobile portrait)
+- sm: ≥576px (Mobile landscape)
+- md: ≥768px (Tablet)
+- lg: ≥992px (Desktop)
+- xl: ≥1200px (Large desktop)
+- xxl: ≥1400px (Extra large)
+
+**Mobile Optimizations:**
+- Touch-friendly buttons (44x44px minimum)
+- Collapsible sidebar with overlay
+- Horizontal scrolling for tables
+- Stacked form layouts
+- Orientation detection and warnings
+- Viewport meta tag optimization
+
+**Tablet Optimizations:**
+- Hybrid layout (sidebar + content)
+- Touch and mouse support
+- Landscape/portrait adaptations
+
+#### 6. Loading & Feedback Systems
+
+**Loading Screens:**
+- Full-screen overlay with spinner
+- Animated rotation (1s linear infinite)
+- Semi-transparent backdrop
+- "Yükleniyor..." text
+- Z-index: 9999 (top layer)
+
+**Progress Indicators:**
+- Inline spinners for AJAX calls
+- Button loading states
+- Skeleton screens (planned)
+
+**User Feedback:**
+- Toast notifications (planned)
+- Inline validation messages
+- Success/error alerts
+- Status badges (color-coded)
+
+#### 7. Image Handling
+
+**Upload System:**
+- File input with preview
+- Base64 encoding for transmission
+- Blob conversion for FormData
+- Image compression (planned)
+- Multiple file support (planned)
+
+**Display:**
+- Thumbnail previews
+- Full-size modal view
+- Lazy loading
+- Fallback images
+
+#### 8. Navigation & Routing
+
+**Sidebar Navigation:**
+- Collapsible menu
+- Active state highlighting
+- Icon + text labels
+- Role-based menu items
+- Mobile overlay behavior
+
+**Breadcrumbs:**
+- Contextual navigation
+- Back button support
+- URL parameter preservation
+
+**URL Management:**
+- Query parameters for filters
+- State preservation in URL
+- Deep linking support
+
+### JavaScript Architecture
+
+#### Modular Structure
+```
+js/
+├── api.js              # API wrapper, session management
+├── login.js            # Authentication logic
+├── datatable-helper.js # DataTable utilities
+├── sidebar-toggle.js   # Sidebar behavior
+├── orientation.js      # Device orientation detection
+├── dark-mode.js        # Theme switching (planned)
+└── [module-specific].js
+```
+
+#### Core Modules
+
+**api.js:**
+- Session management (localStorage)
+- API endpoint wrapper
+- Request/response interceptors
+- Error handling
+- Token refresh (planned)
+
+**datatable-helper.js:**
+- DataTable initialization
+- Turkish language support
+- Custom rendering functions
+- Export utilities (planned)
+
+**sidebar-toggle.js:**
+- Mobile sidebar control
+- Click outside detection
+- State persistence
+- Animation handling
+
+**orientation.js:**
+- Portrait/landscape detection
+- Device type identification
+- Warning messages
+- Responsive adjustments
+
+#### Design Patterns
+
+**Async/Await:**
+- All API calls use async/await
+- Try-catch error handling
+- Promise chaining where appropriate
+
+**Event Delegation:**
+- Efficient event handling
+- Dynamic content support
+- Memory leak prevention
+
+**Debouncing:**
+- Search inputs (300ms)
+- Resize handlers
+- Scroll listeners
+
+**State Management:**
+- localStorage for persistence
+- Session state in memory
+- URL parameters for filters
+
+### CSS Architecture
+
+#### Structure
+```
+css/
+├── style.css           # Main styles, variables
+├── login.css           # Authentication pages
+├── orientation.css     # Device warnings
+├── dark-mode-fixes.css # Theme overrides (planned)
+└── home-style.css      # Dashboard specific
+```
+
+#### CSS Features
+
+**Custom Properties (Variables):**
+- Color palette
+- Spacing scale
+- Border radius
+- Transition timing
+- Z-index layers
+
+**Flexbox & Grid:**
+- Responsive layouts
+- Card grids
+- Form layouts
+- Button groups
+
+**Animations & Transitions:**
+- Smooth state changes (0.3s ease)
+- Loading spinners
+- Modal fade-in/out
+- Hover effects
+- Sticky header transitions
+
+**Utility Classes:**
+- Spacing (margin, padding)
+- Typography (font-size, weight)
+- Colors (text, background)
+- Display (flex, grid, none)
+- Positioning (sticky, fixed, absolute)
+
+### Performance Optimizations
+
+**Code Splitting:**
+- Page-specific JavaScript
+- Lazy loading modules (planned)
+- Dynamic imports (planned)
+
+**Asset Optimization:**
+- Minified CSS/JS (production)
+- Image compression
+- Icon sprite sheets (planned)
+- CDN usage for libraries
+
+**Caching Strategy:**
+- `cache: 'no-cache'` for data freshness
+- Browser caching for static assets
+- Service workers (planned for PWA)
+
+**Rendering Optimization:**
+- Debounced scroll/resize handlers
+- RequestAnimationFrame for animations
+- Virtual scrolling for large lists (planned)
+- Intersection Observer for lazy loading (planned)
+
+### Accessibility (a11y)
+
+**Keyboard Navigation:**
+- Tab order management
+- Focus indicators
+- Keyboard shortcuts (planned)
+- Skip links
+
+**Screen Readers:**
+- ARIA labels
+- ARIA roles
+- ARIA live regions
+- Semantic HTML
+
+**Visual Accessibility:**
+- Color contrast ratios (WCAG AA)
+- Focus indicators
+- Error messages
+- Loading states
+
+**Form Accessibility:**
+- Label associations
+- Error announcements
+- Required field indicators
+- Input validation feedback
+
+### Browser Compatibility
+
+**Supported Browsers:**
+- Chrome 90+ (primary)
+- Firefox 88+
+- Safari 14+
+- Edge 90+
+- iOS Safari 14+
+- Android Chrome 90+
+
+**Polyfills:**
+- ES6+ features for older browsers
+- Fetch API fallback
+- CSS Grid fallback
+
+**Testing:**
+- Cross-browser manual testing
+- Mobile device testing
+- Tablet testing
+- Orientation testing
 
 ---
 
@@ -342,7 +693,7 @@ This constitution supersedes all other development practices and guidelines. All
 
 **Language/Version**: JavaScript ES6+ (Node.js for backend, Browser for frontend)  
 **Primary Dependencies**: Express.js 4.21.2, Bootstrap 5.3.2, jQuery 3.7.0, DataTables 1.13.7, Axios 1.7.9  
-**Storage**: SAP HANA Database (via SAP Business One Service Layer)  
+**Storage**: SAP HANA & SQL Server Database (via SAP Business One Service Layer)  
 **Testing**: Manual testing (cross-browser, mobile, UAT), Integration testing (SAP connectivity)  
 **Target Platform**: Web browsers (Chrome, Firefox, Safari, Edge), Mobile browsers (iOS Safari, Android Chrome)  
 **Project Type**: Web application (frontend + backend)  
