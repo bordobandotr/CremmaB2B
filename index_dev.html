@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cremma - Ana Sayfa</title>
+    <link rel="icon" type="image/png" href="img/favicon.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="theme-color" content="#000000">
+    <meta name="msapplication-navbutton-color" content="#000000">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- <link href="css/orientation.css" rel="stylesheet"> -->
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <!-- Select2 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <link href="https://cdn.jsdelivr.net/npm/select2-bootstrap-5-theme@1.3.0/dist/select2-bootstrap-5-theme.min.css" rel="stylesheet" />
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.6/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.4.1/css/buttons.bootstrap5.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.5.0/css/responsive.bootstrap5.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/datetime/1.5.1/css/dataTables.dateTime.min.css">
+    <!-- DataTables RowGroup CSS -->
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/rowgroup/1.4.1/css/rowGroup.bootstrap5.min.css">
+    <link rel="stylesheet" type="text/css" href="css/home-style.css">
+
+</head>
+
+<body>
+    <div class="d-flex">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div id="logo-container">
+                
+            </div>
+            <div id="sidebar-nav">
+                <!-- Navigation menu will be loaded here -->
+            </div>
+            <div id="sidebar-user">
+                <!-- User information will be loaded here -->
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Header -->
+            <header class="d-flex justify-content-between p-3 bg-white border-bottom">
+                <div class="d-flex align-items-center">
+                    <button id="sidebarToggle" class="btn btn-link d-md-none">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <h5 class="mb-0">Anasayfa</h5>
+                </div>
+                <div class="d-flex align-items-center">
+                    <button class="btn btn-outline-secondary" onclick="logout()">
+                        Çıkış Yap <i class="bi bi-box-arrow-right"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- Content -->
+            <div class="container-fluid p-4">
+                <div class="dashboard-grid">
+                        <!-- Sipariş Oluşturma Kartı -->
+                        <div class="grid-col-span-6 mb-3">
+                            <div class="order-card">
+                                <div class="order-card-header">
+                                    <h5>Hızlı Sipariş Oluştur ve Açık Siparişler</h5>
+                                </div>
+                                <div class="order-card-body">
+                                    <div class="order-creation-actions">
+                                        <div class="order-action-btn dark-btn">
+                                            <div class="main-action">
+                                                <i class="bi bi-building"></i>
+                                                <span class="action-text">Üretim Siparişi Oluştur</span>
+                                                <span class="badge">3</span>
+                                            </div>
+                                        </div>
+                                        <div class="order-action-btn dark-btn">
+                                            <div class="main-action">
+                                                <i class="bi bi-truck"></i>
+                                                <span class="action-text">Dış Tedarik Siparişi Oluştur</span>
+                                                <span class="badge">7</span>
+                                            </div>
+                                        </div>
+                                        <div class="order-action-btn dark-btn">
+                                            <div class="main-action">
+                                                <i class="bi bi-boxes"></i>
+                                                <span class="action-text">Ana Depo Siparişi Oluştur</span>
+                                                <span class="badge">2</span>
+                                            </div>
+                                        </div>
+                                        <div class="order-action-btn dark-btn">
+                                            <div class="main-action">
+                                                <i class="bi bi-arrow-left-right"></i>
+                                                <span class="action-text">Transfer Siparişi Oluştur</span>
+                                                <span class="badge zero">0</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Onay ve AI Skor Wrapper -->
+                        <div class="grid-col-span-6 mb-3">
+                            <div class="approval-ai-horizontal">
+                                <!-- Onay Kartı -->
+                                <div class="approval-card">
+                                    <div class="approval-header">
+                                        <div class="approval-icon"><i class="bi bi-exclamation-triangle"></i></div>
+                                        <div class="approval-count">6</div>
+                                    </div>
+                                    <div class="approval-text">Onayınızı Bekleyen Transfer</div>
+                                </div>
+                                <!-- Yeni AI Skor Kartı -->
+                                <div id="new-ai-scoreboard">
+                                    <div class="ai-score-board-container">
+                                        <div class="ai-score-board-sparkles-container"></div>
+                                        <div class="ai-score-board-card">
+                                            <h1 class="ai-score-board-title">AI VERİMLİLİK SKORU</h1>
+                                            <div class="ai-score-board-score-circle">
+                                                <span class="ai-score-board-score-number">0</span>
+                                            </div>
+                                        </div>
+                                        <div class="ai-score-board-foreground-sparkles-container"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    <!-- Bildirimler -->
+                    <div class="card grid-col-span-6">
+                        <div class="card-header"><h2 class="card-title">Bildirimler</h2></div>
+                        <div class="card-body notifications-list">
+                            <div class="notification-item">
+                                <i class="bi bi-bell item-icon warning"></i>
+                                <div class="item-content">
+                                    <h5>Stok Uyarısı</h5>
+                                    <p>"Türk Kahvesi" ürünü minimum stok seviyesinin altına düştü.</p>
+                                    <div class="item-meta"><span class="timestamp">Bugün, 09:15</span></div>
+                                </div>
+                            </div>
+                            <div class="notification-item">
+                                <i class="bi bi-check-circle item-icon success"></i>
+                                <div class="item-content">
+                                    <h5>Transfer Tamamlandı</h5>
+                                    <p>Depo 1010'dan Depo 3030'a transfer başarıyla tamamlandı.</p>
+                                    <div class="item-meta"><span class="timestamp">Dün, 16:42</span></div>
+                                </div>
+                            </div>
+                            <div class="notification-item">
+                                <i class="bi bi-exclamation-triangle item-icon danger"></i>
+                                <div class="item-content">
+                                    <h5>Geciken Sipariş</h5>
+                                    <p>SIP2025091001 numaralı sipariş teslim tarihi geçti.</p>
+                                    <div class="item-meta"><span class="timestamp">23.09.2025</span></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="card-footer"><button>Tüm Bildirimleri Görüntüle</button></div>
+                    </div>
+
+                    <!-- Ticketlar -->
+                    <div class="card grid-col-span-6">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h2 class="card-title mb-0">Okunmamış Son Ticketlar</h2>
+                            <div>
+                                <a href="ticket-olustur.html" class="btn btn-danger btn-sm me-2">Yeni Oluştur</a>
+                                <a href="ticket.html" class="btn btn-outline-secondary btn-sm">Tümünü Gör</a>
+                            </div>
+                        </div>
+                        <div class="card-body tickets-list">
+                            <div class="ticket-item">
+                                <div class="item-content">
+                                    <h5>Stok Sayım Hatası</h5>
+                                    <p>Depo 1010'da stok sayımında tutarsızlık tespit edildi.</p>
+                                    <div class="item-meta">
+                                        <div class="ticket-priority priority-high"><i class="bi bi-info-circle"></i> Yüksek Öncelik</div>
+                                        
+                                    </div>
+                                </div>
+                                <div class="d-flex gap-1 ms-2 item-meta">
+                                  <span class="timestamp">3 saat önce</span>
+                                    <a href="#" class="btn btn-sm btn-light" title="İncele"><i class="bi bi-reply"></i> İncele / Yanıtla</a>
+                                </div>
+                            </div>
+                            <div class="ticket-item">
+                                <div class="item-content">
+                                    <h5>Transfer Onayı Gerekiyor</h5>
+                                    <p>Depo 2020'den Depo 1010'a transfer onayınız bekleniyor.</p>
+                                    <div class="item-meta">
+                                       <div class="ticket-priority priority-medium"><i class="bi bi-info-circle"></i> Orta Öncelik</div>
+                                        <span class="timestamp">5 saat önce</span>
+                                    </div>
+                                </div>
+                                <div class="d-flex gap-1 ms-2">
+                                    <a href="#" class="btn btn-sm btn-light" title="İncele"><i class="bi bi-reply"></i> İncele / Yanıtla</a>
+                                </div>
+                            </div>
+                            <div class="ticket-item">
+                                <div class="item-content">
+                                    <h5>Sipariş Teslim Sorunu</h5>
+                                    <p>Dış tedarik siparişi eksik teslim edildi.</p>
+                                    <div class="item-meta">
+                                        <div class="ticket-priority priority-normal"><i class="bi bi-info-circle"></i> Normal Öncelik</div>
+                                        <span class="timestamp">1 gün önce</span>
+                                    </div>
+                                </div>
+                                <div class="d-flex gap-1 ms-2">
+                                    <a href="#" class="btn btn-sm btn-light" title="İncele"><i class="bi bi-search"></i></a>
+                                    <a href="#" class="btn btn-sm btn-light" title="Yanıtla"><i class="bi bi-reply"></i></a>
+                                </div>
+                            </div>
+                            <div class="ticket-item">
+                                <div class="item-content">
+                                    <h5>Sipariş Teslim Sorunu</h5>
+                                    <p>Dış tedarik siparişi eksik teslim edildi.</p>
+                                    <div class="item-meta">
+                                        <div class="ticket-priority priority-normal"><i class="bi bi-info-circle"></i> Normal Öncelik</div>
+                                        <span class="timestamp">1 gün önce</span>
+                                    </div>
+                                </div>
+                                <div class="d-flex gap-1 ms-2">
+                                    <a href="#" class="btn btn-sm btn-light" title="İncele"><i class="bi bi-reply"></i> İncele / Yanıtla</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- KPI Kartları -->
+                    <div class="card grid-col-span-4 kpi-card">
+                        <div class="card-header"><h2 class="card-title">Aylık Fire Oranı</h2></div>
+                        <div class="card-body">
+                            <div class="kpi-header">
+                                <div class="kpi-value">5.5 <span class="unit">%</span></div>
+                                <div class="kpi-change"><i class="bi bi-graph-up-arrow"></i> +3.5%</div>
+                            </div>
+                            <div class="kpi-details">
+                                Geçen ay: 2.0%
+                                <div class="kpi-target"><i class="bi bi-bullseye"></i> Hedef: &lt; 2%</div>
+                            </div>
+                            <div class="progress-bar"><div class="progress-bar-inner" style="width: 55%; background-color: var(--accent-red);"></div></div>
+                        </div>
+                    </div>
+                     
+                    <div class="card grid-col-span-4 kpi-card">
+                        <div class="card-header"><h2 class="card-title">Günlük Ortalama Ciro</h2></div>
+                        <div class="card-body">
+                            <div class="kpi-header">
+                                <div class="kpi-value">106.667 <span class="unit">TRY</span></div>
+                                <div class="kpi-change"><i class="bi bi-graph-up-arrow"></i> +1.8%</div>
+                            </div>
+                            <div class="kpi-details">
+                                Aylık Toplam Ciro: 3.200.000 TRY
+                                <div class="kpi-target"><i class="bi bi-bullseye"></i> Hedef: 110.000 TRY</div>
+                            </div>
+                            <div class="progress-bar"><div class="progress-bar-inner" style="width: 96%; background-color: var(--accent-blue);"></div></div>
+                        </div>
+                    </div>
+                     
+                    <div class="card grid-col-span-4 kpi-card">
+                        <div class="card-header"><h2 class="card-title">Ortalama İşlem Değeri</h2></div>
+                        <div class="card-body">
+                            <div class="kpi-header">
+                                <div class="kpi-value">87.45 <span class="unit">TRY</span></div>
+                                <div class="kpi-change"><i class="bi bi-graph-up-arrow"></i> +8.2%</div>
+                            </div>
+                            <div class="kpi-details">
+                                Geçen Ay: 80.85 TRY
+                                <div class="kpi-target"><i class="bi bi-bullseye"></i> Hedef: 95 TRY</div>
+                            </div>
+                            <div class="progress-bar"><div class="progress-bar-inner" style="width: 92%; background-color: var(--accent-purple);"></div></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Grafikler -->
+                    <div class="card grid-col-span-6">
+                        <div class="card-header"><h2 class="card-title">Fire Nedenleri Dağılımı</h2></div>
+                        <div class="card-body">
+                            <div class="chart-container">
+                                <div class="pie-chart"></div>
+                                <ul class="chart-legend">
+                                    <li class="legend-item"><span class="legend-color" style="background-color: #5C6BC0;"></span>Üretim Hatası</li>
+                                    <li class="legend-item"><span class="legend-color" style="background-color: #9CCC65;"></span>Son Kul. Tar.</li>
+                                    <li class="legend-item"><span class="legend-color" style="background-color: #FFCA28;"></span>Yanlış Sipariş</li>
+                                    <li class="legend-item"><span class="legend-color" style="background-color: #EF5350;"></span>Diğer</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card grid-col-span-6">
+                        <div class="card-header"><h2 class="card-title">Ürün Kategorisi Ciro Dağılımı</h2></div>
+                        <div class="card-body">
+                             <div class="chart-container">
+                                <div class="donut-chart"></div>
+                                <ul class="chart-legend">
+                                    <li class="legend-item"><span class="legend-color" style="background-color: #60a5fa;"></span>Bar Ciro</li>
+                                    <li class="legend-item"><span class="legend-color" style="background-color: #86efac;"></span>Tatlı Ciro</li>
+                                    <li class="legend-item"><span class="legend-color" style="background-color: #fcd34d;"></span>Bakery Ciro</li>
+                                    <li class="legend-item"><span class="legend-color" style="background-color: #f87171;"></span>Store Ciro</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Satış Raporu -->
+                    <div class="grid-col-span-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Satış Raporu</h2>
+                            </div>
+                            <div class="card-body">
+                                <!-- Rapor Toolbar -->
+                                <div class="report-toolbar">
+                                    <div class="toolbar-grid">
+                                        <div class="toolbar-left">
+                                            <!-- Kayıt Sayısı -->
+                                            <div class="toolbar-cell" id="dt-length-container">
+                                                <div class="toolbar-header">Kayıt Sayısı</div>
+                                                <div class="toolbar-content"></div>
+                                            </div>
+                                            <!-- Kolon Görünümü -->
+                                            <div class="toolbar-cell" id="dt-colvis-container">
+                                                <div class="toolbar-header">Kolonlar</div>
+                                                <div class="toolbar-content"></div>
+                                            </div>
+                                            <!-- Grupla -->
+                                            <div class="toolbar-cell" id="dt-group-container">
+                                                <div class="toolbar-header">Grupla</div>
+                                                <div class="toolbar-content"></div>
+                                            </div>
+                                            <!-- Dışarı Aktar -->
+                                            <div class="toolbar-cell" id="dt-export-container">
+                                                <div class="toolbar-header">Dışarı Aktar</div>
+                                                <div class="toolbar-content"></div>
+                                            </div>
+                                             <!-- Dikey Çizgi -->
+                                        <div class="toolbar-divider"></div>
+                                        </div>
+                                        <div class="toolbar-right">
+                                            <!-- Dikey Çizgi -->
+                                            <div class="toolbar-divider"></div>
+                                            <!-- Tarih -->
+                                            <div class="toolbar-cell">
+                                                <div class="toolbar-header">Tarih Aralığı</div>
+                                                <div class="toolbar-content">
+                                                    <div class="date-range">
+                                                        <input type="date" class="form-control form-control-sm" id="startDate" value="2025-09-01">
+                                                        <span class="date-separator">-</span>
+                                                        <input type="date" class="form-control form-control-sm" id="endDate" value="2025-09-25">
+                                                        <button type="button" class="btn btn-sm btn-secondary" id="btnFilter"><i class="bi bi-search"></i></button>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            <!-- Dikey Çizgi -->
+                                            <div class="toolbar-divider"></div>
+                                            <!-- Grup -->
+                                            <div class="toolbar-cell toolbar-search">
+                                                <div class="toolbar-header">Grup Filtresi</div>
+                                                <div class="toolbar-content">
+                                                    <select class="form-select form-select-sm" id="itemGroup" multiple="multiple">
+                                                        <option value="">Tümü</option>
+                                                        <option value="bar">Bar</option>
+                                                        <option value="tatli">Tatlı</option>
+                                                        <option value="bakery">Bakery</option>
+                                                        <option value="store">Store</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                            <!-- Kalem -->
+                                            <div class="toolbar-cell toolbar-search">
+                                                <div class="toolbar-header">Tanım Filtresi</div>
+                                                <div class="toolbar-content">
+                                                    <select class="form-select form-select-sm" id="itemCodeFilter" multiple="multiple">
+                                                        <option value="">Tümü</option>
+                                                        <option value="BEF001">Beef</option>
+                                                        <option value="CHE002">Cheesecake</option>
+                                                        <option value="ACK003">Acuka</option>
+                                                        <option value="FUM004">Füme Eti</option>
+                                                        <option value="LOT005">Lotus</option>
+                                                        <option value="STR006">Strawberry</option>
+                                                        <option value="ESP007">Espresso Blend</option>
+                                                        <option value="BAD008">Badem Sütü</option>
+                                                        <option value="CIK009">Çikolata Şurup</option>
+                                                        <option value="DAN010">Dana Jambonlu Sandwich</option>
+                                                        <option value="DUB011">Dubai Chocolate</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Tablo Görünümü -->
+                                <div id="tableView" class="report-view">
+                                    <table id="salesTable" class="table table-striped table-hover dt-responsive nowrap data-table" style="width:100%">
+                                        <thead>
+                                            <tr>
+                                                <th>Tarih</th>
+                                                <th>Kalem Kodu</th>
+                                                <th>Tanımı</th>
+                                                <th>Kalem Grubu</th>
+                                                <th>Miktar</th>
+                                                <th>Birim</th>
+                                                <th>Birim Fiyat</th>
+                                                <th>Toplam Tutar</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>25.09.2025</td>
+                                                <td>BEF001</td>
+                                                <td>Beef</td>
+                                                <td>Bar</td>
+                                                <td>12</td>
+                                                <td>Adet</td>
+                                                <td>85.00 TRY</td>
+                                                <td>1,020.00 TRY</td>
+                                            </tr>
+                                            <tr>
+                                                <td>25.09.2025</td>
+                                                <td>CHE002</td>
+                                                <td>Cheesecake</td>
+                                                <td>Tatlı</td>
+                                                <td>8</td>
+                                                <td>Dilim</td>
+                                                <td>45.00 TRY</td>
+                                                <td>360.00 TRY</td>
+                                            </tr>
+                                            <tr>
+                                                <td>24.09.2025</td>
+                                                <td>ACK003</td>
+                                                <td>Acuka</td>
+                                                <td>Store</td>
+                                                <td>5</td>
+                                                <td>Kavanoz</td>
+                                                <td>65.00 TRY</td>
+                                                <td>325.00 TRY</td>
+                                            </tr>
+                                            <tr>
+                                                <td>24.09.2025</td>
+                                                <td>FUM004</td>
+                                                <td>Füme Eti</td>
+                                                <td>Store</td>
+                                                <td>7</td>
+                                                <td>Paket</td>
+                                                <td>120.00 TRY</td>
+                                                <td>840.00 TRY</td>
+                                            </tr>
+                                            <tr>
+                                                <td>23.09.2025</td>
+                                                <td>LOT005</td>
+                                                <td>Lotus</td>
+                                                <td>Tatlı</td>
+                                                <td>10</td>
+                                                <td>Dilim</td>
+                                                <td>55.00 TRY</td>
+                                                <td>550.00 TRY</td>
+                                            </tr>
+                                            <tr>
+                                                <td>23.09.2025</td>
+                                                <td>STR006</td>
+                                                <td>Strawberry</td>
+                                                <td>Tatlı</td>
+                                                <td>6</td>
+                                                <td>Dilim</td>
+                                                <td>50.00 TRY</td>
+                                                <td>300.00 TRY</td>
+                                            </tr>
+                                            <tr>
+                                                <td>22.09.2025</td>
+                                                <td>BEF001</td>
+                                                <td>Beef</td>
+                                                <td>Bar</td>
+                                                <td>15</td>
+                                                <td>Adet</td>
+                                                <td>85.00 TRY</td>
+                                                <td>1,275.00 TRY</td>
+                                            </tr>
+                                            <tr>
+                                                <td>22.09.2025</td>
+                                                <td>CHE002</td>
+                                                <td>Cheesecake</td>
+                                                <td>Tatlı</td>
+                                                <td>12</td>
+                                                <td>Dilim</td>
+                                                <td>45.00 TRY</td>
+                                                <td>540.00 TRY</td>
+                                            </tr>
+                                            <tr>
+                                                <td>21.09.2025</td>
+                                                <td>ACK003</td>
+                                                <td>Acuka</td>
+                                                <td>Store</td>
+                                                <td>3</td>
+                                                <td>Kavanoz</td>
+                                                <td>65.00 TRY</td>
+                                                <td>195.00 TRY</td>
+                                            </tr>
+                                            <tr>
+                                                <td>21.09.2025</td>
+                                                <td>FUM004</td>
+                                                <td>Füme Eti</td>
+                                                <td>Store</td>
+                                                <td>9</td>
+                                                <td>Paket</td>
+                                                <td>120.00 TRY</td>
+                                                <td>1,080.00 TRY</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+                                
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Stok Raporu -->
+                    <div class="grid-col-span-12">
+                        <div class="card">
+                            <div class="card-header">
+                                <h2 class="card-title">Stok Raporu</h2>
+                            </div>
+                            <div class="report-header">
+                                <button class="report-btn active">Günlük</button>
+                                <button class="report-btn">Haftalık</button>
+                                <button class="report-btn">Aylık</button>
+                                <button class="report-btn">Arama Alanı: Kalem Tanımı</button>
+                                <button class="report-btn">Arama Alanı: Kalem Grubu</button>
+                                <button class="report-btn">Tarih Aralığı</button>
+                                <button class="report-btn">Kayıt Sayısı: 5</button>
+                                <button class="report-btn">Excel/PDF</button>
+                                <button class="report-btn active">Liste</button>
+                            </div>
+                            <div class="card-body">
+                                <table class="data-table">
+                                    <thead>
+                                        <tr><th>Stok Kodu</th><th>Stok Adı</th><th>Girilen Miktar</th><th>Giriş Tarihi</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td>STK004</td><td>Organik Bal</td><td>1.500</td><td>26.10.2024</td></tr>
+                                        <tr><td>STK003</td><td>Türk Kahvesi</td><td>500</td><td>25.10.2024</td></tr>
+                                    </tbody>
+                                </table>
+                                <div class="table-pagination">
+                                    <span>2 kayıttan 1 - 2 arasındaki kayıtlar gösteriliyor</span>
+                                    <div class="pagination-controls">
+                                        <button disabled>Önceki</button>
+                                        <button class="page-num">1</button>
+                                        <button>Sonraki</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Haftalık Shift Tablosu -->
+                    <div class="card grid-col-span-8">
+                        <div class="card-header"><h2 class="card-title">Haftalık Shift Tablosu</h2></div>
+                        <div class="card-body" style="padding: 0 1.3rem 1.3rem;">
+                            <table class="shifts-table">
+                                <thead>
+                                    <tr>
+                                        <th>Vardiya Doluluğu</th>
+                                        <th>Tarih</th>
+                                        <th>07:00-16:00</th>
+                                        <th>08:00-17:00</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td class="day-cell">Pazartesi <div class="day-timeline"><div class="day-progress" style="width: 60%"></div></div></td>
+                                        <td>11.09.2025</td>
+                                        <td>
+                                            <div class="shift-person-group">
+                                                <div class="shift-person">Ayhan Doğan</div>
+                                                <div class="shift-person">Arif Mert</div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                             <div class="shift-person-group">
+                                                <div class="shift-person">Kamile Ortaçlı</div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="day-cell">Salı <div class="day-timeline"><div class="day-progress" style="width: 80%"></div></div></td>
+                                        <td>12.09.2025</td>
+                                         <td>
+                                             <div class="shift-person-group">
+                                                <div class="shift-person">Kamile Ortaçlı</div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="shift-person-group">
+                                                <div class="shift-person">Ayhan Doğan</div>
+                                                <div class="shift-person">Arif Mert</div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                     <tr>
+                                        <td class="day-cell">Çarşamba <div class="day-timeline"><div class="day-progress" style="width: 40%"></div></div></td>
+                                        <td>13.09.2025</td>
+                                        <td>
+                                            <div class="shift-person-group">
+                                                <div class="shift-person">Kamile Ortaçlı</div>
+                                                <div class="shift-person">Arif Mert</div>
+                                            </div>
+                                        </td>
+                                        <td>
+                                            <div class="shift-person-group">
+                                                <div class="shift-person">Ayhan Doğan</div>
+                                                <div class="shift-person">Emre Yılmaz</div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- En Çok Satış Yapan Personel -->
+                    <div class="card grid-col-span-4">
+                        <div class="card-header"><h2 class="card-title">En Çok Satış Yapan 3 Personel</h2></div>
+                        <div class="card-body" style="padding: 0;">
+                            <table class="data-table">
+                                <thead>
+                                    <tr><th>Sıra</th><th>Personel Adı</th></tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td><div class="rank-cell rank-1">1</div></td><td>Ayaz Doğan</td></tr>
+                                    <tr><td><div class="rank-cell rank-2">2</div></td><td>Jale Korkmaz</td></tr>
+                                    <tr><td><div class="rank-cell rank-3">3</div></td><td>Emre Yılmaz</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+    <script src="https://code.jquery.com/jquery-3.7.0.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="js/loadHeader.js"></script>
+    <script src="js/sidebar-toggle.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.6/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.html5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.print.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.4.1/js/buttons.colVis.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.5.0/js/responsive.bootstrap5.min.js"></script>
+    <!-- RowGroup JS -->
+    <script src="https://cdn.datatables.net/rowgroup/1.4.1/js/dataTables.rowGroup.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/moment@2.29.4/moment.min.js"></script>
+    <script src="https://cdn.datatables.net/datetime/1.5.1/js/dataTables.dateTime.min.js"></script>
+    <script>
+                $(document).ready(function() {
+            let salesTable;
+            let salesBarChart;
+
+            // Filtreleri başlatan fonksiyon
+            function initFilters() {
+                try {
+                    if (!$.fn.select2) {
+                        console.error('Select2 yüklenmemiş!');
+                        return;
+                    }
+                    $('#itemGroup, #itemCodeFilter').select2({
+                        theme: 'bootstrap-5',
+                        width: '100%',
+                        placeholder: 'Seçiniz veya yazınız...',
+                        allowClear: true,
+                        closeOnSelect: false,
+                    });
+                    updateFilterOptions();
+                } catch (error) {
+                    console.error('initFilters hatası:', error);
+                }
+            }
+
+            // Filtre seçeneklerini dolduran fonksiyon (statik)
+            function updateFilterOptions() {
+                var items = ["Beef", "Cheesecake", "Acuka", "Füme Eti", "Lotus", "Strawberry"];
+                var groups = ["Bar", "Tatlı", "Store"];
+                var itemCodeFilter = $('#itemCodeFilter').empty().append('<option></option>');
+                items.forEach(item => itemCodeFilter.append(new Option(item, item)));
+                var itemGroup = $('#itemGroup').empty().append('<option></option>');
+                groups.forEach(group => itemGroup.append(new Option(group, group)));
+                $('#itemCodeFilter, #itemGroup').trigger('change');
+            }
+            
+            // Filtreleri uygulayan fonksiyon
+            function applyFilters() {
+                if (!salesTable) return;
+                var itemGroups = $('#itemGroup').val() || [];
+                var itemNames = $('#itemCodeFilter').val() || [];
+                salesTable.column(3).search(itemGroups.join('|'), true, false);
+                salesTable.column(2).search(itemNames.join('|'), true, false);
+                salesTable.draw();
+            }
+
+            // Filtreleri sıfırlayan fonksiyon
+            function resetFilters() {
+                $('#startDate').val('2025-09-01');
+                $('#endDate').val('2025-09-25');
+                $('#itemGroup, #itemCodeFilter').val(null).trigger('change');
+                salesTable.search('').columns().search('').draw();
+            }
+
+            // DataTable'ı başlat
+            salesTable = $('#salesTable').DataTable({
+                processing: true,
+                ajax: {
+                    url: 'data/sales-report.json',
+                    dataSrc: 'data'
+                },
+                columns: [
+                    { data: 'DocDate', render: data => data ? new Date(data).toLocaleDateString('tr-TR') : '' },
+                    { data: 'ItemCode' },
+                    { data: 'ItemName' },
+                    { data: 'ItmsGrpNam' },
+                    { data: 'Quantity', className: 'text-end' },
+                    { data: 'UomCode' },
+                    { data: 'Price', className: 'text-end', render: $.fn.dataTable.render.number('.', ',', 2, '', ' TRY') },
+                    { data: 'LineTotal', className: 'text-end', render: $.fn.dataTable.render.number('.', ',', 2, '', ' TRY') }
+                ],
+                responsive: true,
+                paging: true,
+                lengthChange: true,
+                searching: true,
+                info: true,
+                order: [[3, 'asc']],
+                autoWidth: false,
+                dom: "<'row'<'col-sm-12'tr>>" + 
+                     "<'row'<'col-sm-12 col-md-5'i><'col-sm-12 col-md-7'p>>" + 
+                     "<'d-none'lB>", // Length menüsünü ve Butonları oluştur ama gizle
+                buttons: [
+                    'excelHtml5',
+                    'pdfHtml5',
+                    {
+                        extend: 'colvis',
+                        text: 'Kolonlar',
+                        collectionLayout: 'dt-button-collection-fixed two-column',
+                        columnText: function ( dt, idx, title ) {
+                            // Her zaman her iki ikonu da metne ekle.
+                            // CSS, 'dt-button-active' sınıfına göre doğru olanı gösterecek.
+                            return '<span class="icon-visible">✓</span><span class="icon-hidden">𐄂</span> ' + title;
+                        }
+                    },
+                    {
+                        extend: 'collection',
+                        text: 'Grupla',
+                        buttons: [
+                            { 
+                                text: '✓ Gruplama Yok', // Varsayılan olarak bu aktif
+                                className: 'group-button',
+                                action: function (e, dt, node, config) {
+                                    dt.buttons('.group-button').each(function(button) {
+                                        $(button.node).text($(button.node).text().replace('✓ ', ''));
+                                    });
+                                    $(node).text('✓ ' + $(node).text());
+                                    dt.rowGroup().disable().draw(); 
+                                } 
+                            },
+                            { 
+                                text: 'Kalem Grubu', 
+                                className: 'group-button',
+                                action: function (e, dt, node, config) {
+                                    dt.buttons('.group-button').each(function(button) {
+                                        $(button.node).text($(button.node).text().replace('✓ ', ''));
+                                    });
+                                    $(node).text('✓ ' + $(node).text());
+                                    dt.order([3, 'asc']).rowGroup().dataSrc('ItmsGrpNam').enable().draw(); 
+                                } 
+                            },
+                            { 
+                                text: 'Kalem Adı', 
+                                className: 'group-button',
+                                action: function (e, dt, node, config) {
+                                    dt.buttons('.group-button').each(function(button) {
+                                        $(button.node).text($(button.node).text().replace('✓ ', ''));
+                                    });
+                                    $(node).text('✓ ' + $(node).text());
+                                    dt.order([2, 'asc']).rowGroup().dataSrc('ItemName').enable().draw(); 
+                                } 
+                            },
+                            { 
+                                text: 'Tarih', 
+                                className: 'group-button',
+                                action: function (e, dt, node, config) {
+                                    dt.buttons('.group-button').each(function(button) {
+                                        $(button.node).text($(button.node).text().replace('✓ ', ''));
+                                    });
+                                    $(node).text('✓ ' + $(node).text());
+                                    dt.order([0, 'asc']).rowGroup().dataSrc(function(row) {
+                                        return row.DocDate ? row.DocDate.substring(0, 10) : '';
+                                    }).enable().draw(); 
+                                } 
+                            }
+                        ]
+                    }
+                ],
+                rowGroup: {
+                    enable: false,
+                    startRender: function (rows, group) {
+                        let groupLabel = group;
+                        if (Date.parse(group)) {
+                            groupLabel = new Date(group).toLocaleDateString('tr-TR');
+                        }
+                        return $('<tr class="group-start">')
+                            .append('<td colspan="8">' + groupLabel + ' (' + rows.count() + ' satır)</td></tr>');
+                    },
+                    endRender: function (rows, group) {
+                        var quantitySum = rows.data().pluck('Quantity').reduce((a, b) => a + b, 0);
+                        var totalSum = rows.data().pluck('LineTotal').reduce((a, b) => a + b, 0);
+
+                        return $('<tr class="group-end">')
+                            .append('<td colspan="4" class="subtotal">Grup Toplamı</td>')
+                            .append('<td class="subtotal">' + quantitySum + '</td>')
+                            .append('<td></td>')
+                            .append('<td></td>')
+                            .append('<td class="subtotal">' + $.fn.dataTable.render.number('.', ',', 2, '', ' TRY').display(totalSum) + '</td>')
+                            .append('</tr>');
+                    }
+                },
+                language: { url: 'js/datatables-tr.json' },
+               
+                initComplete: function () {
+                    initFilters();
+                    var table = this.api();
+                    var buttonsContainer = table.buttons().container();
+
+                    // 1. Kayıt Sayısı menüsünü taşı ve stil ver
+                    var lengthMenu = $('.dataTables_length');
+                    var lengthSelect = lengthMenu.find('select').detach();
+                    lengthMenu.empty()
+                        .append(lengthSelect)
+                    $('#dt-length-container .toolbar-content').append(lengthMenu);
+                    lengthMenu.find('select').addClass('form-select');
+
+                    // 2. Kolonlar butonunu taşı ve stil ver
+                    var colvisButton = buttonsContainer.find('.buttons-colvis');
+                    $('#dt-colvis-container .toolbar-content').append(colvisButton.removeClass('btn-secondary').addClass('btn-sm btn-outline-secondary').html('<i class="bi bi-layout-three-columns"></i>'));
+
+                    // 3. Grupla butonunu taşı ve stil ver
+                    var groupButton = buttonsContainer.find('.buttons-collection');
+                    $('#dt-group-container .toolbar-content').append(groupButton.parent('.btn-group'));
+                    groupButton.removeClass('btn-secondary').addClass('btn-sm btn-outline-secondary').html('<i class="bi bi-grid-3x3-gap"></i>');
+
+                    // 4. Dışarı Aktar butonlarını dropdown olarak oluştur
+                    var exportContainer = $('#dt-export-container .toolbar-content');
+                    exportContainer.empty().append(
+                        '<div class="btn-group">' +
+                        '  <button type="button" class="btn btn-sm btn-outline-secondary dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false"><i class="bi bi-download"></i></button>' +
+                        '  <ul class="dropdown-menu dropdown-menu-end"></ul>' +
+                        '</div>'
+                    );
+                    var exportMenu = exportContainer.find('.dropdown-menu');
+
+                    exportMenu.append('<li><a class="dropdown-item" href="#"><i class="bi bi-file-earmark-excel me-2"></i>Excel</a></li>')
+                        .find('a').last().on('click', function() { table.button('.buttons-excel').trigger(); });
+
+                    exportMenu.append('<li><a class="dropdown-item" href="#"><i class="bi bi-file-earmark-pdf me-2"></i>PDF</a></li>')
+                        .find('a').last().on('click', function() { table.button('.buttons-pdf').trigger(); });
+
+                    buttonsContainer.hide();
+                }
+            });
+
+            // Olay dinleyicileri
+            $('#btnFilter').on('click', function() {
+                if(salesTable) salesTable.ajax.reload();
+            });
+
+            $('#itemGroup, #itemCodeFilter').on('change', applyFilters);
+            $('#btnReset').click(resetFilters);
+        });
+    </script>
+    <script src="js/dashboard-interactions.js"></script>
+    <script src="js/ai-scoreboard.js"></script>
+</body>
+</html>

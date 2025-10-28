@@ -897,25 +897,57 @@ app.get("/api/supply-orders", async (req, res) => {
     console.log("sessionId:", sessionId);
     console.log("whsCode:", whsCode);
  
-    
     try {
-        const response = await axiosInstance.get(
-            `${SAP_CONFIG.SERVICE_LAYER_URL}/SQLQueries('OPOR_LIST')/List`,
-            {
-                params: {
-                    value1: "'SUPPLY'",
-                    value2: `'${whsCode}'`,
-                },
-                headers: {
-                    Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
-                    "Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
-                },
-            }
-        );
-        console.log("Response for whsCode:", whsCode, response.data);
+        // View Service ile OData $filter kullanarak filtreleme
+        const serviceLayerUrl = `${SAP_CONFIG.SERVICE_LAYER_URL}`;
+        const sapUrl = `${serviceLayerUrl}/view.svc/AS_B2B_OporList_B1SLQuery?$filter=Type eq 'SUPPLY' and WhsCode eq '${whsCode}'`;
+        
+        console.log('Fetching from SAP View URL:', sapUrl);
+
+        const response = await axiosInstance.get(sapUrl, {
+            headers: {
+                Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+                "Content-Type": "application/json",
+            },
+        });
+
+        console.log(`View returned ${response.data.value?.length || 0} items for WhsCode: ${whsCode}`);
+
         res.json(response.data);
     } catch (error) {
-        console.error("Error:", error.message);
+        console.error("Error fetching supply orders:", error);
+        console.error("Error message:", error.message);
+        if (error.response) {
+            console.error("Error response status:", error.response.status);
+            console.error("Error response data:", error.response.data);
+        }
+        
+        // Eğer OData filter hatası alırsak, server-side filtrelemeye geri dön
+        if (error.response && error.response.status === 400) {
+            console.log("OData filter failed, falling back to server-side filtering");
+            try {
+                const fallbackResponse = await axiosInstance.get(
+                    `${serviceLayerUrl}/view.svc/AS_B2B_OporList_B1SLQuery`,
+                    {
+                        headers: {
+                            Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+                            "Content-Type": "application/json",
+                        },
+                    }
+                );
+                
+                let filteredData = fallbackResponse.data.value || [];
+                filteredData = filteredData.filter(item => 
+                    item.Type === 'SUPPLY' && item.WhsCode === whsCode
+                );
+                
+                console.log(`Server-side filtered ${filteredData.length} items`);
+                return res.json({ value: filteredData });
+            } catch (fallbackError) {
+                console.error("Fallback also failed:", fallbackError.message);
+            }
+        }
+        
         res.status(500).json({ error: error.message });
     }
 });
@@ -1107,27 +1139,11 @@ app.post("/api/supply-delivery/:docNum", upload.single('image'), async (req, res
 
         console.log('Delivery API Response:', response.data);
 
-        // Delete the uploaded file after successful submission
-        if (req.file) {
-            fs.unlink(req.file.path, (err) => {
-                if (err) console.error('Error deleting temp file:', err);
-                else console.log('Successfully deleted file:', req.file.path);
-            });
-        }
-
         res.json({
             success: true,
             data: response.data
         });
     } catch (error) {
-        // Delete the uploaded file if there was an error
-        if (req.file) {
-            fs.unlink(req.file.path, (err) => {
-                if (err) console.error('Error deleting temp file:', err);
-                else console.log('Successfully deleted file:', req.file.path);
-            });
-        }
-
         console.error('Error in delivery submit:', error);
         res.status(500).json({
             success: false,
@@ -1809,27 +1825,56 @@ app.get("/anadepo-siparisleri-list", async (req, res) => {
   console.log("sessionId", sessionId); 
   console.log("whsCode", whsCode); 
   try {
-    const response = await axiosInstance.get(
-      `${SAP_CONFIG.SERVICE_LAYER_URL}/SQLQueries('OWTQ_NEW')/List`,
-      {
-        params: {
-          value1: "'MAIN'",
-          value2: "'" + whsCode + "'",
-        },
-        headers: {
-          Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
-          "Content-Type": "application/x-www-form-urlencoded; charset=utf-8",
-        },
-      }
-    );
+    // View Service ile OData $filter kullanarak filtreleme
+    const serviceLayerUrl = `${SAP_CONFIG.SERVICE_LAYER_URL}`;
+    const sapUrl = `${serviceLayerUrl}/view.svc/AS_B2B_OwtqNew_B1SLQuery?$filter=Type eq 'MAIN' and WhsCode eq '${whsCode}'`;
+    
+    console.log('Fetching from SAP View URL:', sapUrl);
 
-    console.log(response);
-    console.log(response.data);
+    const response = await axiosInstance.get(sapUrl, {
+      headers: {
+        Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+        "Content-Type": "application/json",
+      },
+    });
+
+    console.log(`View returned ${response.data.value?.length || 0} items for WhsCode: ${whsCode}`);
 
     res.json(response.data);
   } catch (error) {
-    console.error("Error:", error);
-    console.error("Error:", error.message);
+    console.error("Error fetching anadepo siparisleri:", error);
+    console.error("Error message:", error.message);
+    if (error.response) {
+      console.error("Error response status:", error.response.status);
+      console.error("Error response data:", error.response.data);
+    }
+    
+    // Eğer OData filter hatası alırsak, server-side filtrelemeye geri dön
+    if (error.response && error.response.status === 400) {
+      console.log("OData filter failed, falling back to server-side filtering");
+      try {
+        const fallbackResponse = await axiosInstance.get(
+          `${serviceLayerUrl}/view.svc/AS_B2B_OwtqNew_B1SLQuery`,
+          {
+            headers: {
+              Cookie: "B1SESSION=" + encodeURIComponent(sessionId),
+              "Content-Type": "application/json",
+            },
+          }
+        );
+        
+        let filteredData = fallbackResponse.data.value || [];
+        filteredData = filteredData.filter(item => 
+          item.Type === 'MAIN' && item.WhsCode === whsCode
+        );
+        
+        console.log(`Server-side filtered ${filteredData.length} items`);
+        return res.json({ value: filteredData });
+      } catch (fallbackError) {
+        console.error("Fallback also failed:", fallbackError.message);
+      }
+    }
+    
     res.status(500).json({ error: error.message });
   }
 });
@@ -1894,8 +1939,6 @@ app.get("/api/anadepo-order/:docNum", async (req, res) => {
 
     console.log("Getting order details for docNum:", docNum);
     console.log("Using sessionId:", sessionId);
-
-    // ${SAP_CONFIG.SERVICE_LAYER_URL}/SQLQueries('OWTQ_DETAIL')/List?value1= 'PROD'&value2= 'DocNum'
 
     try {
         const response = await axiosInstance.get(

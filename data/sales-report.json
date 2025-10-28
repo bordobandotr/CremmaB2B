@@ -1,0 +1,104 @@
+{
+    "data": [
+        {
+            "DocDate": "2025-09-25T10:00:00Z",
+            "ItemCode": "BEF001",
+            "ItemName": "Beef",
+            "ItmsGrpNam": "Bar",
+            "Quantity": 12,
+            "UomCode": "Adet",
+            "Price": 85.00,
+            "LineTotal": 1020.00
+        },
+        {
+            "DocDate": "2025-09-25T10:05:00Z",
+            "ItemCode": "CHE002",
+            "ItemName": "Cheesecake",
+            "ItmsGrpNam": "Tatlı",
+            "Quantity": 8,
+            "UomCode": "Dilim",
+            "Price": 45.00,
+            "LineTotal": 360.00
+        },
+        {
+            "DocDate": "2025-09-24T14:30:00Z",
+            "ItemCode": "ACK003",
+            "ItemName": "Acuka",
+            "ItmsGrpNam": "Store",
+            "Quantity": 5,
+            "UomCode": "Kavanoz",
+            "Price": 65.00,
+            "LineTotal": 325.00
+        },
+        {
+            "DocDate": "2025-09-24T11:20:00Z",
+            "ItemCode": "FUM004",
+            "ItemName": "Füme Eti",
+            "ItmsGrpNam": "Store",
+            "Quantity": 7,
+            "UomCode": "Paket",
+            "Price": 120.00,
+            "LineTotal": 840.00
+        },
+        {
+            "DocDate": "2025-09-23T18:00:00Z",
+            "ItemCode": "LOT005",
+            "ItemName": "Lotus",
+            "ItmsGrpNam": "Tatlı",
+            "Quantity": 10,
+            "UomCode": "Dilim",
+            "Price": 55.00,
+            "LineTotal": 550.00
+        },
+        {
+            "DocDate": "2025-09-23T16:45:00Z",
+            "ItemCode": "STR006",
+            "ItemName": "Strawberry",
+            "ItmsGrpNam": "Tatlı",
+            "Quantity": 6,
+            "UomCode": "Adet",
+            "Price": 30.00,
+            "LineTotal": 180.00
+        },
+        {
+            "DocDate": "2025-09-22T09:15:00Z",
+            "ItemCode": "BEF001",
+            "ItemName": "Beef",
+            "ItmsGrpNam": "Bar",
+            "Quantity": 15,
+            "UomCode": "Adet",
+            "Price": 85.00,
+            "LineTotal": 1275.00
+        },
+        {
+            "DocDate": "2025-09-22T13:00:00Z",
+            "ItemCode": "CHE002",
+            "ItemName": "Cheesecake",
+            "ItmsGrpNam": "Tatlı",
+            "Quantity": 12,
+            "UomCode": "Dilim",
+            "Price": 45.00,
+            "LineTotal": 540.00
+        },
+        {
+            "DocDate": "2025-09-21T15:00:00Z",
+            "ItemCode": "ACK003",
+            "ItemName": "Acuka",
+            "ItmsGrpNam": "Store",
+            "Quantity": 3,
+            "UomCode": "Kavanoz",
+            "Price": 65.00,
+            "LineTotal": 195.00
+        },
+        {
+            "DocDate": "2025-09-21T17:30:00Z",
+            "ItemCode": "FUM004",
+            "ItemName": "Füme Eti",
+            "ItmsGrpNam": "Store",
+            "Quantity": 9,
+            "UomCode": "Paket",
+            "Price": 120.00,
+            "LineTotal": 1080.00
+        }
+    ]
+}

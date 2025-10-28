@@ -139,7 +139,7 @@
                 <div class="card">
                     <div class="card-body">
                         <div class="table-responsive">
-                            <table id="ordersTable" class="table table-hover">
+                            <table id="ordersTable" class="table table-striped table-hover">
                                 <thead>
                                     <tr>
                                         <th>Sipariş No</th>
@@ -312,13 +312,13 @@
                     formatDate(order.DocDueDate) || '',
                     order.NumAtCard || '',
                     `<span style="display: none;">${order.DocStatus}</span>${getStatusBadge(order.DocStatus)}`,
-                    `<div class="btn-group">
-                        <a href="anadepo-siparisi-detay.html?docNum=${order.DocNum}" type="button" class="btn btn-sm btn-primary">
+                    `<div class="d-flex flex-column gap-2" style="min-width: 120px;">
+                        <a href="anadepo-siparisi-detay.html?docNum=${order.DocNum}" type="button" class="btn btn-sm btn-outline-primary w-100">
                             <i class="bi bi-eye"></i> Detay
                         </a>
                         ${order.DocStatus === '3' ? 
                             `<a href="anadepo-siparisi-teslim.html?docNum=${order.DocNum}" type="button"
-                                class="btn btn-sm btn-success">
+                                class="btn btn-sm btn-success w-100">
                                 <i class="bi bi-check-lg"></i> Teslim Al
                             </a>` 
                             : ''

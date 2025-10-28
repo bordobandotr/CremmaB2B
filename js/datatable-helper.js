@@ -7,10 +7,6 @@
  * This ensures table data is always freshly requested from the server
  */
 function disableDataTableCaching() {
-    /*
-    // THIS FUNCTION IS DISABLED DUE TO CAUSING A FATAL ERROR ON PAGE LOAD.
-    // IT TRIES TO PATCH DATATABLE BEFORE IT'S FULLY INITIALIZED.
-
     // Check if DataTable plugin exists
     if (window.$ && $.fn.DataTable) {
         // Set global default
@@ -53,7 +49,6 @@ function disableDataTableCaching() {
         
         console.log('DataTable caching disabled successfully');
     }
-    */
 }
 
 /**
@@ -174,52 +169,8 @@ function patchAllDataTablesForNoCache() {
     }
 }
 
-/**
- * Adds a refresh button to the page that will reload with the refreshOnToggle parameter
- * This is a fallback solution for pages where DataTables don't resize properly with the sidebar toggle
- */
-function addDataTableRefreshButton() {
-    // Check if the button already exists
-    if (document.getElementById('datatableRefreshToggle')) {
-        return;
-    }
-    
-    // Create the refresh button
-    const refreshBtn = document.createElement('button');
-    refreshBtn.id = 'datatableRefreshToggle';
-    refreshBtn.className = 'btn btn-sm btn-outline-secondary';
-    refreshBtn.innerHTML = '<i class="bi bi-arrow-clockwise"></i> Tabloyu Yenile';
-    refreshBtn.title = 'Tablo genişliğini düzeltmek için sayfayı yeniler';
-    refreshBtn.style.position = 'fixed';
-    refreshBtn.style.left = '290px';
-    refreshBtn.style.bottom = '20px';
-    refreshBtn.style.zIndex = '1000';
-    refreshBtn.style.opacity = '0.8';
-    
-    // Add click event to refresh the page with the refreshOnToggle parameter
-    refreshBtn.addEventListener('click', function() {
-        forceRedrawDataTables();
-    });
-    
-    // Append to body
-    document.body.appendChild(refreshBtn);
-
-    // Adjust button position based on sidebar state
-    if (document.querySelector('.sidebar.collapsed')) {
-        refreshBtn.style.left = '110px';
-    }
-
-    // Listen for sidebar toggle to reposition the button
-    document.querySelector('.main-content').addEventListener('transitionend', function(e) {
-        if (e.propertyName === 'margin-left' || e.propertyName === 'width') {
-            if (document.querySelector('.sidebar.collapsed')) {
-                refreshBtn.style.left = '110px';
-            } else {
-                refreshBtn.style.left = '290px';
-            }
-        }
-    });
-}
+// Removed: addDataTableRefreshButton() function
+// This function was creating unwanted refresh buttons on all pages
 
 /**
  * Force redraw of all DataTables to fix layout issues
@@ -368,82 +319,42 @@ function addDataTableDarkModeStyles() {
             border-color: var(--border-color) !important;
         }
         
-        /* Fix for alternate row coloring */
-        body.dark-mode table.dataTable.stripe tbody tr.odd, 
-        body.dark-mode table.dataTable.display tbody tr.odd {
-            background-color: var(--card-bg) !important;
-        }
-        
-        body.dark-mode table.dataTable.stripe tbody tr.even, 
-        body.dark-mode table.dataTable.display tbody tr.even {
-            background-color: rgba(255, 255, 255, 0.03) !important;
-        }
-        
-        /* Fix for hover effect */
-        body.dark-mode table.dataTable.hover tbody tr:hover, 
-        body.dark-mode table.dataTable.display tbody tr:hover {
-            background-color: rgba(255, 255, 255, 0.05) !important;
-        }
-        
-        /* Fix for input fields */
-        body.dark-mode .dataTables_filter input {
-            background-color: var(--card-bg) !important;
-            color: var(--text-color) !important;
+        body.dark-mode .dataTables_scrollBody {
             border-color: var(--border-color) !important;
         }
         
+        body.dark-mode .dataTables_scrollHead {
+            border-color: var(--border-color) !important;
+        }
+        
+        body.dark-mode .dataTables_filter input,
         body.dark-mode .dataTables_length select {
-            background-color: var(--card-bg) !important;
-            color: var(--text-color) !important;
-            border-color: var(--border-color) !important;
-        }
-
-        /* Fix for specific components */
-        body.dark-mode #orderSummaryModal .modal-content {
-            background-color: var(--card-bg) !important;
-            color: var(--text-color) !important;
-        }
-        
-        body.dark-mode #orderSummaryModal .item-row {
-            background-color: rgba(0, 0, 0, 0.2) !important;
-        }
-        
-        body.dark-mode #orderSummaryModal .item-row:hover {
-            background-color: rgba(255, 255, 255, 0.05) !important;
-        }
-        
-        body.dark-mode .reply-section {
-            background-color: rgba(0, 0, 0, 0.2) !important;
-        }
-        
-        body.dark-mode .reply-item {
-            border-color: var(--border-color) !important;
-        }
-        
-        body.dark-mode .quantity-control .form-control {
-            background-color: var(--card-bg) !important;
-            color: var(--text-color) !important;
-            border-color: var(--border-color) !important;
+            background-color: rgba(0, 0, 0, 0.2);
+            color: var(--text-color);
+            border: 1px solid var(--border-color);
         }
     `;
     document.head.appendChild(styleEl);
 }
 
-// Apply dark mode to DataTables
+// Function to apply dark mode to existing DataTables
 function applyDarkModeToDataTables() {
     safeJQuery(() => {
-        // Check for dark mode
         const isDarkMode = document.body.classList.contains('dark-mode');
         
-        // Apply necessary classes based on dark mode state
-        $('table.dataTable').toggleClass('table-dark', isDarkMode);
+        // Add or remove dark mode classes from DataTables
         $('.dataTables_wrapper').toggleClass('dark-mode', isDarkMode);
+        $('table.dataTable').toggleClass('table-dark', isDarkMode);
         
-        // Fix for inputs in dark mode
+        // Apply specific styles for dark mode
         if (isDarkMode) {
             $('.dataTables_filter input, .dataTables_length select').css({
-                'background-color': 'var(--card-bg)',
+                'background-color': 'rgba(0, 0, 0, 0.2)',
                 'color': 'var(--text-color)',
+                'border': '1px solid var(--border-color)'
+            });
+            
+            $('table.dataTable').css({
                 'border-color': 'var(--border-color)'
             });
             
@@ -714,62 +625,38 @@ document.addEventListener('DOMContentLoaded', function() {
         
         observer.observe(document.body, { attributes: true });
         
-        // Only add the refresh button if the page has DataTables
+        // Only force redraw if the page has DataTables
         if (window.$ && $.fn.DataTable && $.fn.DataTable.tables) {
             const hasTables = safeJQuery(() => $.fn.dataTable.tables().length > 0);
             if (hasTables) {
-                addDataTableRefreshButton();
                 forceRedrawDataTables();
             }
         }
         
-        // Add refresh button to all DataTable containers
-        if (window.$ && $.fn.DataTable) {
-            $('.dataTables_wrapper').each(function() {
-                const wrapper = $(this);
-                if (!wrapper.find('.dt-refresh-btn').length) {
-                    const refreshBtn = $('<button>')
-                        .addClass('btn btn-sm btn-outline-secondary dt-refresh-btn')
-                        .html('<i class="bi bi-arrow-clockwise"></i>')
-                        .attr('title', 'Verileri Yenile')
-                        .css({
-                            'position': 'absolute',
-                            'top': '5px',
-                            'right': '5px',
-                            'z-index': '100'
-                        })
-                        .on('click', function(e) {
-                            e.preventDefault();
-                            const table = $(this).closest('.dataTables_wrapper').find('table.dataTable');
-                            if (table.length && $.fn.DataTable.isDataTable(table)) {
-                                table.DataTable().ajax.reload(null, false);
-                            }
-                        });
-                    
-                    wrapper.css('position', 'relative').append(refreshBtn);
-                }
-            });
-        }
+        // Removed: Automatic refresh button addition to DataTable containers
+        // This was creating unwanted buttons on all pages
     }, 500);
 });
 
 // Call these functions on script load to affect all tables
-// disableDataTableCaching(); // DISABLED: Causes fatal error on page load
+disableDataTableCaching();
 patchAllDataTablesForNoCache();
 
 // Add to any existing initialization function
 document.addEventListener('DOMContentLoaded', function() {
-    // disableDataTableCaching(); // DISABLED: Causes fatal error on page load
-    // patchAllDataTablesForNoCache(); // DISABLED: Causes fatal error on page load
+    disableDataTableCaching();
+    patchAllDataTablesForNoCache();
 });
 
 // Expose the functions in the global dataTableHelper object at the end of the file
 window.dataTableHelper = window.dataTableHelper || {};
 $.extend(window.dataTableHelper, {
+    // Add the new functions to the existing helper object
     disableCaching: disableDataTableCaching,
     patchForNoCache: patchAllDataTablesForNoCache,
     refreshWithFreshData: refreshDataTableWithFreshData,
-    reloadAll: reloadAllDataTables
+    reloadAll: reloadAllDataTables,
+    // ... existing properties ...
 });
 
 /**
