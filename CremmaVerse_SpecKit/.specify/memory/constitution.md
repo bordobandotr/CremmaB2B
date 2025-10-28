@@ -1,10 +1,13 @@
 <!--
 Sync Impact Report:
-- Version: 0.0.0 → 1.0.0 (MAJOR: Initial constitution establishment)
-- Added Principles: 5 core architecture principles
-- Added Sections: Technology Stack, Design System, Security, Performance, Quality Assurance, Development Workflow, i18n, Accessibility, Support, Success Metrics
-- Templates Status: ⚠ Pending review of plan-template.md, spec-template.md, tasks-template.md
-- Follow-up TODOs: None - all placeholders filled
+- Version: 1.0.0 → 1.1.0 (MINOR: v1.9.0-stable features added)
+- Added: Sticky Header standards (UI/UX principle)
+- Added: DataTable pagination standards (25, 50, 100)
+- Added: Üretim Teslim Alma module (Type=PROD)
+- Added: WhsCode/CardCode filtering requirements (Security)
+- Updated: Recent Changes section with v1.9.0-stable details
+- Templates Status: ✅ All templates reviewed and active
+- Follow-up TODOs: None - all v1.9.0 features documented
 -->
 
 # CremmaVerse B2B Platform Constitution
@@ -84,14 +87,18 @@ Sync Impact Report:
 **MUST Requirements:**
 - All DataTables MUST use zebra striping (`table-striped`) and hover effects (`table-hover`)
 - All DataTables MUST have always-visible scrollbars (14px height, styled)
+- All DataTables MUST use `pageLength: 25` and `lengthMenu: [[25, 50, 100], [25, 50, 100]]`
 - UOM (Ölçü Birimi) columns MUST be styled red and bold
 - All action buttons MUST be stacked vertically with `d-flex flex-column gap-2`
 - Multi-select filters MUST use Select2
 - "Tabloyu Yenile" buttons MUST NOT be present (removed in v1.9.0)
 - DataTable font size MUST be 0.85rem for headers and cells
 - DataTable DOM parameter MUST be `'lfrtip'` (no buttons)
+- All list page headers MUST use sticky positioning with scroll-triggered size reduction
+- Sticky headers MUST transition smoothly (0.3s ease) at 50px scroll threshold
+- Scrolled headers MUST reduce padding (0.5rem 1rem) and font size (1.1rem)
 
-**Rationale:** Consistent UI patterns reduce learning curve and user errors. Color-coding improves data scanning. Always-visible scrollbars improve navigation.
+**Rationale:** Consistent UI patterns reduce learning curve and user errors. Color-coding improves data scanning. Always-visible scrollbars improve navigation. 25-item default pagination reduces scrolling while maintaining performance. Sticky headers improve navigation and context awareness during scrolling.
 
 ---
 
@@ -158,6 +165,9 @@ Sync Impact Report:
 - User type separation (MAIN, BRANCH, PROD)
 - Server-side endpoint validation
 - Every API request MUST validate sessionId
+- All delivery endpoints MUST filter by WhsCode (ana depo, üretim) or CardCode (dış tedarik)
+- WhsCode filtering MUST be implemented in both OData queries and fallback mechanisms
+- Users MUST only access data for their assigned branch/warehouse
 
 ### Data Security (NON-NEGOTIABLE)
 - HTTPS only (TLS 1.2+)
@@ -317,11 +327,12 @@ This constitution supersedes all other development practices and guidelines. All
 - Deviations MUST be documented and approved
 
 ### Version History
+- **v1.1.0 (2025-10-28):** Added sticky header standards, DataTable pagination requirements (25/50/100), WhsCode/CardCode filtering mandates, and v1.9.0-stable feature documentation.
 - **v1.0.0 (2025-10-28):** Initial constitution establishment with 5 core principles, comprehensive technology stack, design system, security standards, and governance rules.
 
 ---
 
-**Version**: 1.0.0 | **Ratified**: 2025-10-28 | **Last Amended**: 2025-10-28
+**Version**: 1.1.0 | **Ratified**: 2025-10-28 | **Last Amended**: 2025-10-28
 
 ---
 
@@ -422,15 +433,21 @@ uploads/                      # User uploads
 ### Ana Depo
 - `GET /anadepo-siparisleri-list` - View: AS_B2B_OwtqNew_B1SLQuery
 - `POST /api/anadepo-order` - Create order
+- `GET /api/anadepo-delivery/:docNum` - View: AS_B2B_OwtrNew_B1SLQuery (Type='MAIN', WhsCode filter)
+- `POST /api/anadepo-delivery/:docNum` - Submit delivery (ASUDO_B2B_OWTR)
 
 ### Dış Tedarik
 - `GET /api/supply-orders` - View: AS_B2B_OporList_B1SLQuery
 - `GET /api/supply-items-list/:whsCode` - View: AS_B2B_OporNew_B1SLQuery
 - `POST /api/supply-order` - Create purchase order
+- `GET /api/supply-detail-order/:docNum` - View: AS_B2B_OpdnNew_B1SLQuery (Type='SUPPLY', CardCode filter)
+- `POST /api/supply-delivery/:docNum` - Submit delivery (ASUDO_B2B_OPDN)
 
-### Production
+### Production (Üretim)
 - `GET /api/production-orders` - Query: OWTQ_LIST
 - `POST /api/production-order` - Create production order
+- `GET /api/uretim-delivery/:docNum` - View: AS_B2B_OwtrNew_B1SLQuery (Type='PROD', WhsCode filter)
+- `POST /api/uretim-delivery/:docNum` - Submit delivery (ASUDO_B2B_OWTR)
 
 ### Transfers
 - `GET /api/transfers` - Query: OWTR_LIST
@@ -447,20 +464,26 @@ uploads/                      # User uploads
 ## Recent Changes (v1.9.0-stable)
 
 ### Backend
-- Migrated `/api/supply-orders` to View Service (AS_B2B_OporList_B1SLQuery)
-- Migrated `/anadepo-siparisleri-list` to View Service (AS_B2B_OwtqNew_B1SLQuery)
-- Implemented OData $filter with server-side fallback on 400 errors
-- Enhanced error logging and response validation
+- ✅ **Üretim Teslim Alma:** Created GET/POST `/api/uretim-delivery/:docNum` endpoints (Type='PROD')
+- ✅ **Ana Depo WhsCode Filtering:** Added WhsCode parameter to `/api/anadepo-delivery/:docNum` for branch-based security
+- ✅ **Dış Tedarik View Service:** Migrated `/api/supply-detail-order/:docNum` from SQLQuery to AS_B2B_OpdnNew_B1SLQuery with CardCode filtering
+- ✅ **View Service Migration:** Migrated `/api/supply-orders` to AS_B2B_OporList_B1SLQuery and `/anadepo-siparisleri-list` to AS_B2B_OwtqNew_B1SLQuery
+- ✅ **OData Filtering:** Implemented OData $filter with server-side fallback on 400 errors across all delivery endpoints
+- ✅ **Security Enhancement:** All delivery endpoints now filter by WhsCode (ana depo, üretim) or CardCode (dış tedarik)
+- ✅ **Error Handling:** Enhanced error logging and response validation
 
 ### Frontend
-- Removed "Tabloyu Yenile" button globally (from datatable-helper.js)
-- Implemented always-visible scrollbars (14px height, styled)
-- Standardized font size to 0.85rem for all DataTables
-- Applied red+bold styling to UOM (Ölçü Birimi) columns
-- Added Birim Çevirimi (UOM Conversion) columns
-- Stacked action buttons vertically (Detay + Teslim Al)
-- Applied `cache: 'no-cache'` to all data fetches
-- Optimized column widths across all pages
+- ✅ **Sticky Header (8 pages):** Implemented sticky positioning with scroll-triggered size reduction (50px threshold, 0.3s ease transition)
+  - uretim-siparisleri.html, dis-tedarik-siparisleri.html, anadepo-siparisleri.html
+  - transferler.html, check-list.html, fire-zayi.html, ticket.html, stok-sayimlarim.html
+- ✅ **DataTable Pagination (3 pages):** Changed default from 10 to 25 records with [25, 50, 100] options
+  - stok-sayimlarim.html (js/stok-sayimlarim.js), ticket.html, fire-zayi.html
+- ✅ **Üretim Teslim Alma Page:** Created uretim-siparisi-teslim.html (copied from ana depo, Type='PROD')
+- ✅ **Ana Depo Status Badge:** Fixed getStatusBadge function to use bg-orange for status 2 (matching dış tedarik)
+- ✅ **UI/UX Consistency:** Removed "Tabloyu Yenile" button globally, implemented always-visible scrollbars (14px height)
+- ✅ **Typography:** Standardized font size to 0.85rem for all DataTables
+- ✅ **Styling:** Applied red+bold to UOM columns, added Birim Çevirimi columns, stacked action buttons vertically
+- ✅ **Performance:** Applied `cache: 'no-cache'` to all data fetches, optimized column widths
 
 ## Future Roadmap
 
